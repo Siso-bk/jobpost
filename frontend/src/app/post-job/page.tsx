@@ -24,7 +24,7 @@ export default function PostJobPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const id = searchParams.get('id');
+    const id = searchParams?.get('id') ?? '';
     if (!id) {
       setEditId(null);
       return;
