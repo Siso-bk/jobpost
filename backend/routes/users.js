@@ -98,6 +98,15 @@ const uploadProfileImage = async (dataUrl, userId) =>
     allowedTypes: new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']),
   });
 
+const uploadCompanyLogo = async (dataUrl, userId) =>
+  uploadGcsDataUrl({
+    dataUrl,
+    userId,
+    folder: 'company-logos',
+    maxBytes: MAX_IMAGE_BYTES,
+    allowedTypes: new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']),
+  });
+
 const uploadResumeFile = async (dataUrl, userId) =>
   uploadGcsDataUrl({
     dataUrl,
@@ -235,6 +244,19 @@ router.put('/:id', auth, async (req, res) => {
         if (!publicBase || !value.startsWith(publicBase)) {
           return res.status(400).json({ message: 'Profile image must be uploaded from device' });
         }
+      }
+    }
+
+    if (typeof updates.companyLogo === 'string') {
+      const value = updates.companyLogo.trim();
+      if (value.startsWith('data:image/')) {
+        updates.companyLogo = await uploadCompanyLogo(value, req.userId);
+      } else if (value === '') {
+        updates.companyLogo = '';
+      } else if (/^https?:\/\//.test(value)) {
+        updates.companyLogo = value;
+      } else {
+        return res.status(400).json({ message: 'Company logo must be a URL or uploaded image' });
       }
     }
 

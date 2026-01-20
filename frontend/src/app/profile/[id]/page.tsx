@@ -46,6 +46,7 @@ export default function ProfilePage() {
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
+  const companyLogoInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     try {
@@ -168,6 +169,33 @@ export default function ProfilePage() {
     setForm((prev) => ({ ...prev, profilePicture: '' }));
     if (photoInputRef.current) {
       photoInputRef.current.value = '';
+    }
+  };
+
+  const handleCompanyLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please upload an image file.');
+      return;
+    }
+    const maxSize = 700 * 1024;
+    if (file.size > maxSize) {
+      setError('Image must be under 700KB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((prev) => ({ ...prev, companyLogo: reader.result as string }));
+      setError(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveCompanyLogo = () => {
+    setForm((prev) => ({ ...prev, companyLogo: '' }));
+    if (companyLogoInputRef.current) {
+      companyLogoInputRef.current.value = '';
     }
   };
 
@@ -398,7 +426,24 @@ export default function ProfilePage() {
                   </label>
                   <label>
                     <span>Company logo URL</span>
-                    <input name="companyLogo" value={form.companyLogo || ''} onChange={handleChange} />
+                    <input
+                      name="companyLogo"
+                      value={form.companyLogo && form.companyLogo.startsWith('data:image/') ? '' : form.companyLogo || ''}
+                      onChange={handleChange}
+                    />
+                  </label>
+                  <label>
+                    <span>Company logo</span>
+                    <input ref={companyLogoInputRef} type="file" accept="image/*" onChange={handleCompanyLogoChange} />
+                    <span className="upload-hint">Upload from device</span>
+                    {form.companyLogo && (
+                      <div className="profile-photo-row">
+                        <img className="logo-preview" src={form.companyLogo} alt="Company logo preview" />
+                        <button type="button" className="icon-button" onClick={handleRemoveCompanyLogo} aria-label="Remove company logo">
+                          ×
+                        </button>
+                      </div>
+                    )}
                   </label>
                   <label>
                     <span>Company description</span>

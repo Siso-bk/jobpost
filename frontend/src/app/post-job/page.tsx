@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { jobsService } from '@/services/api';
 
@@ -7,6 +7,7 @@ export default function PostJobPage() {
   const searchParams = useSearchParams();
   const [editId, setEditId] = useState<string | null>(null);
   const [loadingJob, setLoadingJob] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -57,6 +58,32 @@ export default function PostJobPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target as HTMLInputElement;
     setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setMessage('Please upload an image file.');
+      return;
+    }
+    const maxSize = 1024 * 1024;
+    if (file.size > maxSize) {
+      setMessage('Logo must be under 1MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((f) => ({ ...f, logoUrl: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setForm((f) => ({ ...f, logoUrl: '' }));
+    if (logoInputRef.current) {
+      logoInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,7 +149,25 @@ export default function PostJobPage() {
           </label>
           <label>
             <span>Company Logo URL</span>
-            <input name="logoUrl" placeholder="https://..." value={form.logoUrl} onChange={handleChange} />
+            <input
+              name="logoUrl"
+              placeholder="https://..."
+              value={form.logoUrl && form.logoUrl.startsWith('data:image/') ? '' : form.logoUrl}
+              onChange={handleChange}
+            />
+          </label>
+          <label>
+            <span>Company Logo</span>
+            <input ref={logoInputRef} type="file" accept="image/*" onChange={handleLogoChange} />
+            <span className="upload-hint">Upload from device</span>
+            {form.logoUrl && (
+              <div className="profile-photo-row">
+                <img className="logo-preview" src={form.logoUrl} alt="Company logo preview" />
+                <button type="button" className="icon-button" onClick={handleRemoveLogo} aria-label="Remove logo">
+                  ×
+                </button>
+              </div>
+            )}
           </label>
           <label>
             <span>Location</span>
