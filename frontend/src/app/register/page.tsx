@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
@@ -67,7 +67,7 @@ export default function RegisterPage() {
         const res = await authService.paiVerifyCode({
           email: email.trim().toLowerCase(),
           code: code.trim(),
-          role: details.role
+          role: details.role,
         });
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('userId', res.data.user.id);
@@ -107,7 +107,7 @@ export default function RegisterPage() {
         name: details.name.trim(),
         handle: details.handle.trim(),
         password: details.password,
-        role: details.role
+        role: details.role,
       });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('userId', res.data.user.id);
@@ -198,7 +198,12 @@ export default function RegisterPage() {
             <button type="submit" className="btn-primary" disabled={loading}>
               {loading ? 'Verifying...' : 'Verify'}
             </button>
-            <button type="button" className="btn-secondary" onClick={handleResend} disabled={resendLoading}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleResend}
+              disabled={resendLoading}
+            >
               {resendLoading ? 'Resending...' : 'Resend code'}
             </button>
             {resendMessage && <p className="status-message">{resendMessage}</p>}

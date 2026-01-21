@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { jobsService } from '@/services/api';
@@ -55,7 +55,9 @@ export default function PostJobClient() {
       .finally(() => setLoadingJob(false));
   }, [searchParams]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target as HTMLInputElement;
     setForm((f) => ({ ...f, [name]: value }));
   };
@@ -136,16 +138,30 @@ export default function PostJobClient() {
       <div className="form-card">
         <div className="eyebrow">Employer</div>
         <h2>{editId ? 'Edit Job' : 'Post a Job'}</h2>
-        <p className="muted">Create a listing that stands out with clear responsibilities and salary range.</p>
+        <p className="muted">
+          Create a listing that stands out with clear responsibilities and salary range.
+        </p>
         {message && <p className={message.includes('success') ? '' : 'error-message'}>{message}</p>}
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
             <span>Job Title</span>
-            <input name="title" placeholder="Senior Product Designer" value={form.title} onChange={handleChange} required />
+            <input
+              name="title"
+              placeholder="Senior Product Designer"
+              value={form.title}
+              onChange={handleChange}
+              required
+            />
           </label>
           <label>
             <span>Company</span>
-            <input name="company" placeholder="Nimbus Labs" value={form.company} onChange={handleChange} required />
+            <input
+              name="company"
+              placeholder="Nimbus Labs"
+              value={form.company}
+              onChange={handleChange}
+              required
+            />
           </label>
           <label>
             <span>Company Logo URL</span>
@@ -163,7 +179,12 @@ export default function PostJobClient() {
             {form.logoUrl && (
               <div className="profile-photo-row">
                 <img className="logo-preview" src={form.logoUrl} alt="Company logo preview" />
-                <button type="button" className="icon-button" onClick={handleRemoveLogo} aria-label="Remove logo">
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={handleRemoveLogo}
+                  aria-label="Remove logo"
+                >
                   x
                 </button>
               </div>
@@ -171,7 +192,13 @@ export default function PostJobClient() {
           </label>
           <label>
             <span>Location</span>
-            <input name="location" placeholder="Remote or city" value={form.location} onChange={handleChange} required />
+            <input
+              name="location"
+              placeholder="Remote or city"
+              value={form.location}
+              onChange={handleChange}
+              required
+            />
           </label>
           <label>
             <span>Job Type</span>
@@ -210,11 +237,24 @@ export default function PostJobClient() {
             </label>
             <label>
               <span>Currency</span>
-              <input name="currency" placeholder="USD" value={form.currency} onChange={handleChange} />
+              <input
+                name="currency"
+                placeholder="USD"
+                value={form.currency}
+                onChange={handleChange}
+              />
             </label>
           </div>
           <button type="submit" className="btn-primary" disabled={loading || loadingJob}>
-            {loadingJob ? 'Loading...' : loading ? (editId ? 'Updating...' : 'Posting...') : (editId ? 'Update Job' : 'Post Job')}
+            {loadingJob
+              ? 'Loading...'
+              : loading
+                ? editId
+                  ? 'Updating...'
+                  : 'Posting...'
+                : editId
+                  ? 'Update Job'
+                  : 'Post Job'}
           </button>
         </form>
       </div>

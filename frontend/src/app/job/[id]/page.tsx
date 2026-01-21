@@ -4,7 +4,8 @@ import ApplyForm from '@/components/ApplyForm';
 
 async function getJob(id: string) {
   // Next.js can't use axios instance with localStorage on server; fetch directly
-  const base = process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_ORIGIN || ''}/api` || '/api';
+  const base =
+    process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_ORIGIN || ''}/api` || '/api';
   const res = await fetch(`${base}/jobs/${id}`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to fetch job');
   return res.json();
@@ -15,9 +16,18 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   return (
     <div className="job-detail">
       <div className="detail-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
           <div className="eyebrow">Job Details</div>
-          <Link href="/jobs" className="btn-ghost">Back to jobs</Link>
+          <Link href="/jobs" className="btn-ghost">
+            Back to jobs
+          </Link>
         </div>
         <h1>{job.title}</h1>
         <div className="job-meta">
@@ -40,7 +50,9 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
         )}
         <div className="detail-card">
           <strong>Description</strong>
-          <p className="job-desc" style={{ whiteSpace: 'pre-wrap' }}>{job.description}</p>
+          <p className="job-desc" style={{ whiteSpace: 'pre-wrap' }}>
+            {job.description}
+          </p>
         </div>
         <ApplyForm jobId={job._id} />
       </div>

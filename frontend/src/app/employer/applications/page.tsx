@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { applicationsService } from '@/services/api';
@@ -75,7 +75,9 @@ export default function EmployerApplicationsPage() {
           <h1>Applications</h1>
           <p className="muted">Review applicants and update their status.</p>
         </div>
-        <Link className="btn-secondary" href="/employer/jobs">View my jobs</Link>
+        <Link className="btn-secondary" href="/employer/jobs">
+          View my jobs
+        </Link>
       </div>
 
       {error && <p className="error-message">{error}</p>}
@@ -96,7 +98,9 @@ export default function EmployerApplicationsPage() {
                   <h3>{application.jobId?.title || 'Role unavailable'}</h3>
                   <p className="muted">{application.workerId?.name || 'Applicant'}</p>
                 </div>
-                <span className={`status-pill status-${application.status}`}>{application.status}</span>
+                <span className={`status-pill status-${application.status}`}>
+                  {application.status}
+                </span>
               </div>
               <div className="application-meta">
                 <span>{application.workerId?.email || 'No email'}</span>
@@ -114,7 +118,9 @@ export default function EmployerApplicationsPage() {
                 <Link href={`/employer/applications/${application._id}`}>View application</Link>
                 <select
                   value={application.status}
-                  onChange={(e) => handleStatusChange(application._id, e.target.value as Application['status'])}
+                  onChange={(e) =>
+                    handleStatusChange(application._id, e.target.value as Application['status'])
+                  }
                   disabled={savingId === application._id}
                 >
                   <option value="pending">Pending</option>

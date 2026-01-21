@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
   try {
     const issuer = process.env.PERSONALAI_ISSUER || 'https://pai-iota.vercel.app';
     const tokenEndpoint = process.env.PERSONALAI_TOKEN_ENDPOINT || '/oauth/token';
-    const clientId = process.env.PERSONALAI_CLIENT_ID || process.env.NEXT_PUBLIC_PERSONALAI_CLIENT_ID;
+    const clientId =
+      process.env.PERSONALAI_CLIENT_ID || process.env.NEXT_PUBLIC_PERSONALAI_CLIENT_ID;
     const clientSecret = process.env.PERSONALAI_CLIENT_SECRET;
 
     if (!clientId) throw new Error('Missing PERSONALAI_CLIENT_ID');
@@ -63,7 +64,8 @@ export async function GET(req: NextRequest) {
     if (!id_token) throw new Error('missing_id_token');
 
     // Call backend directly (server-to-server) and then set cookie on this response
-    const backendBase = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const backendBase =
+      process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
     const appRes = await fetch(`${backendBase.replace(/\/$/, '')}/auth/external`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -79,12 +81,32 @@ export async function GET(req: NextRequest) {
     const user = appData?.user || {};
     if (!token) throw new Error('missing_app_token');
 
-    const next = NextResponse.redirect(`${origin}/auth/catch?id=${encodeURIComponent(user.id || '')}&role=${encodeURIComponent(user.role || '')}`);
+    const next = NextResponse.redirect(
+      `${origin}/auth/catch?id=${encodeURIComponent(user.id || '')}&role=${encodeURIComponent(user.role || '')}`
+    );
     const isProd = process.env.NODE_ENV === 'production';
-    next.cookies.set('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 });
+    next.cookies.set('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60,
+    });
     // Clear PKCE cookies
-    next.cookies.set('personalai_state', '', { path: '/', expires: new Date(0), httpOnly: true, sameSite: 'lax', secure: isProd });
-    next.cookies.set('personalai_verifier', '', { path: '/', expires: new Date(0), httpOnly: true, sameSite: 'lax', secure: isProd });
+    next.cookies.set('personalai_state', '', {
+      path: '/',
+      expires: new Date(0),
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+    });
+    next.cookies.set('personalai_verifier', '', {
+      path: '/',
+      expires: new Date(0),
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+    });
     return next;
   } catch (e: any) {
     const msg = e?.message || 'callback_error';

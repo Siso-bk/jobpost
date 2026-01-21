@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usersService } from '@/services/api';
@@ -72,14 +72,31 @@ export default function TalentPage() {
         <div>
           <div className="eyebrow">Talent</div>
           <h1>Find workers ready for their next role.</h1>
-          <p className="muted">Filter by skill, experience, and availability to discover great candidates.</p>
+          <p className="muted">
+            Filter by skill, experience, and availability to discover great candidates.
+          </p>
         </div>
       </div>
 
       <form className="filter-card talent-filters" onSubmit={handleSearch}>
-        <input name="search" placeholder="Name, headline, or role" value={filters.search} onChange={handleChange} />
-        <input name="location" placeholder="Location" value={filters.location} onChange={handleChange} />
-        <input name="skill" placeholder="Skill (e.g. React)" value={filters.skill} onChange={handleChange} />
+        <input
+          name="search"
+          placeholder="Name, headline, or role"
+          value={filters.search}
+          onChange={handleChange}
+        />
+        <input
+          name="location"
+          placeholder="Location"
+          value={filters.location}
+          onChange={handleChange}
+        />
+        <input
+          name="skill"
+          placeholder="Skill (e.g. React)"
+          value={filters.skill}
+          onChange={handleChange}
+        />
         <select name="availability" value={filters.availability} onChange={handleChange}>
           <option value="">Availability</option>
           <option value="open">Open to offers</option>
@@ -87,9 +104,23 @@ export default function TalentPage() {
           <option value="2-weeks">2 weeks</option>
           <option value="1-month">1 month</option>
         </select>
-        <input name="minExp" type="number" placeholder="Min years" value={filters.minExp} onChange={handleChange} />
-        <input name="maxExp" type="number" placeholder="Max years" value={filters.maxExp} onChange={handleChange} />
-        <button type="submit" className="btn-primary">Search</button>
+        <input
+          name="minExp"
+          type="number"
+          placeholder="Min years"
+          value={filters.minExp}
+          onChange={handleChange}
+        />
+        <input
+          name="maxExp"
+          type="number"
+          placeholder="Max years"
+          value={filters.maxExp}
+          onChange={handleChange}
+        />
+        <button type="submit" className="btn-primary">
+          Search
+        </button>
       </form>
 
       {error && <p className="error-message">{error}</p>}
@@ -115,13 +146,17 @@ export default function TalentPage() {
                 </div>
                 <div>
                   <h3>{worker.name || 'Unnamed worker'}</h3>
-                  <p className="muted">{worker.headline || 'Professional available for opportunities'}</p>
+                  <p className="muted">
+                    {worker.headline || 'Professional available for opportunities'}
+                  </p>
                 </div>
               </div>
               <div className="talent-meta">
                 <span>{worker.location || 'Location flexible'}</span>
                 <span className="dot">|</span>
-                <span>{worker.yearsExperience ? `${worker.yearsExperience}+ yrs` : 'Experience varies'}</span>
+                <span>
+                  {worker.yearsExperience ? `${worker.yearsExperience}+ yrs` : 'Experience varies'}
+                </span>
                 <span className="dot">|</span>
                 <span>{worker.availability || 'Open'}</span>
               </div>
@@ -129,7 +164,9 @@ export default function TalentPage() {
               {worker.skills && worker.skills.length > 0 && (
                 <div className="job-tags">
                   {worker.skills.slice(0, 6).map((skill) => (
-                    <span key={skill} className="pill">{skill}</span>
+                    <span key={skill} className="pill">
+                      {skill}
+                    </span>
                   ))}
                 </div>
               )}

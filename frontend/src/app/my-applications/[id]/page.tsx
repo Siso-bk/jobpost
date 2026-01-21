@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -65,7 +65,9 @@ export default function WorkerApplicationDetailPage() {
           <h1>Application</h1>
           <p className="muted">Review what you submitted and track the status.</p>
         </div>
-        <Link className="btn-secondary" href="/my-applications">Back to applications</Link>
+        <Link className="btn-secondary" href="/my-applications">
+          Back to applications
+        </Link>
       </div>
 
       {error && <p className="error-message">{error}</p>}
@@ -79,7 +81,9 @@ export default function WorkerApplicationDetailPage() {
             <div className="profile-list">
               <div>
                 <span className="profile-label">Title</span>
-                <div className="profile-value">{application.jobId?.title || 'Role unavailable'}</div>
+                <div className="profile-value">
+                  {application.jobId?.title || 'Role unavailable'}
+                </div>
               </div>
               <div>
                 <span className="profile-label">Company</span>
@@ -94,7 +98,9 @@ export default function WorkerApplicationDetailPage() {
                 <div className="profile-value">{formatDate(application.createdAt)}</div>
               </div>
               {application.jobId?._id && (
-                <Link className="btn-ghost" href={`/job/${application.jobId._id}`}>View job</Link>
+                <Link className="btn-ghost" href={`/job/${application.jobId._id}`}>
+                  View job
+                </Link>
               )}
             </div>
           </section>
@@ -135,7 +141,9 @@ export default function WorkerApplicationDetailPage() {
                 <div className="profile-value">
                   {resumeValue ? (
                     resumeIsLink ? (
-                      <a href={resumeValue} target="_blank" rel="noreferrer">View resume</a>
+                      <a href={resumeValue} target="_blank" rel="noreferrer">
+                        View resume
+                      </a>
                     ) : (
                       <pre className="resume-text">{resumeValue}</pre>
                     )

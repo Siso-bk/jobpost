@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { jobsService } from '@/services/api';
@@ -70,7 +70,8 @@ export default function JobsPage() {
     return `hsl(${hash}, 58%, 52%)`;
   };
 
-  const formatJobType = (value: string) => value.replace('-', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  const formatJobType = (value: string) =>
+    value.replace('-', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 
   const isFeaturedJob = (job: Job, index: number) => {
     if (typeof job.views === 'number') {
@@ -85,10 +86,23 @@ export default function JobsPage() {
         <div className="container">
           <div className="eyebrow">JobPost</div>
           <h1>Find work that fits your life.</h1>
-          <p>Curated roles across remote, hybrid, and on-site teams. Search by title, location, and job type.</p>
+          <p>
+            Curated roles across remote, hybrid, and on-site teams. Search by title, location, and
+            job type.
+          </p>
           <form className="filter-card" onSubmit={handleSearch}>
-            <input name="title" placeholder="Role or keyword" value={filters.title} onChange={handleChange} />
-            <input name="location" placeholder="City, state, or remote" value={filters.location} onChange={handleChange} />
+            <input
+              name="title"
+              placeholder="Role or keyword"
+              value={filters.title}
+              onChange={handleChange}
+            />
+            <input
+              name="location"
+              placeholder="City, state, or remote"
+              value={filters.location}
+              onChange={handleChange}
+            />
             <select name="jobType" value={filters.jobType} onChange={handleChange}>
               <option value="">All Job Types</option>
               <option value="full-time">Full Time</option>
@@ -96,7 +110,9 @@ export default function JobsPage() {
               <option value="contract">Contract</option>
               <option value="internship">Internship</option>
             </select>
-            <button type="submit" className="btn-primary">Search</button>
+            <button type="submit" className="btn-primary">
+              Search
+            </button>
           </form>
         </div>
       </section>
@@ -108,7 +124,9 @@ export default function JobsPage() {
         </div>
 
         {error && (
-          <p className="error-message" style={{ textAlign: 'center' }}>{error}</p>
+          <p className="error-message" style={{ textAlign: 'center' }}>
+            {error}
+          </p>
         )}
 
         {loading ? (
@@ -189,11 +207,27 @@ export default function JobsPage() {
 
         {pages > 1 && (
           <div className="pagination">
-            <button className="btn-ghost" disabled={page === 1} onClick={() => { const next = Math.max(page - 1, 1); setPage(next); }}>
+            <button
+              className="btn-ghost"
+              disabled={page === 1}
+              onClick={() => {
+                const next = Math.max(page - 1, 1);
+                setPage(next);
+              }}
+            >
               Prev
             </button>
-            <span className="muted">Page {page} of {pages}</span>
-            <button className="btn-ghost" disabled={page >= pages} onClick={() => { const next = Math.min(page + 1, pages); setPage(next); }}>
+            <span className="muted">
+              Page {page} of {pages}
+            </span>
+            <button
+              className="btn-ghost"
+              disabled={page >= pages}
+              onClick={() => {
+                const next = Math.min(page + 1, pages);
+                setPage(next);
+              }}
+            >
               Next
             </button>
           </div>

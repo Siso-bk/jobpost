@@ -33,17 +33,29 @@ export const authService = {
   login: (email: string, password: string) => api.post('/auth/login', { email, password }),
   logout: () => api.post('/auth/logout'),
   paiSignup: (email: string) => api.post('/auth/pai-signup', { email }),
-  paiSignupVerify: (email: string, code: string) => api.post('/auth/pai-signup/verify', { email, code }),
-  paiSignupComplete: (payload: { preToken: string; name: string; handle: string; password: string; role: string }) =>
-    api.post('/auth/pai-signup/complete', payload),
+  paiSignupVerify: (email: string, code: string) =>
+    api.post('/auth/pai-signup/verify', { email, code }),
+  paiSignupComplete: (payload: {
+    preToken: string;
+    name: string;
+    handle: string;
+    password: string;
+    role: string;
+  }) => api.post('/auth/pai-signup/complete', payload),
   paiLogin: (email: string, password: string) => api.post('/auth/pai-login', { email, password }),
   paiResend: (email: string) => api.post('/auth/pai-resend', { email }),
-  paiVerifyCode: (payload: { email: string; code: string; role: string }) => api.post('/auth/pai-verify-code', payload),
+  paiVerifyCode: (payload: { email: string; code: string; role: string }) =>
+    api.post('/auth/pai-verify-code', payload),
 };
 
 export const jobsService = {
-  getAllJobs: (filters: { title?: string; location?: string; jobType?: string; page?: number; limit?: number }) =>
-    api.get('/jobs', { params: filters }),
+  getAllJobs: (filters: {
+    title?: string;
+    location?: string;
+    jobType?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get('/jobs', { params: filters }),
   getJobById: (id: string) => api.get(`/jobs/${id}`),
   getMyJobs: () => api.get('/jobs/mine'),
   createJob: (jobData: any) => api.post('/jobs', jobData),
@@ -56,15 +68,22 @@ export const applicationsService = {
   getMyApplications: () => api.get('/applications'),
   getEmployerApplications: () => api.get('/applications/employer'),
   getApplicationById: (id: string) => api.get(`/applications/${id}`),
-  updateApplicationStatus: (id: string, status: string) => api.put(`/applications/${id}`, { status }),
+  updateApplicationStatus: (id: string, status: string) =>
+    api.put(`/applications/${id}`, { status }),
 };
 
 export const usersService = {
   getUserProfile: (id: string) => api.get(`/users/${id}`),
   updateProfile: (id: string, data: any) => api.put(`/users/${id}`, data),
   uploadResume: (dataUrl: string) => api.post('/users/upload-resume', { dataUrl }),
-  searchWorkers: (filters: { search?: string; location?: string; skill?: string; availability?: string; minExp?: number; maxExp?: number }) =>
-    api.get('/users/workers', { params: filters }),
+  searchWorkers: (filters: {
+    search?: string;
+    location?: string;
+    skill?: string;
+    availability?: string;
+    minExp?: number;
+    maxExp?: number;
+  }) => api.get('/users/workers', { params: filters }),
 };
 
 export default api;

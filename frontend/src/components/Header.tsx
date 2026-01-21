@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -42,39 +42,89 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-content">
-        <Link href="/" className="logo">JobPost</Link>
+        <Link href="/" className="logo">
+          JobPost
+        </Link>
         <nav className="nav">
           {!isAuthed ? (
             <>
-              <Link href="/talent" className={`nav-link ${isActive('/talent') ? 'active' : ''}`}>Talent</Link>
-              <Link href="/login" className={`nav-link ${isActive('/login') ? 'active' : ''}`}>Login</Link>
-              <Link href="/register" className={`btn-primary nav-link ${isActive('/register') ? 'active' : ''}`}>Register</Link>
+              <Link href="/talent" className={`nav-link ${isActive('/talent') ? 'active' : ''}`}>
+                Talent
+              </Link>
+              <Link href="/login" className={`nav-link ${isActive('/login') ? 'active' : ''}`}>
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className={`btn-primary nav-link ${isActive('/register') ? 'active' : ''}`}
+              >
+                Register
+              </Link>
             </>
           ) : (
             <>
-              <Link href="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>Jobs</Link>
+              <Link href="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>
+                Jobs
+              </Link>
               {userRole === 'employer' && (
-                <Link href="/post-job" className={`nav-link ${isActive('/post-job') ? 'active' : ''}`}>Post Job</Link>
+                <Link
+                  href="/post-job"
+                  className={`nav-link ${isActive('/post-job') ? 'active' : ''}`}
+                >
+                  Post Job
+                </Link>
               )}
               {userRole === 'employer' && (
-                <Link href="/employer" className={`nav-link ${isActive('/employer') ? 'active' : ''}`}>Dashboard</Link>
+                <Link
+                  href="/employer"
+                  className={`nav-link ${isActive('/employer') ? 'active' : ''}`}
+                >
+                  Dashboard
+                </Link>
               )}
               {userRole === 'employer' && (
-                <Link href="/employer/jobs" className={`nav-link ${isActive('/employer/jobs') ? 'active' : ''}`}>My Jobs</Link>
+                <Link
+                  href="/employer/jobs"
+                  className={`nav-link ${isActive('/employer/jobs') ? 'active' : ''}`}
+                >
+                  My Jobs
+                </Link>
               )}
               {userRole === 'employer' && (
-                <Link href="/employer/applications" className={`nav-link ${isActive('/employer/applications') ? 'active' : ''}`}>Applications</Link>
+                <Link
+                  href="/employer/applications"
+                  className={`nav-link ${isActive('/employer/applications') ? 'active' : ''}`}
+                >
+                  Applications
+                </Link>
               )}
               {userRole === 'employer' && (
-                <Link href="/talent" className={`nav-link ${isActive('/talent') ? 'active' : ''}`}>Talent</Link>
+                <Link href="/talent" className={`nav-link ${isActive('/talent') ? 'active' : ''}`}>
+                  Talent
+                </Link>
               )}
               {userRole === 'worker' && (
-                <Link href="/my-applications" className={`nav-link ${isActive('/my-applications') ? 'active' : ''}`}>My Applications</Link>
+                <Link
+                  href="/my-applications"
+                  className={`nav-link ${isActive('/my-applications') ? 'active' : ''}`}
+                >
+                  My Applications
+                </Link>
               )}
               {userRole === 'worker' && (
-                <Link href="/worker/cv" className={`nav-link ${isActive('/worker/cv') ? 'active' : ''}`}>My CV</Link>
+                <Link
+                  href="/worker/cv"
+                  className={`nav-link ${isActive('/worker/cv') ? 'active' : ''}`}
+                >
+                  My CV
+                </Link>
               )}
-              <Link href={`/profile/${userId || ''}`} className={`nav-link ${isActive('/profile') ? 'active' : ''}`}>Profile</Link>
+              <Link
+                href={`/profile/${userId || ''}`}
+                className={`nav-link ${isActive('/profile') ? 'active' : ''}`}
+              >
+                Profile
+              </Link>
               {profilePicture && (
                 <Link href={`/profile/${userId || ''}`} className="nav-avatar">
                   <img src={profilePicture} alt="Profile" />

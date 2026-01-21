@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { authService, usersService } from '@/services/api';
@@ -141,7 +141,9 @@ export default function ProfilePage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target as HTMLInputElement;
     if (type === 'checkbox') {
       setForm((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
@@ -228,9 +230,12 @@ export default function ProfilePage() {
         ...form,
         skills: parseList(form.skills),
         desiredRoles: parseList(form.desiredRoles),
-        yearsExperience: form.yearsExperience !== undefined && form.yearsExperience !== null && form.yearsExperience !== ''
-          ? Number(form.yearsExperience)
-          : undefined,
+        yearsExperience:
+          form.yearsExperience !== undefined &&
+          form.yearsExperience !== null &&
+          form.yearsExperience !== ''
+            ? Number(form.yearsExperience)
+            : undefined,
       };
       const res = await usersService.updateProfile(userId, payload);
       setUser(res.data?.user || null);
@@ -246,7 +251,11 @@ export default function ProfilePage() {
   const roleForView = user?.role || viewerRole;
   const isEmployer = roleForView === 'employer';
   const isWorker = roleForView === 'worker';
-  const themeLabel = themeReady ? (theme === 'light' ? 'Switch to dark' : 'Switch to light') : 'Theme';
+  const themeLabel = themeReady
+    ? theme === 'light'
+      ? 'Switch to dark'
+      : 'Switch to light'
+    : 'Theme';
 
   return (
     <div className="page-container profile-page">
@@ -259,7 +268,11 @@ export default function ProfilePage() {
             <div className="profile-list">
               {user.profilePicture && (
                 <div className="profile-avatar-wrap">
-                  <img className="profile-avatar" src={user.profilePicture} alt={user.name || 'Profile'} />
+                  <img
+                    className="profile-avatar"
+                    src={user.profilePicture}
+                    alt={user.name || 'Profile'}
+                  />
                 </div>
               )}
               <div>
@@ -338,7 +351,9 @@ export default function ProfilePage() {
                 <div>
                   <span className="profile-label">Resume</span>
                   <div className="profile-value">
-                    <a href={user.resumeUrl} target="_blank" rel="noreferrer">View resume</a>
+                    <a href={user.resumeUrl} target="_blank" rel="noreferrer">
+                      View resume
+                    </a>
                   </div>
                 </div>
               )}
@@ -350,7 +365,8 @@ export default function ProfilePage() {
                     {user.phone && <span>Phone: {user.phone} </span>}
                     {user.chatApp && (
                       <span>
-                        Chat: {user.chatApp}{user.chatHandle ? ` ${user.chatHandle}` : ''}
+                        Chat: {user.chatApp}
+                        {user.chatHandle ? ` ${user.chatHandle}` : ''}
                       </span>
                     )}
                   </div>
@@ -360,7 +376,8 @@ export default function ProfilePage() {
                 <div>
                   <span className="profile-label">Company</span>
                   <div className="profile-value">
-                    {user.companyName || 'Company'} {user.companyWebsite ? `(${user.companyWebsite})` : ''}
+                    {user.companyName || 'Company'}{' '}
+                    {user.companyWebsite ? `(${user.companyWebsite})` : ''}
                   </div>
                 </div>
               )}
@@ -373,7 +390,12 @@ export default function ProfilePage() {
             <h2>Settings</h2>
             <div className="setting-row">
               <span>Theme</span>
-              <button type="button" className="btn-secondary" onClick={toggleTheme} aria-label="Toggle theme">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+              >
                 {themeLabel}
               </button>
             </div>
@@ -404,19 +426,33 @@ export default function ProfilePage() {
                 <span>Location</span>
                 <input name="location" value={form.location || ''} onChange={handleChange} />
               </label>
-                  <label>
-                    <span>Profile photo</span>
-                    <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} />
-                    <span className="upload-hint">Upload from device</span>
-                    {form.profilePicture && (
-                      <div className="profile-photo-row">
-                        <img className="profile-photo" src={form.profilePicture} alt="Profile preview" />
-                        <button type="button" className="icon-button" onClick={handleRemovePhoto} aria-label="Remove photo">
-                          x
-                        </button>
-                      </div>
-                    )}
-                  </label>
+              <label>
+                <span>Profile photo</span>
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                />
+                <span className="upload-hint">Upload from device</span>
+                {form.profilePicture && (
+                  <div className="profile-photo-row">
+                    <img
+                      className="profile-photo"
+                      src={form.profilePicture}
+                      alt="Profile preview"
+                    />
+                    <button
+                      type="button"
+                      className="icon-button"
+                      onClick={handleRemovePhoto}
+                      aria-label="Remove photo"
+                    >
+                      x
+                    </button>
+                  </div>
+                )}
+              </label>
               <label>
                 <span>Bio</span>
                 <textarea name="bio" value={form.bio || ''} onChange={handleChange} />
@@ -426,28 +462,54 @@ export default function ProfilePage() {
                 <>
                   <label>
                     <span>Company name</span>
-                    <input name="companyName" value={form.companyName || ''} onChange={handleChange} />
+                    <input
+                      name="companyName"
+                      value={form.companyName || ''}
+                      onChange={handleChange}
+                    />
                   </label>
                   <label>
                     <span>Company website</span>
-                    <input name="companyWebsite" value={form.companyWebsite || ''} onChange={handleChange} />
+                    <input
+                      name="companyWebsite"
+                      value={form.companyWebsite || ''}
+                      onChange={handleChange}
+                    />
                   </label>
                   <label>
                     <span>Company logo URL</span>
                     <input
                       name="companyLogo"
-                      value={form.companyLogo && form.companyLogo.startsWith('data:image/') ? '' : form.companyLogo || ''}
+                      value={
+                        form.companyLogo && form.companyLogo.startsWith('data:image/')
+                          ? ''
+                          : form.companyLogo || ''
+                      }
                       onChange={handleChange}
                     />
                   </label>
                   <label>
                     <span>Company logo</span>
-                    <input ref={companyLogoInputRef} type="file" accept="image/*" onChange={handleCompanyLogoChange} />
+                    <input
+                      ref={companyLogoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCompanyLogoChange}
+                    />
                     <span className="upload-hint">Upload from device</span>
                     {form.companyLogo && (
                       <div className="profile-photo-row">
-                        <img className="logo-preview" src={form.companyLogo} alt="Company logo preview" />
-                        <button type="button" className="icon-button" onClick={handleRemoveCompanyLogo} aria-label="Remove company logo">
+                        <img
+                          className="logo-preview"
+                          src={form.companyLogo}
+                          alt="Company logo preview"
+                        />
+                        <button
+                          type="button"
+                          className="icon-button"
+                          onClick={handleRemoveCompanyLogo}
+                          aria-label="Remove company logo"
+                        >
                           x
                         </button>
                       </div>
@@ -455,7 +517,11 @@ export default function ProfilePage() {
                   </label>
                   <label>
                     <span>Company description</span>
-                    <textarea name="companyDescription" value={form.companyDescription || ''} onChange={handleChange} />
+                    <textarea
+                      name="companyDescription"
+                      value={form.companyDescription || ''}
+                      onChange={handleChange}
+                    />
                   </label>
                 </>
               )}
@@ -474,7 +540,9 @@ export default function ProfilePage() {
                     <span>Skills (comma separated)</span>
                     <input
                       name="skills"
-                      value={Array.isArray(form.skills) ? form.skills.join(', ') : form.skills || ''}
+                      value={
+                        Array.isArray(form.skills) ? form.skills.join(', ') : form.skills || ''
+                      }
                       onChange={handleChange}
                     />
                   </label>
@@ -482,17 +550,30 @@ export default function ProfilePage() {
                     <span>Desired roles (comma separated)</span>
                     <input
                       name="desiredRoles"
-                      value={Array.isArray(form.desiredRoles) ? form.desiredRoles.join(', ') : form.desiredRoles || ''}
+                      value={
+                        Array.isArray(form.desiredRoles)
+                          ? form.desiredRoles.join(', ')
+                          : form.desiredRoles || ''
+                      }
                       onChange={handleChange}
                     />
                   </label>
                   <label>
                     <span>Years of experience</span>
-                    <input name="yearsExperience" type="number" value={form.yearsExperience?.toString() || ''} onChange={handleChange} />
+                    <input
+                      name="yearsExperience"
+                      type="number"
+                      value={form.yearsExperience?.toString() || ''}
+                      onChange={handleChange}
+                    />
                   </label>
                   <label>
                     <span>Availability</span>
-                    <select name="availability" value={form.availability || 'open'} onChange={handleChange}>
+                    <select
+                      name="availability"
+                      value={form.availability || 'open'}
+                      onChange={handleChange}
+                    >
                       <option value="open">Open to offers</option>
                       <option value="immediately">Immediately</option>
                       <option value="2-weeks">2 weeks</option>
@@ -501,11 +582,19 @@ export default function ProfilePage() {
                   </label>
                   <label>
                     <span>Portfolio URL</span>
-                    <input name="portfolioUrl" value={form.portfolioUrl || ''} onChange={handleChange} />
+                    <input
+                      name="portfolioUrl"
+                      value={form.portfolioUrl || ''}
+                      onChange={handleChange}
+                    />
                   </label>
                   <label>
                     <span>LinkedIn URL</span>
-                    <input name="linkedinUrl" value={form.linkedinUrl || ''} onChange={handleChange} />
+                    <input
+                      name="linkedinUrl"
+                      value={form.linkedinUrl || ''}
+                      onChange={handleChange}
+                    />
                   </label>
                   <label>
                     <span>GitHub URL</span>
@@ -517,10 +606,19 @@ export default function ProfilePage() {
                   </label>
                   <label>
                     <span>Chat handle</span>
-                    <input name="chatHandle" value={form.chatHandle || ''} onChange={handleChange} />
+                    <input
+                      name="chatHandle"
+                      value={form.chatHandle || ''}
+                      onChange={handleChange}
+                    />
                   </label>
                   <label className="checkbox-row">
-                    <input type="checkbox" name="allowContact" checked={form.allowContact === true} onChange={handleChange} />
+                    <input
+                      type="checkbox"
+                      name="allowContact"
+                      checked={form.allowContact === true}
+                      onChange={handleChange}
+                    />
                     <span>Allow employers to contact me</span>
                   </label>
                 </>

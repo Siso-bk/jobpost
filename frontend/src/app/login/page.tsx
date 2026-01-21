@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
@@ -71,7 +71,9 @@ export default function LoginPage() {
           </button>
         </form>
         <div className="auth-alt">
-          <a className="btn-secondary" href="/api/personalai/authorize">Sign in with PersonalAI</a>
+          <a className="btn-secondary" href="/api/personalai/authorize">
+            Sign in with PersonalAI
+          </a>
         </div>
         <p className="auth-meta">
           Do not have an account? <a href="/register">Register here</a>

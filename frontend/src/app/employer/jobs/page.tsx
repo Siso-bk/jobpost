@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { jobsService } from '@/services/api';
@@ -65,7 +65,9 @@ export default function EmployerJobsPage() {
           <h1>My jobs</h1>
           <p className="muted">Manage your job listings and keep them up to date.</p>
         </div>
-        <Link className="btn-primary" href="/post-job">Post a job</Link>
+        <Link className="btn-primary" href="/post-job">
+          Post a job
+        </Link>
       </div>
 
       {error && <p className="error-message">{error}</p>}

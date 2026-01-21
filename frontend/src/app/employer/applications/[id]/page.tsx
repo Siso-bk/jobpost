@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -78,7 +78,9 @@ export default function EmployerApplicationDetailPage() {
           <h1>Application</h1>
           <p className="muted">Review details and update the application status.</p>
         </div>
-        <Link className="btn-secondary" href="/employer/applications">Back to applications</Link>
+        <Link className="btn-secondary" href="/employer/applications">
+          Back to applications
+        </Link>
       </div>
 
       {error && <p className="error-message">{error}</p>}
@@ -92,7 +94,9 @@ export default function EmployerApplicationDetailPage() {
             <div className="profile-list">
               <div>
                 <span className="profile-label">Title</span>
-                <div className="profile-value">{application.jobId?.title || 'Role unavailable'}</div>
+                <div className="profile-value">
+                  {application.jobId?.title || 'Role unavailable'}
+                </div>
               </div>
               <div>
                 <span className="profile-label">Company</span>
@@ -107,7 +111,9 @@ export default function EmployerApplicationDetailPage() {
                 <div className="profile-value">{formatDate(application.createdAt)}</div>
               </div>
               {application.jobId?._id && (
-                <Link className="btn-ghost" href={`/job/${application.jobId._id}`}>View job</Link>
+                <Link className="btn-ghost" href={`/job/${application.jobId._id}`}>
+                  View job
+                </Link>
               )}
             </div>
           </section>
@@ -124,7 +130,9 @@ export default function EmployerApplicationDetailPage() {
                 <div className="profile-value">{application.workerId?.email || 'No email'}</div>
               </div>
               {application.workerId?._id && (
-                <Link className="btn-ghost" href={`/profile/${application.workerId._id}`}>View profile</Link>
+                <Link className="btn-ghost" href={`/profile/${application.workerId._id}`}>
+                  View profile
+                </Link>
               )}
             </div>
           </section>
@@ -135,7 +143,11 @@ export default function EmployerApplicationDetailPage() {
               <div>
                 <span className="profile-label">Status</span>
                 <div className="profile-value">
-                  <select value={application.status} onChange={(e) => handleStatusChange(e.target.value as Application['status'])} disabled={saving}>
+                  <select
+                    value={application.status}
+                    onChange={(e) => handleStatusChange(e.target.value as Application['status'])}
+                    disabled={saving}
+                  >
                     <option value="pending">Pending</option>
                     <option value="reviewed">Reviewed</option>
                     <option value="accepted">Accepted</option>
@@ -158,7 +170,9 @@ export default function EmployerApplicationDetailPage() {
                 <div className="profile-value">
                   {resumeValue ? (
                     resumeIsLink ? (
-                      <a href={resumeValue} target="_blank" rel="noreferrer">View resume</a>
+                      <a href={resumeValue} target="_blank" rel="noreferrer">
+                        View resume
+                      </a>
                     ) : (
                       <pre className="resume-text">{resumeValue}</pre>
                     )

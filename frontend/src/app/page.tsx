@@ -9,12 +9,16 @@ export default function HomePage() {
             <div className="eyebrow">JobPost</div>
             <h1>Hire and get hired with a modern job board.</h1>
             <p>
-              Source high-signal roles, manage applicants, and connect with teams that fit your goals.
-              JobPost keeps the process fast, clear, and human.
+              Source high-signal roles, manage applicants, and connect with teams that fit your
+              goals. JobPost keeps the process fast, clear, and human.
             </p>
             <div className="hero-actions">
-              <Link className="btn-primary" href="/jobs">Explore jobs</Link>
-              <Link className="btn-secondary" href="/post-job">Post a role</Link>
+              <Link className="btn-primary" href="/jobs">
+                Explore jobs
+              </Link>
+              <Link className="btn-secondary" href="/post-job">
+                Post a role
+              </Link>
             </div>
             <div className="hero-metrics">
               <div>
@@ -86,16 +90,24 @@ export default function HomePage() {
         <div className="container">
           <div className="section-head">
             <h2>Everything you need to hire with confidence.</h2>
-            <p className="muted">JobPost pairs clean listings with applicant workflows that feel effortless.</p>
+            <p className="muted">
+              JobPost pairs clean listings with applicant workflows that feel effortless.
+            </p>
           </div>
           <div className="feature-grid">
             <div className="feature-card">
               <h3>Curated search</h3>
-              <p>Filter by role, location, and job type. Save the searches that matter and return fast.</p>
+              <p>
+                Filter by role, location, and job type. Save the searches that matter and return
+                fast.
+              </p>
             </div>
             <div className="feature-card">
               <h3>Applicant ready</h3>
-              <p>Structured roles, clear salary bands, and fast application flows keep the funnel moving.</p>
+              <p>
+                Structured roles, clear salary bands, and fast application flows keep the funnel
+                moving.
+              </p>
             </div>
             <div className="feature-card">
               <h3>Built for speed</h3>
@@ -135,11 +147,17 @@ export default function HomePage() {
         <div className="container cta-card">
           <div>
             <h2>Ready to upgrade your hiring flow?</h2>
-            <p className="muted">Start with a featured listing or browse roles that match your skills.</p>
+            <p className="muted">
+              Start with a featured listing or browse roles that match your skills.
+            </p>
           </div>
           <div className="hero-actions">
-            <Link className="btn-primary" href="/register">Create account</Link>
-            <Link className="btn-secondary" href="/jobs">Browse jobs</Link>
+            <Link className="btn-primary" href="/register">
+              Create account
+            </Link>
+            <Link className="btn-secondary" href="/jobs">
+              Browse jobs
+            </Link>
           </div>
         </div>
       </section>

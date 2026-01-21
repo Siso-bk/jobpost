@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { applicationsService, jobsService } from '@/services/api';
@@ -66,8 +66,12 @@ export default function EmployerDashboardPage() {
           <p className="muted">Track listings and stay on top of applicants in one place.</p>
         </div>
         <div className="hero-actions">
-          <Link className="btn-secondary" href="/employer/jobs">My jobs</Link>
-          <Link className="btn-primary" href="/post-job">Post a job</Link>
+          <Link className="btn-secondary" href="/employer/jobs">
+            My jobs
+          </Link>
+          <Link className="btn-primary" href="/post-job">
+            Post a job
+          </Link>
         </div>
       </div>
 
@@ -109,8 +113,12 @@ export default function EmployerDashboardPage() {
                   {applications.slice(0, 5).map((app) => (
                     <div key={app._id} className="dashboard-row">
                       <div>
-                        <div className="dashboard-title">{app.jobId?.title || 'Role unavailable'}</div>
-                        <div className="muted">{app.workerId?.name || app.workerId?.email || 'Applicant'}</div>
+                        <div className="dashboard-title">
+                          {app.jobId?.title || 'Role unavailable'}
+                        </div>
+                        <div className="muted">
+                          {app.workerId?.name || app.workerId?.email || 'Applicant'}
+                        </div>
                       </div>
                       <div className="dashboard-meta">
                         <span className={`status-pill status-${app.status}`}>{app.status}</span>

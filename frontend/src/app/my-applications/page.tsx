@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { applicationsService } from '@/services/api';
@@ -65,7 +65,9 @@ export default function MyApplicationsPage() {
             <h1>My applications</h1>
             <p className="muted">Track the roles you have applied for and their latest status.</p>
           </div>
-          <Link className="btn-secondary" href="/jobs">Browse jobs</Link>
+          <Link className="btn-secondary" href="/jobs">
+            Browse jobs
+          </Link>
         </div>
 
         {error && <p className="error-message">{error}</p>}
@@ -86,14 +88,20 @@ export default function MyApplicationsPage() {
                   <div className="application-head">
                     <div>
                       <h3>{job?.title || 'Role unavailable'}</h3>
-                      <p className="muted">{job?.company || application.employerId?.company || 'Company'}</p>
+                      <p className="muted">
+                        {job?.company || application.employerId?.company || 'Company'}
+                      </p>
                     </div>
-                    <span className={`status-pill status-${application.status}`}>{formatStatus(application.status)}</span>
+                    <span className={`status-pill status-${application.status}`}>
+                      {formatStatus(application.status)}
+                    </span>
                   </div>
                   <div className="application-meta">
                     <span>{job?.location || 'Location TBD'}</span>
                     <span className="dot">|</span>
-                    <span>{job?.jobType ? formatStatus(job.jobType.replace('-', ' ')) : 'Role type'}</span>
+                    <span>
+                      {job?.jobType ? formatStatus(job.jobType.replace('-', ' ')) : 'Role type'}
+                    </span>
                     <span className="dot">|</span>
                     <span>Applied {formatDate(application.createdAt)}</span>
                   </div>

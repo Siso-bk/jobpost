@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import { usersService } from '@/services/api';
 
@@ -65,7 +65,10 @@ export default function WorkerCvPage() {
           summary: data.summary || '',
           skills: Array.isArray(data.skills) ? data.skills.join(', ') : '',
           desiredRoles: Array.isArray(data.desiredRoles) ? data.desiredRoles.join(', ') : '',
-          yearsExperience: data.yearsExperience !== undefined && data.yearsExperience !== null ? String(data.yearsExperience) : '',
+          yearsExperience:
+            data.yearsExperience !== undefined && data.yearsExperience !== null
+              ? String(data.yearsExperience)
+              : '',
           availability: data.availability || 'open',
           portfolioUrl: data.portfolioUrl || '',
           linkedinUrl: data.linkedinUrl || '',
@@ -83,7 +86,9 @@ export default function WorkerCvPage() {
       .finally(() => setLoading(false));
   }, [userId]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target as HTMLInputElement;
     if (type === 'checkbox') {
       setForm((prev) => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
@@ -203,24 +208,50 @@ export default function WorkerCvPage() {
           <form className="auth-form" onSubmit={handleSubmit}>
             <label>
               <span>Headline</span>
-              <input name="headline" value={form.headline} onChange={handleChange} placeholder="Frontend Engineer | React + Next.js" />
+              <input
+                name="headline"
+                value={form.headline}
+                onChange={handleChange}
+                placeholder="Frontend Engineer | React + Next.js"
+              />
             </label>
             <label>
               <span>Summary</span>
-              <textarea name="summary" value={form.summary} onChange={handleChange} placeholder="Share your strengths, recent work, and what roles you want." />
+              <textarea
+                name="summary"
+                value={form.summary}
+                onChange={handleChange}
+                placeholder="Share your strengths, recent work, and what roles you want."
+              />
             </label>
             <label>
               <span>Skills (comma separated)</span>
-              <input name="skills" value={form.skills} onChange={handleChange} placeholder="React, TypeScript, Figma" />
+              <input
+                name="skills"
+                value={form.skills}
+                onChange={handleChange}
+                placeholder="React, TypeScript, Figma"
+              />
             </label>
             <label>
               <span>Desired roles (comma separated)</span>
-              <input name="desiredRoles" value={form.desiredRoles} onChange={handleChange} placeholder="Frontend Engineer, UI Developer" />
+              <input
+                name="desiredRoles"
+                value={form.desiredRoles}
+                onChange={handleChange}
+                placeholder="Frontend Engineer, UI Developer"
+              />
             </label>
             <div className="form-grid">
               <label>
                 <span>Years of experience</span>
-                <input name="yearsExperience" type="number" value={form.yearsExperience} onChange={handleChange} placeholder="3" />
+                <input
+                  name="yearsExperience"
+                  type="number"
+                  value={form.yearsExperience}
+                  onChange={handleChange}
+                  placeholder="3"
+                />
               </label>
               <label>
                 <span>Availability</span>
@@ -234,23 +265,44 @@ export default function WorkerCvPage() {
             </div>
             <label>
               <span>Portfolio URL</span>
-              <input name="portfolioUrl" value={form.portfolioUrl} onChange={handleChange} placeholder="https://..." />
+              <input
+                name="portfolioUrl"
+                value={form.portfolioUrl}
+                onChange={handleChange}
+                placeholder="https://..."
+              />
             </label>
             <label>
               <span>LinkedIn URL</span>
-              <input name="linkedinUrl" value={form.linkedinUrl} onChange={handleChange} placeholder="https://linkedin.com/in/..." />
+              <input
+                name="linkedinUrl"
+                value={form.linkedinUrl}
+                onChange={handleChange}
+                placeholder="https://linkedin.com/in/..."
+              />
             </label>
             <label>
               <span>GitHub URL</span>
-              <input name="githubUrl" value={form.githubUrl} onChange={handleChange} placeholder="https://github.com/..." />
+              <input
+                name="githubUrl"
+                value={form.githubUrl}
+                onChange={handleChange}
+                placeholder="https://github.com/..."
+              />
             </label>
             <label>
               <span>Resume file (PDF, DOC, DOCX, TXT)</span>
               <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleResumeUpload} />
               {form.resumeUrl && (
                 <div className="resume-row">
-                  <a href={form.resumeUrl} target="_blank" rel="noreferrer">View uploaded resume</a>
-                  <button type="button" className="btn-ghost" onClick={() => setForm((prev) => ({ ...prev, resumeUrl: '' }))}>
+                  <a href={form.resumeUrl} target="_blank" rel="noreferrer">
+                    View uploaded resume
+                  </a>
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => setForm((prev) => ({ ...prev, resumeUrl: '' }))}
+                  >
                     Remove
                   </button>
                 </div>
@@ -259,22 +311,47 @@ export default function WorkerCvPage() {
             </label>
             <label>
               <span>Phone</span>
-              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+1 555 000 0000" />
+              <input
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="+1 555 000 0000"
+              />
             </label>
             <label>
               <span>Chat app</span>
-              <input name="chatApp" value={form.chatApp} onChange={handleChange} placeholder="WhatsApp, Telegram, Discord" />
+              <input
+                name="chatApp"
+                value={form.chatApp}
+                onChange={handleChange}
+                placeholder="WhatsApp, Telegram, Discord"
+              />
             </label>
             <label>
               <span>Chat handle</span>
-              <input name="chatHandle" value={form.chatHandle} onChange={handleChange} placeholder="@username" />
+              <input
+                name="chatHandle"
+                value={form.chatHandle}
+                onChange={handleChange}
+                placeholder="@username"
+              />
             </label>
             <label className="checkbox-row">
-              <input type="checkbox" name="allowContact" checked={form.allowContact} onChange={handleChange} />
+              <input
+                type="checkbox"
+                name="allowContact"
+                checked={form.allowContact}
+                onChange={handleChange}
+              />
               <span>Allow employers to contact me</span>
             </label>
             <label className="checkbox-row">
-              <input type="checkbox" name="isDiscoverable" checked={form.isDiscoverable} onChange={handleChange} />
+              <input
+                type="checkbox"
+                name="isDiscoverable"
+                checked={form.isDiscoverable}
+                onChange={handleChange}
+              />
               <span>Make my profile discoverable to employers</span>
             </label>
             <button type="submit" className="btn-primary" disabled={saving}>

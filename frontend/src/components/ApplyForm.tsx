@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useEffect, useState } from 'react';
 import { applicationsService, usersService } from '@/services/api';
 
@@ -73,9 +73,15 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
         const summaryParts = [
           profile.headline ? `Headline: ${profile.headline}` : null,
           profile.summary ? `Summary: ${profile.summary}` : null,
-          Array.isArray(profile.skills) && profile.skills.length ? `Skills: ${profile.skills.join(', ')}` : null,
-          Array.isArray(profile.desiredRoles) && profile.desiredRoles.length ? `Desired roles: ${profile.desiredRoles.join(', ')}` : null,
-          profile.yearsExperience !== undefined ? `Experience: ${profile.yearsExperience} years` : null,
+          Array.isArray(profile.skills) && profile.skills.length
+            ? `Skills: ${profile.skills.join(', ')}`
+            : null,
+          Array.isArray(profile.desiredRoles) && profile.desiredRoles.length
+            ? `Desired roles: ${profile.desiredRoles.join(', ')}`
+            : null,
+          profile.yearsExperience !== undefined
+            ? `Experience: ${profile.yearsExperience} years`
+            : null,
           profile.portfolioUrl ? `Portfolio: ${profile.portfolioUrl}` : null,
           profile.linkedinUrl ? `LinkedIn: ${profile.linkedinUrl}` : null,
           profile.githubUrl ? `GitHub: ${profile.githubUrl}` : null,
@@ -146,7 +152,12 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
             <input type="file" accept=".pdf,.doc,.docx,.txt" onChange={handleResumeUpload} />
             <span>{resumeUploading ? 'Uploading resume...' : 'Upload from device'}</span>
           </label>
-          <button type="button" className="btn-ghost" onClick={handleUseSavedCv} disabled={cvLoading}>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={handleUseSavedCv}
+            disabled={cvLoading}
+          >
             {cvLoading ? 'Loading CV...' : 'Use saved CV'}
           </button>
         </div>

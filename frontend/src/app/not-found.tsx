@@ -8,8 +8,12 @@ export default function NotFound() {
         <h1>Page not found</h1>
         <p className="muted">The page you are looking for does not exist or has moved.</p>
         <div className="error-actions">
-          <Link className="btn-primary" href="/jobs">Go to jobs</Link>
-          <Link className="btn-secondary" href="/">Home</Link>
+          <Link className="btn-primary" href="/jobs">
+            Go to jobs
+          </Link>
+          <Link className="btn-secondary" href="/">
+            Home
+          </Link>
         </div>
       </div>
     </div>

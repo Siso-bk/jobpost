@@ -1,8 +1,14 @@
-"use client";
+'use client';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -14,8 +20,12 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         <h1>Something went wrong</h1>
         <p className="muted">We hit a snag. Try again or return to a safe page.</p>
         <div className="error-actions">
-          <button type="button" className="btn-primary" onClick={reset}>Try again</button>
-          <Link className="btn-secondary" href="/jobs">Go to jobs</Link>
+          <button type="button" className="btn-primary" onClick={reset}>
+            Try again
+          </button>
+          <Link className="btn-secondary" href="/jobs">
+            Go to jobs
+          </Link>
         </div>
       </div>
     </div>

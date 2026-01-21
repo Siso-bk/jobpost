@@ -43,8 +43,17 @@ export async function GET(req: NextRequest) {
 
   const res = NextResponse.redirect(url.toString());
   const isProd = process.env.NODE_ENV === 'production';
-  res.cookies.set('personalai_state', state, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/' });
-  res.cookies.set('personalai_verifier', verifier, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/' });
+  res.cookies.set('personalai_state', state, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProd,
+    path: '/',
+  });
+  res.cookies.set('personalai_verifier', verifier, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: isProd,
+    path: '/',
+  });
   return res;
 }
-
