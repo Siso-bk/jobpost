@@ -13,11 +13,29 @@ function getCookie(name: string) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+let csrfWarmup: Promise<void> | null = null;
+
+async function ensureCsrfCookie() {
+  if (typeof document === 'undefined') return;
+  if (getCookie('csrfToken')) return;
+  if (!csrfWarmup) {
+    csrfWarmup = api
+      .get('/health')
+      .then(() => undefined)
+      .catch(() => undefined)
+      .finally(() => {
+        csrfWarmup = null;
+      });
+  }
+  await csrfWarmup;
+}
+
 // With cookie-based auth, send CSRF header for mutating requests.
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(async (config) => {
   const method = (config.method || 'get').toLowerCase();
   const isUnsafe = !['get', 'head', 'options'].includes(method);
   if (isUnsafe) {
+    await ensureCsrfCookie();
     const token = getCookie('csrfToken');
     if (token) {
       config.headers = config.headers || {};
