@@ -74,7 +74,7 @@ export default function LoginPage() {
           <a className="btn-secondary" href="/api/personalai/authorize">Sign in with PersonalAI</a>
         </div>
         <p className="auth-meta">
-          Don't have an account? <a href="/register">Register here</a>
+          Do not have an account? <a href="/register">Register here</a>
         </p>
       </div>
     </div>
