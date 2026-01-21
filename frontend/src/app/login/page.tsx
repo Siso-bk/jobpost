@@ -7,6 +7,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,14 +51,71 @@ export default function LoginPage() {
           </label>
           <label>
             <span>Password</span>
-            <input
-              type="password"
-              name="password"
-              placeholder="********"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path
+                      d="M3 4l18 16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M2 12s3.5-6 10-6c2.2 0 4.1.5 5.6 1.4M22 12s-3.5 6-10 6c-2.7 0-5-.9-6.8-2.2"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path
+                      d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="3"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
           </label>
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}

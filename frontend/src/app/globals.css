@@ -230,6 +230,12 @@ a:hover {
   padding: 10px 12px;
   font-family: var(--font-body);
 }
+.password-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
 .auth-form textarea {
   min-height: 120px;
   resize: vertical;
