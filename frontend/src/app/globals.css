@@ -36,7 +36,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --bg: #0b1018;
     --surface: #111827;
     --text: #e5e7eb;
@@ -151,6 +151,7 @@ a:hover { color: var(--brand); }
 }
 
 .error-message { color: var(--danger); margin: 8px 0; }
+.status-message { color: var(--muted); margin: 8px 0; font-size: 14px; }
 
 /* Auth pages */
 .auth-container { display: grid; place-items: center; min-height: calc(100vh - 64px); padding: 24px; }
@@ -198,6 +199,7 @@ a:hover { color: var(--brand); }
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   align-items: start;
+  grid-auto-flow: dense;
 }
 .card {
   background: var(--surface);
@@ -207,6 +209,7 @@ a:hover { color: var(--brand); }
   border: 1px solid var(--line);
   align-self: start;
 }
+.profile-edit { grid-column: span 2; }
 .card h1, .card h2 { margin: 0 0 12px; font-family: var(--font-head); }
 .profile-list { display: grid; gap: 12px; }
 .profile-label { font-size: 12px; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.02em; }
@@ -592,4 +595,5 @@ a:hover { color: var(--brand); }
   .filter-card { grid-template-columns: 1fr; }
   .hero-card-head { flex-direction: column; align-items: flex-start; }
   .job-title-row { flex-direction: column; align-items: flex-start; }
+  .profile-edit { grid-column: auto; }
 }

@@ -4,6 +4,7 @@ const Application = require('../models/Application');
 const Job = require('../models/Job');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
+const { logPaiEvent } = require('../services/pai');
 
 // Apply for job
 router.post('/', auth, async (req, res) => {
@@ -42,6 +43,15 @@ router.post('/', auth, async (req, res) => {
       $addToSet: { applicants: req.userId }
     });
 
+    await logPaiEvent(req.userId, {
+      source: 'jobpost',
+      verb: 'job.apply',
+      objectId: String(job._id),
+      props: {
+        title: job.title,
+        company: job.company
+      }
+    });
     res.status(201).json({
       message: 'Application submitted successfully',
       application

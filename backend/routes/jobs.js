@@ -2,6 +2,7 @@ const express = require('express');
 const { Storage } = require('@google-cloud/storage');
 const router = express.Router();
 const Job = require('../models/Job');
+const { logPaiEvent } = require('../services/pai');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 
@@ -198,6 +199,17 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
     });
 
     await job.save();
+    await logPaiEvent(req.userId, {
+      source: 'jobpost',
+      verb: 'job.post',
+      objectId: String(job._id),
+      props: {
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        jobType: job.jobType
+      }
+    });
     res.status(201).json({ message: 'Job posted successfully', job });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -231,6 +243,15 @@ router.put('/:id', auth, requireRole('employer'), async (req, res) => {
     }
     await job.save();
 
+    await logPaiEvent(req.userId, {
+      source: 'jobpost',
+      verb: 'job.update',
+      objectId: String(job._id),
+      props: {
+        title: job.title,
+        status: job.status
+      }
+    });
     res.json({ message: 'Job updated successfully', job });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -251,6 +272,15 @@ router.delete('/:id', auth, requireRole('employer'), async (req, res) => {
     }
 
     await Job.findByIdAndDelete(req.params.id);
+    await logPaiEvent(req.userId, {
+      source: 'jobpost',
+      verb: 'job.delete',
+      objectId: String(job._id),
+      props: {
+        title: job.title,
+        company: job.company
+      }
+    });
     res.json({ message: 'Job deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

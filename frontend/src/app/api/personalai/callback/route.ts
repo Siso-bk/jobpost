@@ -40,9 +40,17 @@ export async function GET(req: NextRequest) {
     if (clientSecret) body.set('client_secret', clientSecret);
     body.set('code_verifier', verifier);
 
+    const tenantId = process.env.PERSONALAI_TENANT_ID;
+    const platform = process.env.PERSONALAI_PLATFORM || 'jobpost';
+    const tokenHeaders: Record<string, string> = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      ...(tenantId ? { 'x-tenant-id': tenantId } : {}),
+      ...(platform ? { 'x-platform': platform } : {}),
+    };
+
     const tokenRes = await fetch(absoluteUrl(issuer, tokenEndpoint), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: tokenHeaders,
       body: body.toString(),
       cache: 'no-store',
     });

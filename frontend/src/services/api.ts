@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+const API_BASE_URL =
+  typeof window === 'undefined'
+    ? process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_API_URL || 'http://localhost:5000/api'
+    : '/api';
 
 export const api = axios.create({ baseURL: API_BASE_URL, withCredentials: true });
 
@@ -29,6 +32,13 @@ export const authService = {
     api.post('/auth/register', { name, email, password, role }),
   login: (email: string, password: string) => api.post('/auth/login', { email, password }),
   logout: () => api.post('/auth/logout'),
+  paiSignup: (email: string) => api.post('/auth/pai-signup', { email }),
+  paiSignupVerify: (email: string, code: string) => api.post('/auth/pai-signup/verify', { email, code }),
+  paiSignupComplete: (payload: { preToken: string; name: string; handle: string; password: string; role: string }) =>
+    api.post('/auth/pai-signup/complete', payload),
+  paiLogin: (email: string, password: string) => api.post('/auth/pai-login', { email, password }),
+  paiResend: (email: string) => api.post('/auth/pai-resend', { email }),
+  paiVerifyCode: (payload: { email: string; code: string; role: string }) => api.post('/auth/pai-verify-code', payload),
 };
 
 export const jobsService = {

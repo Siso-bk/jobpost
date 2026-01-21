@@ -43,6 +43,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [themeReady, setThemeReady] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
@@ -99,13 +100,17 @@ export default function ProfilePage() {
       if (stored === 'light' || stored === 'dark') {
         setTheme(stored);
         document.documentElement.dataset.theme = stored;
+        setThemeReady(true);
         return;
       }
     } catch {}
-    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setTheme('dark');
-      document.documentElement.dataset.theme = 'dark';
+    if (typeof document !== 'undefined') {
+      const current = document.documentElement.dataset.theme;
+      if (current === 'light' || current === 'dark') {
+        setTheme(current);
+      }
     }
+    setThemeReady(true);
   }, []);
 
   const toggleTheme = () => {
@@ -241,6 +246,7 @@ export default function ProfilePage() {
   const roleForView = user?.role || viewerRole;
   const isEmployer = roleForView === 'employer';
   const isWorker = roleForView === 'worker';
+  const themeLabel = themeReady ? (theme === 'light' ? 'Switch to dark' : 'Switch to light') : 'Theme';
 
   return (
     <div className="page-container profile-page">
@@ -362,21 +368,23 @@ export default function ProfilePage() {
           )}
         </section>
 
-        <section className="card">
-          <h2>Settings</h2>
-          <div className="setting-row">
-            <span>Theme</span>
-            <button type="button" className="btn-secondary" onClick={toggleTheme} aria-label="Toggle theme">
-              {theme === 'light' ? 'Dark mode' : 'Light mode'}
-            </button>
-          </div>
-          <div className="setting-row">
-            <span>Session</span>
-            <button onClick={handleLogout} disabled={logoutLoading} className="btn-logout">
-              {logoutLoading ? 'Logging out...' : 'Logout'}
-            </button>
-          </div>
-        </section>
+        {isOwner && (
+          <section className="card">
+            <h2>Settings</h2>
+            <div className="setting-row">
+              <span>Theme</span>
+              <button type="button" className="btn-secondary" onClick={toggleTheme} aria-label="Toggle theme">
+                {themeLabel}
+              </button>
+            </div>
+            <div className="setting-row">
+              <span>Session</span>
+              <button onClick={handleLogout} disabled={logoutLoading} className="btn-logout">
+                {logoutLoading ? 'Logging out...' : 'Logout'}
+              </button>
+            </div>
+          </section>
+        )}
 
         {isOwner && (
           <section className="card profile-edit">
@@ -404,7 +412,7 @@ export default function ProfilePage() {
                       <div className="profile-photo-row">
                         <img className="profile-photo" src={form.profilePicture} alt="Profile preview" />
                         <button type="button" className="icon-button" onClick={handleRemovePhoto} aria-label="Remove photo">
-                          ×
+                          x
                         </button>
                       </div>
                     )}
@@ -440,7 +448,7 @@ export default function ProfilePage() {
                       <div className="profile-photo-row">
                         <img className="logo-preview" src={form.companyLogo} alt="Company logo preview" />
                         <button type="button" className="icon-button" onClick={handleRemoveCompanyLogo} aria-label="Remove company logo">
-                          ×
+                          x
                         </button>
                       </div>
                     )}

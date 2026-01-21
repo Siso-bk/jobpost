@@ -164,7 +164,7 @@ export default function PostJobClient() {
               <div className="profile-photo-row">
                 <img className="logo-preview" src={form.logoUrl} alt="Company logo preview" />
                 <button type="button" className="icon-button" onClick={handleRemoveLogo} aria-label="Remove logo">
-                  ×
+                  x
                 </button>
               </div>
             )}

@@ -18,6 +18,9 @@ const userRoutes = require('./routes/users');
 const app = express();
 
 const isProd = process.env.NODE_ENV === 'production';
+if (isProd) {
+  app.set('trust proxy', 1);
+}
 
 if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
   const msg = 'Missing MONGODB_URI or JWT_SECRET in environment';

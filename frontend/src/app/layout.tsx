@@ -21,7 +21,13 @@ export default function RootLayout({
 (() => {
   try {
     const t = localStorage.getItem('theme');
-    if (t) document.documentElement.dataset.theme = t;
+    if (t) {
+      document.documentElement.dataset.theme = t;
+      return;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.dataset.theme = 'dark';
+    }
   } catch {}
 })();`,
           }}

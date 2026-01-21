@@ -4,6 +4,71 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
+const axios = require('axios');
+const crypto = require('crypto');
+
+const PAI_API_BASE = (process.env.PAI_API_BASE || '').replace(/\/$/, '');
+const PAI_TIMEOUT_MS = 10000;
+
+function buildPaiUrl(path) {
+  if (!PAI_API_BASE) return '';
+  if (!path.startsWith('/')) return `${PAI_API_BASE}/${path}`;
+  return `${PAI_API_BASE}${path}`;
+}
+
+async function postToPai(path, payload) {
+  if (!PAI_API_BASE) {
+    const error = new Error('PAI_API_BASE is not configured');
+    error.status = 500;
+    throw error;
+  }
+  return axios.post(buildPaiUrl(path), payload, { timeout: PAI_TIMEOUT_MS });
+}
+
+async function upsertPaiUser(paiUser, role) {
+  const email = (paiUser?.email || '').toLowerCase();
+  if (!email) {
+    const error = new Error('PAI user missing email');
+    error.code = 'pai_user_missing_email';
+    throw error;
+  }
+
+  let user = await User.findOne({ provider: 'personalai', providerId: paiUser.id });
+  if (!user) {
+    user = await User.findOne({ email });
+  }
+
+  if (!user) {
+    if (!role) {
+      const error = new Error('JobPost role is required to create a profile');
+      error.code = 'role_required';
+      throw error;
+    }
+    const tempPassword = crypto.randomBytes(24).toString('hex');
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    user = new User({
+      name: paiUser?.name || 'User',
+      email,
+      password: hashedPassword,
+      role,
+      provider: 'personalai',
+      providerId: paiUser.id,
+      isVerified: true
+    });
+    await user.save();
+    return user;
+  }
+
+  const updates = {};
+  if (!user.provider) updates.provider = 'personalai';
+  if (!user.providerId) updates.providerId = paiUser.id;
+  if (paiUser?.name && user.name !== paiUser.name) updates.name = paiUser.name;
+  if (!user.isVerified) updates.isVerified = true;
+  if (Object.keys(updates).length) {
+    user = await User.findByIdAndUpdate(user._id, updates, { new: true });
+  }
+  return user;
+}
 
 // Register
 router.post('/register', async (req, res) => {
@@ -112,6 +177,149 @@ router.post('/logout', (req, res) => {
 });
 
 module.exports = router;
+
+// PAI signup: request verification code
+router.post('/pai-signup', async (req, res) => {
+  try {
+    const email = (req.body?.email || '').toLowerCase();
+    if (!email || !validator.isEmail(email)) {
+      return res.status(400).json({ message: 'Valid email is required' });
+    }
+    const paiRes = await postToPai('/api/auth/pai-signup', { email });
+    return res.status(paiRes.status).json(paiRes.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'PAI signup failed' });
+  }
+});
+
+// PAI signup: verify 6-digit code
+router.post('/pai-signup/verify', async (req, res) => {
+  try {
+    const { email, code } = req.body || {};
+    const paiRes = await postToPai('/api/auth/pai-signup/verify', { email, code });
+    return res.status(paiRes.status).json(paiRes.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'PAI verification failed' });
+  }
+});
+
+// PAI signup: complete account and create JobPost profile
+router.post('/pai-signup/complete', async (req, res) => {
+  try {
+    const { preToken, name, password, handle, role } = req.body || {};
+    if (!role || !['worker', 'employer'].includes(role)) {
+      return res.status(400).json({ message: 'Valid role is required' });
+    }
+    const paiRes = await postToPai('/api/auth/pai-signup/complete', { preToken, name, password, handle });
+    const paiUser = paiRes.data?.user;
+    if (!paiUser) {
+      return res.status(500).json({ message: 'PAI response missing user' });
+    }
+    const user = await upsertPaiUser(paiUser, role);
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    return res.status(201).json({
+      message: 'Signup complete',
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    if (error.code === 'role_required') {
+      return res.status(409).json({ message: error.message, code: 'jobpost_profile_required' });
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'PAI signup failed' });
+  }
+});
+
+// PAI login (email + password)
+router.post('/pai-login', async (req, res) => {
+  try {
+    const { email, password } = req.body || {};
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+    const paiRes = await postToPai('/api/auth/login', { email, password });
+    const paiUser = paiRes.data?.user;
+    if (!paiUser) {
+      return res.status(500).json({ message: 'PAI response missing user' });
+    }
+    let user;
+    try {
+      user = await upsertPaiUser(paiUser);
+    } catch (err) {
+      if (err.code === 'role_required') {
+        return res.status(409).json({ message: err.message, code: 'jobpost_profile_required' });
+      }
+      throw err;
+    }
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    return res.json({
+      message: 'Login successful',
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'PAI login failed' });
+  }
+});
+
+// PAI resend verification code
+router.post('/pai-resend', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    const paiRes = await postToPai('/api/auth/resend', { email });
+    return res.status(paiRes.status).json(paiRes.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'PAI resend failed' });
+  }
+});
+
+// PAI verify code for existing user (email not verified)
+router.post('/pai-verify-code', async (req, res) => {
+  try {
+    const { email, code, role } = req.body || {};
+    const paiRes = await postToPai('/api/auth/verify-code', { email, code });
+    const paiUser = paiRes.data?.user;
+    if (!paiUser) {
+      return res.status(500).json({ message: 'PAI response missing user' });
+    }
+    const user = await upsertPaiUser(paiUser, role);
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    return res.json({
+      message: 'Email verified',
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    if (error.code === 'role_required') {
+      return res.status(409).json({ message: error.message, code: 'jobpost_profile_required' });
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'PAI verify failed' });
+  }
+});
 
 // External auth using PersonalAI id_token
 router.post('/external', async (req, res) => {

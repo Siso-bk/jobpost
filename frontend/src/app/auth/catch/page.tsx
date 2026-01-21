@@ -13,9 +13,12 @@ export default function AuthCatchPage() {
     if (token) localStorage.setItem('token', token);
     if (id) localStorage.setItem('userId', id);
     if (role) localStorage.setItem('userRole', role);
-    router.replace('/jobs');
+    if (role === 'employer') {
+      router.replace('/employer');
+    } else {
+      router.replace('/jobs');
+    }
   }, [router]);
 
   return null;
 }
-

@@ -4,6 +4,7 @@ const router = express.Router();
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
+const { logPaiEvent } = require('../services/pai');
 
 const buildRegex = (value) => new RegExp(String(value).trim(), 'i');
 const MAX_IMAGE_BYTES = 1024 * 1024;
@@ -123,6 +124,11 @@ router.post('/upload-resume', auth, requireRole('worker'), async (req, res) => {
       return res.status(400).json({ message: 'Resume file is required' });
     }
     const url = await uploadResumeFile(dataUrl, req.userId);
+    await logPaiEvent(req.userId, {
+      source: 'jobpost',
+      verb: 'resume.upload',
+      props: { format: 'file' }
+    });
     return res.json({ url });
   } catch (error) {
     return res.status(400).json({ message: error.message });
@@ -264,6 +270,11 @@ router.put('/:id', auth, async (req, res) => {
       new: true
     }).select('-password');
 
+    await logPaiEvent(req.userId, {
+      source: 'jobpost',
+      verb: 'profile.update',
+      objectId: String(user._id)
+    });
     res.json({ message: 'Profile updated successfully', user });
   } catch (error) {
     res.status(500).json({ message: error.message });
