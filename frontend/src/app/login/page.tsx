@@ -19,20 +19,13 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await authService.paiLogin(formData.email, formData.password);
+      const res = await authService.login(formData.email, formData.password);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('userId', res.data.user.id);
       localStorage.setItem('userRole', res.data.user.role);
       router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
     } catch (err: any) {
-      const code = err?.response?.data?.code;
-      if (code === 'email_not_verified') {
-        setError('Email not verified. Please register to request a new code.');
-      } else if (code === 'jobpost_profile_required') {
-        setError('No JobPost profile found. Please register to choose your role.');
-      } else {
-        setError(err?.response?.data?.message || 'Login failed');
-      }
+      setError(err?.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
     }
