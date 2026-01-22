@@ -2,6 +2,13 @@ const express = require('express');
 const { Storage } = require('@google-cloud/storage');
 const router = express.Router();
 const User = require('../models/User');
+const Job = require('../models/Job');
+const Application = require('../models/Application');
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
+const Block = require('../models/Block');
+const Report = require('../models/Report');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 const { logPaiEvent } = require('../services/pai');
@@ -184,6 +191,55 @@ router.get('/workers', async (req, res) => {
     res.json(workers);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete own account
+router.delete('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('_id role');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role === 'employer') {
+      const jobs = await Job.find({ employerId: user._id }).select('_id');
+      const jobIds = jobs.map((job) => job._id);
+      if (jobIds.length) {
+        await Application.deleteMany({ jobId: { $in: jobIds } });
+      }
+      await Application.deleteMany({ employerId: user._id });
+      await Job.deleteMany({ employerId: user._id });
+    } else {
+      await Application.deleteMany({ workerId: user._id });
+      await Job.updateMany({ applicants: user._id }, { $pull: { applicants: user._id } });
+    }
+
+    await Message.deleteMany({
+      $or: [{ senderId: user._id }, { recipientId: user._id }]
+    });
+    await Conversation.deleteMany({ participants: user._id });
+    await Block.deleteMany({ $or: [{ blockerId: user._id }, { blockedId: user._id }] });
+    await Report.deleteMany({
+      $or: [{ reporterId: user._id }, { targetUserId: user._id }]
+    });
+    await Notification.deleteMany({ userId: user._id });
+
+    try {
+      await logPaiEvent(req.userId, {
+        source: 'jobpost',
+        verb: 'account.delete',
+        objectId: String(user._id)
+      });
+    } catch (error) {}
+
+    await User.deleteOne({ _id: user._id });
+
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/' });
+    return res.json({ message: 'Account deleted' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 });
 

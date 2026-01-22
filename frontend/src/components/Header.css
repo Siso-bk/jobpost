@@ -59,6 +59,19 @@
     background 0.2s ease,
     color 0.2s ease;
 }
+.nav-badge {
+  margin-left: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 11px;
+}
 .nav-link.active:not(.btn-primary):not(.btn-secondary) {
   background: rgba(14, 165, 164, 0.14);
   color: var(--brand-600);

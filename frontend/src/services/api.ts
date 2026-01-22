@@ -88,9 +88,49 @@ export const applicationsService = {
     api.put(`/applications/${id}`, { status }),
 };
 
+export const conversationsService = {
+  list: () => api.get('/conversations'),
+  create: (recipientId: string) => api.post('/conversations', { recipientId }),
+  getMessages: (conversationId: string, limit = 50) =>
+    api.get(`/conversations/${conversationId}/messages`, { params: { limit } }),
+  sendMessage: (conversationId: string, body: string) =>
+    api.post(`/conversations/${conversationId}/messages`, { body }),
+  markRead: (conversationId: string) => api.post(`/conversations/${conversationId}/read`),
+  unreadCount: () => api.get('/conversations/unread-count'),
+};
+
+export const blocksService = {
+  list: () => api.get('/blocks'),
+  status: (userId: string) => api.get(`/blocks/status/${userId}`),
+  block: (userId: string) => api.post('/blocks', { userId }),
+  unblock: (userId: string) => api.delete(`/blocks/${userId}`),
+};
+
+export const reportsService = {
+  create: (payload: {
+    targetUserId: string;
+    reason: string;
+    messageId?: string;
+    conversationId?: string;
+  }) => api.post('/reports', payload),
+};
+
+export const notificationsService = {
+  list: (limit = 30) => api.get('/notifications', { params: { limit } }),
+  markAllRead: () => api.post('/notifications/read'),
+  markRead: (id: string) => api.post(`/notifications/${id}/read`),
+};
+
+export const moderationService = {
+  listReports: (status = 'open') => api.get('/moderation/reports', { params: { status } }),
+  resolveReport: (id: string) => api.post(`/moderation/reports/${id}/resolve`),
+  removeMessage: (id: string) => api.post(`/moderation/messages/${id}/remove`),
+};
+
 export const usersService = {
   getUserProfile: (id: string) => api.get(`/users/${id}`),
   updateProfile: (id: string, data: any) => api.put(`/users/${id}`, data),
+  deleteMe: () => api.delete('/users/me'),
   uploadResume: (dataUrl: string) => api.post('/users/upload-resume', { dataUrl }),
   searchWorkers: (filters: {
     search?: string;

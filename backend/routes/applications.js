@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Application = require('../models/Application');
 const Job = require('../models/Job');
+const Notification = require('../models/Notification');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 const { logPaiEvent } = require('../services/pai');
@@ -42,6 +43,17 @@ router.post('/', auth, async (req, res) => {
     await Job.findByIdAndUpdate(jobId, {
       $addToSet: { applicants: req.userId }
     });
+
+    try {
+      await Notification.create({
+        userId: job.employerId,
+        type: 'application.new',
+        title: 'New application',
+        body: `${job.title} has a new applicant.`,
+        link: `/employer/applications/${application._id}`,
+        data: { applicationId: application._id, jobId: job._id }
+      });
+    } catch (error) {}
 
     await logPaiEvent(req.userId, {
       source: 'jobpost',
@@ -128,6 +140,18 @@ router.put('/:id', auth, requireRole('employer'), async (req, res) => {
 
     application.status = status;
     await application.save();
+
+    try {
+      const job = await Job.findById(application.jobId).select('title');
+      await Notification.create({
+        userId: application.workerId,
+        type: 'application.status',
+        title: 'Application status updated',
+        body: `Your application${job?.title ? ` for ${job.title}` : ''} is now ${status}.`,
+        link: `/my-applications/${application._id}`,
+        data: { applicationId: application._id, jobId: application.jobId, status }
+      });
+    } catch (error) {}
 
     res.json({ message: 'Application updated', application });
   } catch (error) {

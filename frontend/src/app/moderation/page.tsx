@@ -1,0 +1,184 @@
+'use client';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authService, moderationService } from '@/services/api';
+
+type ReportItem = {
+  _id: string;
+  reason: string;
+  status: string;
+  createdAt: string;
+  reporterId?: { name?: string; email?: string; role?: string };
+  targetUserId?: { name?: string; email?: string; role?: string };
+  messageId?: { _id: string; body?: string; createdAt?: string };
+  conversationId?: { _id: string };
+};
+
+const formatDate = (value?: string) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+};
+
+export default function ModerationPage() {
+  const router = useRouter();
+  const [reports, setReports] = useState<ReportItem[]>([]);
+  const [status, setStatus] = useState('open');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchReports = async (nextStatus = status) => {
+    setLoading(true);
+    try {
+      const res = await moderationService.listReports(nextStatus);
+      setReports(res.data || []);
+      setError(null);
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to load reports');
+      setReports([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        if (!res.data?.id) {
+          router.replace('/login');
+        }
+      })
+      .catch(() => {
+        if (!active) return;
+        router.replace('/login');
+      });
+    fetchReports();
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
+  const handleResolve = async (reportId: string) => {
+    try {
+      await moderationService.resolveReport(reportId);
+      setReports((prev) =>
+        prev.map((report) =>
+          report._id === reportId ? { ...report, status: 'resolved' } : report
+        )
+      );
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to resolve report');
+    }
+  };
+
+  const handleRemoveMessage = async (messageId?: string) => {
+    if (!messageId) return;
+    try {
+      await moderationService.removeMessage(messageId);
+      setReports((prev) =>
+        prev.map((report) =>
+          report.messageId?._id === messageId
+            ? { ...report, messageId: { ...report.messageId, body: '[message removed]' } }
+            : report
+        )
+      );
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to remove message');
+    }
+  };
+
+  const handleStatusChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = event.target.value;
+    setStatus(next);
+    fetchReports(next);
+  };
+
+  return (
+    <div className="page-container moderation-page">
+      <section className="card">
+        <div className="panel-head">
+          <div>
+            <h2>Moderation</h2>
+            <p className="muted">Reports and enforcement actions</p>
+          </div>
+          <div className="panel-actions">
+            <select value={status} onChange={handleStatusChange}>
+              <option value="open">Open</option>
+              <option value="resolved">Resolved</option>
+              <option value="all">All</option>
+            </select>
+            <button type="button" className="btn-secondary" onClick={() => fetchReports(status)}>
+              Refresh
+            </button>
+          </div>
+        </div>
+        {loading ? (
+          <p className="loading">Loading reports...</p>
+        ) : error ? (
+          <p className="error-message">{error}</p>
+        ) : reports.length === 0 ? (
+          <div className="empty-state">
+            <strong>No reports found.</strong>
+            <p>Incoming reports will appear here.</p>
+          </div>
+        ) : (
+          <div className="moderation-list">
+            {reports.map((report) => (
+              <div key={report._id} className="moderation-card">
+                <div className="moderation-meta">
+                  <span className="tag">{report.status}</span>
+                  <span className="muted">{formatDate(report.createdAt)}</span>
+                </div>
+                <p className="moderation-reason">{report.reason}</p>
+                <div className="moderation-grid">
+                  <div>
+                    <span className="profile-label">Reporter</span>
+                    <div className="profile-value">
+                      {report.reporterId?.name || report.reporterId?.email || 'Unknown'}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="profile-label">Target</span>
+                    <div className="profile-value">
+                      {report.targetUserId?.name || report.targetUserId?.email || 'Unknown'}
+                    </div>
+                  </div>
+                  {report.messageId?.body && (
+                    <div>
+                      <span className="profile-label">Message</span>
+                      <div className="profile-value">{report.messageId.body}</div>
+                    </div>
+                  )}
+                </div>
+                <div className="moderation-actions">
+                  {report.status !== 'resolved' && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() => handleResolve(report._id)}
+                    >
+                      Resolve
+                    </button>
+                  )}
+                  {report.messageId?._id && (
+                    <button
+                      type="button"
+                      className="btn-danger"
+                      onClick={() => handleRemoveMessage(report.messageId?._id)}
+                    >
+                      Remove message
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}

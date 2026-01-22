@@ -2,13 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { authService, usersService } from '@/services/api';
+import { authService, conversationsService, notificationsService, usersService } from '@/services/api';
 
 export default function Header() {
   const [hydrated, setHydrated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [messageUnread, setMessageUnread] = useState(0);
+  const [notificationUnread, setNotificationUnread] = useState(0);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -44,12 +46,37 @@ export default function Header() {
       .catch(() => {});
   }, [userId]);
 
+  useEffect(() => {
+    if (!userId) {
+      setMessageUnread(0);
+      setNotificationUnread(0);
+      return;
+    }
+    const refreshCounts = () => {
+      conversationsService
+        .unreadCount()
+        .then((res) => {
+          setMessageUnread(Number(res.data?.count || 0));
+        })
+        .catch(() => {});
+      notificationsService
+        .list(1)
+        .then((res) => {
+          setNotificationUnread(Number(res.data?.unreadCount || 0));
+        })
+        .catch(() => {});
+    };
+    refreshCounts();
+  }, [userId, pathname]);
+
   const isAuthed = hydrated && Boolean(userRole);
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === '/jobs') return pathname === '/jobs' || pathname.startsWith('/job/');
     if (href === '/profile') return pathname.startsWith('/profile');
     if (href === '/employer') return pathname === '/employer';
+    if (href === '/messages') return pathname.startsWith('/messages');
+    if (href === '/notifications') return pathname.startsWith('/notifications');
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
@@ -65,12 +92,6 @@ export default function Header() {
               <Link href="/talent" className={`nav-link ${isActive('/talent') ? 'active' : ''}`}>
                 Talent
               </Link>
-              <Link
-                href="/integrate"
-                className={`nav-link ${isActive('/integrate') ? 'active' : ''}`}
-              >
-                Integrate
-              </Link>
               <Link href="/login" className={`nav-link ${isActive('/login') ? 'active' : ''}`}>
                 Login
               </Link>
@@ -85,12 +106,6 @@ export default function Header() {
             <>
               <Link href="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>
                 Jobs
-              </Link>
-              <Link
-                href="/integrate"
-                className={`nav-link ${isActive('/integrate') ? 'active' : ''}`}
-              >
-                Integrate
               </Link>
               {userRole === 'employer' && (
                 <Link
@@ -145,6 +160,19 @@ export default function Header() {
                   My CV
                 </Link>
               )}
+              <Link href="/messages" className={`nav-link ${isActive('/messages') ? 'active' : ''}`}>
+                Messages
+                {messageUnread > 0 && <span className="nav-badge">{messageUnread}</span>}
+              </Link>
+              <Link
+                href="/notifications"
+                className={`nav-link ${isActive('/notifications') ? 'active' : ''}`}
+              >
+                Alerts
+                {notificationUnread > 0 && (
+                  <span className="nav-badge">{notificationUnread}</span>
+                )}
+              </Link>
               <Link
                 href={`/profile/${userId || ''}`}
                 className={`nav-link ${isActive('/profile') ? 'active' : ''}`}

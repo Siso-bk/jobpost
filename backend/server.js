@@ -14,6 +14,12 @@ const authRoutes = require('./routes/auth');
 const jobRoutes = require('./routes/jobs');
 const applicationRoutes = require('./routes/applications');
 const userRoutes = require('./routes/users');
+const conversationRoutes = require('./routes/conversations');
+const blockRoutes = require('./routes/blocks');
+const reportRoutes = require('./routes/reports');
+const notificationRoutes = require('./routes/notifications');
+const moderationRoutes = require('./routes/moderation');
+const { startRetentionCleanup } = require('./services/retention');
 
 const app = express();
 
@@ -56,7 +62,19 @@ const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeade
 app.use('/api/auth', authLimiter);
 // Additional rate limit for mutating endpoints
 const writeLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, standardHeaders: true, legacyHeaders: false });
-app.use(['/api/jobs', '/api/applications', '/api/users'], writeLimiter);
+app.use(
+  [
+    '/api/jobs',
+    '/api/applications',
+    '/api/users',
+    '/api/conversations',
+    '/api/blocks',
+    '/api/reports',
+    '/api/notifications',
+    '/api/moderation'
+  ],
+  writeLimiter
+);
 
 // MongoDB Connection
 mongoose.set('strictQuery', true);
@@ -78,6 +96,7 @@ mongoose
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
+    startRetentionCleanup();
   })
   .catch((err) => {
     console.error('MongoDB connection error:', err);
@@ -96,6 +115,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/conversations', conversationRoutes);
+app.use('/api/blocks', blockRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/moderation', moderationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

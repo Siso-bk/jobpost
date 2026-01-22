@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { authService, usersService } from '@/services/api';
+import { authService, blocksService, conversationsService, reportsService, usersService } from '@/services/api';
 
 type UserProfile = {
   name?: string;
@@ -40,12 +40,20 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [themeReady, setThemeReady] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [viewerRole, setViewerRole] = useState<string | null>(null);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [blockStatus, setBlockStatus] = useState({ blocked: false, blockedBy: false });
+  const [blockLoading, setBlockLoading] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportStatus, setReportStatus] = useState<string | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const companyLogoInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -145,6 +153,101 @@ export default function ProfilePage() {
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Logout failed');
       setLogoutLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!userId || !isOwner) return;
+    if (deleteConfirm.trim().toUpperCase() !== 'DELETE') {
+      setError('Type DELETE to confirm account deletion.');
+      return;
+    }
+    setDeleteLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await usersService.deleteMe();
+      router.replace('/login');
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Failed to delete account');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!viewerId || !userId || viewerId === userId) {
+      setBlockStatus({ blocked: false, blockedBy: false });
+      return;
+    }
+    blocksService
+      .status(userId)
+      .then((res) => {
+        setBlockStatus({
+          blocked: Boolean(res.data?.blocked),
+          blockedBy: Boolean(res.data?.blockedBy)
+        });
+      })
+      .catch(() => {
+        setBlockStatus({ blocked: false, blockedBy: false });
+      });
+  }, [viewerId, userId]);
+
+  const handleToggleBlock = async () => {
+    if (!viewerId || !userId || viewerId === userId) return;
+    setBlockLoading(true);
+    setError(null);
+    try {
+      if (blockStatus.blocked) {
+        await blocksService.unblock(userId);
+        setBlockStatus({ blocked: false, blockedBy: false });
+      } else {
+        await blocksService.block(userId);
+        setBlockStatus({ blocked: true, blockedBy: false });
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to update block status');
+    } finally {
+      setBlockLoading(false);
+    }
+  };
+
+  const handleReport = async () => {
+    if (!viewerId || !userId || viewerId === userId) return;
+    const reason = reportReason.trim();
+    if (!reason) {
+      setReportStatus('Please add a reason.');
+      return;
+    }
+    setReportLoading(true);
+    setReportStatus(null);
+    try {
+      await reportsService.create({ targetUserId: userId, reason });
+      setReportStatus('Report submitted.');
+      setReportReason('');
+    } catch (e: any) {
+      setReportStatus(e?.response?.data?.message || 'Unable to submit report.');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const handleStartChat = async () => {
+    if (!viewerId || !userId || isOwner) return;
+    setChatLoading(true);
+    setError(null);
+    try {
+      const res = await conversationsService.create(userId);
+      const conversationId = res.data?.id || res.data?._id;
+      if (conversationId) {
+        router.push(`/messages?c=${conversationId}`);
+      } else {
+        setError('Unable to start chat');
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to start chat');
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -258,6 +361,8 @@ export default function ProfilePage() {
   const roleForView = user?.role || viewerRole;
   const isEmployer = roleForView === 'employer';
   const isWorker = roleForView === 'worker';
+  const canMessage = !blockStatus.blocked && !blockStatus.blockedBy;
+  const deleteReady = deleteConfirm.trim().toUpperCase() === 'DELETE';
   const themeLabel = themeReady
     ? theme === 'light'
       ? 'Switch to dark'
@@ -269,6 +374,33 @@ export default function ProfilePage() {
       <div className="profile-grid">
         <section className="card">
           <h1>Profile</h1>
+          {!isOwner && viewerId && (
+            <div className="profile-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleStartChat}
+                disabled={chatLoading || !canMessage}
+              >
+                {chatLoading ? 'Opening chat...' : 'Message'}
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={handleToggleBlock}
+                disabled={blockLoading || blockStatus.blockedBy}
+              >
+                {blockStatus.blockedBy
+                  ? 'Blocked'
+                  : blockStatus.blocked
+                  ? 'Unblock'
+                  : 'Block'}
+              </button>
+            </div>
+          )}
+          {!isOwner && viewerId && blockStatus.blockedBy && (
+            <p className="status-message">This user has blocked you.</p>
+          )}
           {loading && <p>Loading profile...</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && user && (
@@ -410,6 +542,60 @@ export default function ProfilePage() {
               <span>Session</span>
               <button onClick={handleLogout} disabled={logoutLoading} className="btn-logout">
                 {logoutLoading ? 'Logging out...' : 'Logout'}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {!isOwner && viewerId && (
+          <section className="card">
+            <h2>Safety</h2>
+            <p className="status-message">
+              Report this user if something feels off. We review all reports.
+            </p>
+            <label className="report-label">
+              <span>Reason</span>
+              <textarea
+                value={reportReason}
+                onChange={(event) => setReportReason(event.target.value)}
+                placeholder="Share details for review"
+              />
+            </label>
+            <button
+              type="button"
+              className="btn-danger"
+              onClick={handleReport}
+              disabled={reportLoading}
+            >
+              {reportLoading ? 'Submitting...' : 'Submit report'}
+            </button>
+            {reportStatus && <p className="status-message">{reportStatus}</p>}
+          </section>
+        )}
+
+        {isOwner && (
+          <section className="card danger-zone">
+            <h2>Danger zone</h2>
+            <p className="status-message">
+              {isEmployer
+                ? 'Deleting your account removes your company profile, jobs, and applications. This cannot be undone.'
+                : 'Deleting your account removes your profile and applications. This cannot be undone.'}
+            </p>
+            <div className="danger-actions">
+              <label>
+                <span>Type DELETE to confirm</span>
+                <input
+                  value={deleteConfirm}
+                  onChange={(event) => setDeleteConfirm(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading || !deleteReady}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete account'}
               </button>
             </div>
           </section>
