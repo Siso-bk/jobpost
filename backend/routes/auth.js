@@ -70,104 +70,7 @@ async function upsertPaiUser(paiUser, role) {
   return user;
 }
 
-// Register
-router.post('/register', async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
 
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: 'Invalid email format' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
-
-    let user = await User.findOne({ email });
-    if (user) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role
-    });
-
-    await user.save();
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Login
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
 
 // Logout (clear auth cookie)
 router.post('/logout', (req, res) => {
@@ -175,8 +78,6 @@ router.post('/logout', (req, res) => {
   res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/' });
   return res.json({ message: 'Logged out' });
 });
-
-module.exports = router;
 
 // PAI signup: request verification code
 router.post('/pai-signup', async (req, res) => {
@@ -216,15 +117,28 @@ router.post('/pai-signup/complete', async (req, res) => {
     if (!role || !['worker', 'employer'].includes(role)) {
       return res.status(400).json({ message: 'Valid role is required' });
     }
-    const paiRes = await postToPai('/api/auth/pai-signup/complete', { preToken, name, password, handle });
+    const paiRes = await postToPai('/api/auth/pai-signup/complete', {
+      preToken,
+      name,
+      password,
+      handle
+    });
     const paiUser = paiRes.data?.user;
     if (!paiUser) {
       return res.status(500).json({ message: 'PAI response missing user' });
     }
     const user = await upsertPaiUser(paiUser, role);
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '7d'
+    });
     const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     return res.status(201).json({
       message: 'Signup complete',
       token,
@@ -262,9 +176,17 @@ router.post('/pai-login', async (req, res) => {
       }
       throw err;
     }
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '7d'
+    });
     const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     return res.json({
       message: 'Login successful',
       token,
@@ -302,9 +224,17 @@ router.post('/pai-verify-code', async (req, res) => {
       return res.status(500).json({ message: 'PAI response missing user' });
     }
     const user = await upsertPaiUser(paiUser, role);
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '7d'
+    });
     const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
     return res.json({
       message: 'Email verified',
       token,
@@ -364,7 +294,15 @@ router.post('/external', async (req, res) => {
       user = await User.findOne({ email });
     }
     if (!user) {
-      user = new User({ name, email, role: 'worker', provider: 'personalai', providerId: sub, isVerified: true, password: '!' });
+      user = new User({
+        name,
+        email,
+        role: 'worker',
+        provider: 'personalai',
+        providerId: sub,
+        isVerified: true,
+        password: '!'
+      });
       await user.save();
     } else {
       if (!user.provider) user.provider = 'personalai';
@@ -372,11 +310,25 @@ router.post('/external', async (req, res) => {
       await user.save();
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '7d'
+    });
     const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 });
-    return res.json({ message: 'Login successful', token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    return res.json({
+      message: 'Login successful',
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
   } catch (error) {
     return res.status(401).json({ message: error.message || 'External auth failed' });
   }
 });
+
+module.exports = router;

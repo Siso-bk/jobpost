@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    // Proxy backend API calls, but let Next API routes (e.g. /api/personalai/*) win first.
+    // Proxy backend API calls, but let other Next API routes win first.
     // On Vercel, set API_PROXY_TARGET or NEXT_PUBLIC_API_URL to your backend: https://<render>.onrender.com/api
     const rawBase =
       process.env.API_PROXY_TARGET ||

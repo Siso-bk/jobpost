@@ -51,6 +51,12 @@ export default function Header() {
               <Link href="/talent" className={`nav-link ${isActive('/talent') ? 'active' : ''}`}>
                 Talent
               </Link>
+              <Link
+                href="/integrate"
+                className={`nav-link ${isActive('/integrate') ? 'active' : ''}`}
+              >
+                Integrate
+              </Link>
               <Link href="/login" className={`nav-link ${isActive('/login') ? 'active' : ''}`}>
                 Login
               </Link>
@@ -65,6 +71,12 @@ export default function Header() {
             <>
               <Link href="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>
                 Jobs
+              </Link>
+              <Link
+                href="/integrate"
+                className={`nav-link ${isActive('/integrate') ? 'active' : ''}`}
+              >
+                Integrate
               </Link>
               {userRole === 'employer' && (
                 <Link

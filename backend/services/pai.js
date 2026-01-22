@@ -1,7 +1,7 @@
 const axios = require('axios');
 const User = require('../models/User');
 
-const baseUrl = process.env.PAI_API_BASE || process.env.PERSONALAI_ISSUER || '';
+const baseUrl = process.env.PAI_API_BASE || '';
 const serviceKey = process.env.PAI_SERVICE_KEY || '';
 const tenantId = process.env.PAI_TENANT_ID || '';
 const platform = process.env.PAI_PLATFORM || 'jobpost';

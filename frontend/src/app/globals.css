@@ -1078,6 +1078,60 @@ a:hover {
   padding: 18px;
   box-shadow: var(--shadow);
 }
+.integrate-hero {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 22px;
+}
+.integrate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+.integrate-section {
+  margin-top: 32px;
+}
+.integrate-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.integrate-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.code-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+.code-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.code-card pre {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 13px;
+  color: var(--text);
+  font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
+}
 .steps {
   display: grid;
   gap: 28px;
