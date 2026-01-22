@@ -11,12 +11,20 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const role = localStorage.getItem('userRole');
-      if (role) {
-        router.replace(role === 'employer' ? '/employer' : '/jobs');
-      }
-    } catch {}
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        const role = res.data?.role;
+        if (role) {
+          router.replace(role === 'employer' ? '/employer' : '/jobs');
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,9 +38,6 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await authService.paiLogin(formData.email, formData.password);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('userId', res.data.user.id);
-      localStorage.setItem('userRole', res.data.user.role);
       router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
     } catch (err: any) {
       const code = err?.response?.data?.code;

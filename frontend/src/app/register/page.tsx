@@ -22,12 +22,20 @@ export default function RegisterPage() {
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const role = localStorage.getItem('userRole');
-      if (role) {
-        router.replace(role === 'employer' ? '/employer' : '/jobs');
-      }
-    } catch {}
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        const role = res.data?.role;
+        if (role) {
+          router.replace(role === 'employer' ? '/employer' : '/jobs');
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -78,9 +86,6 @@ export default function RegisterPage() {
           code: code.trim(),
           role: details.role,
         });
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('userId', res.data.user.id);
-        localStorage.setItem('userRole', res.data.user.role);
         router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
         return;
       }
@@ -118,9 +123,6 @@ export default function RegisterPage() {
         password: details.password,
         role: details.role,
       });
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('userId', res.data.user.id);
-      localStorage.setItem('userRole', res.data.user.role);
       router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Unable to finish signup.');

@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const axios = require('axios');
 const crypto = require('crypto');
+const auth = require('../middleware/auth');
 
 const PAI_API_BASE = (process.env.PAI_API_BASE || '').replace(/\/$/, '');
 const PAI_TIMEOUT_MS = 10000;
@@ -79,6 +80,24 @@ router.post('/logout', (req, res) => {
   return res.json({ message: 'Logged out' });
 });
 
+// Return current user based on session cookie
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('_id name email role');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    return res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 // PAI signup: request verification code
 router.post('/pai-signup', async (req, res) => {
   try {
@@ -141,7 +160,6 @@ router.post('/pai-signup/complete', async (req, res) => {
     });
     return res.status(201).json({
       message: 'Signup complete',
-      token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
@@ -189,7 +207,6 @@ router.post('/pai-login', async (req, res) => {
     });
     return res.json({
       message: 'Login successful',
-      token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
@@ -237,7 +254,6 @@ router.post('/pai-verify-code', async (req, res) => {
     });
     return res.json({
       message: 'Email verified',
-      token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {
@@ -323,7 +339,6 @@ router.post('/external', async (req, res) => {
     });
     return res.json({
       message: 'Login successful',
-      token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (error) {

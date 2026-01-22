@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { applicationsService, usersService } from '@/services/api';
+import { applicationsService, authService, usersService } from '@/services/api';
 
 type ApplyFormProps = {
   jobId: string;
@@ -18,10 +18,22 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      setUserRole(localStorage.getItem('userRole'));
-      setUserId(localStorage.getItem('userId'));
-    } catch {}
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        setUserRole(res.data?.role || null);
+        setUserId(res.data?.id || null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setUserRole(null);
+        setUserId(null);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

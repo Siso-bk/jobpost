@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { usersService } from '@/services/api';
+import { authService, usersService } from '@/services/api';
 
 export default function Header() {
   const [hydrated, setHydrated] = useState(false);
@@ -12,12 +12,26 @@ export default function Header() {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Read client-only storage after mount to avoid hydration mismatch
-    try {
-      setUserRole(localStorage.getItem('userRole'));
-      setUserId(localStorage.getItem('userId'));
-    } catch {}
-    setHydrated(true);
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        setUserRole(res.data?.role || null);
+        setUserId(res.data?.id || null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setUserRole(null);
+        setUserId(null);
+      })
+      .finally(() => {
+        if (!active) return;
+        setHydrated(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {

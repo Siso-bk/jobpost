@@ -3,7 +3,7 @@ import Link from 'next/link';
 import ApplyForm from '@/components/ApplyForm';
 
 async function getJob(id: string) {
-  // Next.js can't use axios instance with localStorage on server; fetch directly
+  // Next.js server components should use fetch directly.
   const base =
     process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_ORIGIN || ''}/api` || '/api';
   const res = await fetch(`${base}/jobs/${id}`, { cache: 'no-store' });

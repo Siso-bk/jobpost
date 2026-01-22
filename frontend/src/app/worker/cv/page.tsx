@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { usersService } from '@/services/api';
+import { authService, usersService } from '@/services/api';
 
 type CvForm = {
   headline: string;
@@ -47,10 +47,22 @@ export default function WorkerCvPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      setUserId(localStorage.getItem('userId'));
-      setUserRole(localStorage.getItem('userRole'));
-    } catch {}
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        setUserId(res.data?.id || null);
+        setUserRole(res.data?.role || null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setUserId(null);
+        setUserRole(null);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {

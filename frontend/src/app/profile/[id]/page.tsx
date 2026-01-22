@@ -50,10 +50,22 @@ export default function ProfilePage() {
   const companyLogoInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    try {
-      setViewerId(localStorage.getItem('userId'));
-      setViewerRole(localStorage.getItem('userRole'));
-    } catch {}
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        setViewerId(res.data?.id || null);
+        setViewerRole(res.data?.role || null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setViewerId(null);
+        setViewerRole(null);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -129,11 +141,6 @@ export default function ProfilePage() {
     setError(null);
     try {
       await authService.logout();
-      try {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        localStorage.removeItem('userRole');
-      } catch {}
       router.replace('/login');
     } catch (e: any) {
       setError(e?.response?.data?.message || 'Logout failed');
