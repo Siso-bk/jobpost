@@ -178,4 +178,30 @@ router.put('/:id', auth, requireRole('employer'), async (req, res) => {
   }
 });
 
+// Delete application (employer only)
+router.delete('/:id', auth, requireRole('employer'), async (req, res) => {
+  try {
+    const application = await Application.findById(req.params.id);
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    if (application.employerId.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const jobId = application.jobId;
+    const workerId = application.workerId;
+    await Application.deleteOne({ _id: application._id });
+
+    if (jobId && workerId) {
+      await Job.findByIdAndUpdate(jobId, { $pull: { applicants: workerId } });
+    }
+
+    return res.json({ message: 'Application deleted' });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

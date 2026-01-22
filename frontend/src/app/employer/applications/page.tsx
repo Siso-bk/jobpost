@@ -36,6 +36,7 @@ export default function EmployerApplicationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [messageLoadingId, setMessageLoadingId] = useState<string | null>(null);
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -91,6 +92,21 @@ export default function EmployerApplicationsPage() {
       setError(e?.response?.data?.message || 'Unable to start chat');
     } finally {
       setMessageLoadingId(null);
+    }
+  };
+
+  const handleDelete = async (applicationId: string) => {
+    const confirmed = window.confirm('Delete this application? This cannot be undone.');
+    if (!confirmed) return;
+    setDeleteLoadingId(applicationId);
+    setError(null);
+    try {
+      await applicationsService.deleteApplication(applicationId);
+      setApplications((prev) => prev.filter((app) => app._id !== applicationId));
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to delete application');
+    } finally {
+      setDeleteLoadingId(null);
     }
   };
 
@@ -168,6 +184,14 @@ export default function EmployerApplicationsPage() {
                   disabled={messageLoadingId === application.workerId?._id}
                 >
                   {messageLoadingId === application.workerId?._id ? 'Opening...' : 'Message'}
+                </button>
+                <button
+                  type="button"
+                  className="btn-danger"
+                  onClick={() => handleDelete(application._id)}
+                  disabled={deleteLoadingId === application._id}
+                >
+                  {deleteLoadingId === application._id ? 'Deleting...' : 'Delete'}
                 </button>
                 <Link href={`/employer/applications/${application._id}`}>View application</Link>
                 <select

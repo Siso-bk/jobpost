@@ -41,6 +41,7 @@ export default function EmployerApplicationDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [messageLoading, setMessageLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (!applicationId) return;
@@ -91,6 +92,22 @@ export default function EmployerApplicationDetailPage() {
       setError(e?.response?.data?.message || 'Unable to start chat');
     } finally {
       setMessageLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!application) return;
+    const confirmed = window.confirm('Delete this application? This cannot be undone.');
+    if (!confirmed) return;
+    setDeleteLoading(true);
+    setError(null);
+    try {
+      await applicationsService.deleteApplication(application._id);
+      router.push('/employer/applications');
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to delete application');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -250,6 +267,14 @@ export default function EmployerApplicationDetailPage() {
                   )}
                 </div>
               </div>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={handleDelete}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? 'Deleting...' : 'Delete application'}
+              </button>
             </div>
           </section>
         </div>

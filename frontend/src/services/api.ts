@@ -86,6 +86,7 @@ export const applicationsService = {
   getApplicationById: (id: string) => api.get(`/applications/${id}`),
   updateApplicationStatus: (id: string, status: string) =>
     api.put(`/applications/${id}`, { status }),
+  deleteApplication: (id: string) => api.delete(`/applications/${id}`),
 };
 
 export const conversationsService = {
