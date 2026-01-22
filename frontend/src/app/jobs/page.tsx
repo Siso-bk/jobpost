@@ -164,8 +164,14 @@ export default function JobsPage() {
               const featured = isFeaturedJob(job, index);
               const logoColor = getLogoColor(job.company);
               const initials = getInitials(job.company);
+              const jobLabel = `View ${job.title} at ${job.company}`;
               return (
-                <div key={job._id} className="job-card">
+                <Link
+                  key={job._id}
+                  href={`/job/${job._id}`}
+                  className="job-card job-card-link"
+                  aria-label={jobLabel}
+                >
                   <div className="job-card-top">
                     <div className="job-logo" style={{ backgroundColor: logoColor }}>
                       {job.logoUrl ? (
@@ -197,9 +203,9 @@ export default function JobsPage() {
                   <p className="job-desc">{job.description?.slice(0, 140)}...</p>
                   <div className="job-actions">
                     <span className="muted">Open role</span>
-                    <Link href={`/job/${job._id}`}>View details</Link>
+                    <span className="job-link">View details</span>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

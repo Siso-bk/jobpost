@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { applicationsService, jobsService } from '@/services/api';
+import { useRouter } from 'next/navigation';
+import { applicationsService, conversationsService, jobsService } from '@/services/api';
 
 type Job = {
   _id: string;
@@ -15,14 +16,16 @@ type Application = {
   status: 'pending' | 'reviewed' | 'accepted' | 'rejected';
   createdAt: string;
   jobId?: { _id: string; title: string } | null;
-  workerId?: { name?: string; email?: string } | null;
+  workerId?: { _id: string; name?: string; email?: string } | null;
 };
 
 export default function EmployerDashboardPage() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [messageLoadingId, setMessageLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,6 +58,25 @@ export default function EmployerDashboardPage() {
     const date = new Date(value);
     if (Number.isNaN(date.valueOf())) return 'Unknown date';
     return date.toISOString().slice(0, 10);
+  };
+
+  const handleMessage = async (workerId?: string) => {
+    if (!workerId) return;
+    setMessageLoadingId(workerId);
+    setError(null);
+    try {
+      const res = await conversationsService.create(workerId);
+      const conversationId = res.data?.id || res.data?._id;
+      if (conversationId) {
+        router.push(`/messages?c=${conversationId}`);
+      } else {
+        setError('Unable to start chat');
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to start chat');
+    } finally {
+      setMessageLoadingId(null);
+    }
   };
 
   return (
@@ -118,6 +140,17 @@ export default function EmployerDashboardPage() {
                         </div>
                         <div className="muted">
                           {app.workerId?.name || app.workerId?.email || 'Applicant'}
+                        </div>
+                        <div className="dashboard-actions">
+                          <Link href={`/employer/applications/${app._id}`}>View</Link>
+                          <button
+                            type="button"
+                            className="btn-ghost"
+                            onClick={() => handleMessage(app.workerId?._id)}
+                            disabled={messageLoadingId === app.workerId?._id}
+                          >
+                            {messageLoadingId === app.workerId?._id ? 'Opening...' : 'Message'}
+                          </button>
                         </div>
                       </div>
                       <div className="dashboard-meta">

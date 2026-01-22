@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { applicationsService } from '@/services/api';
+import { useRouter } from 'next/navigation';
+import { applicationsService, conversationsService } from '@/services/api';
 
 type Job = {
   _id: string;
@@ -14,6 +15,10 @@ type Worker = {
   _id: string;
   name?: string;
   email?: string;
+  phone?: string;
+  chatApp?: string;
+  chatHandle?: string;
+  allowContact?: boolean;
 };
 
 type Application = {
@@ -25,10 +30,12 @@ type Application = {
 };
 
 export default function EmployerApplicationsPage() {
+  const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [messageLoadingId, setMessageLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -68,6 +75,25 @@ export default function EmployerApplicationsPage() {
     }
   };
 
+  const handleMessage = async (workerId?: string) => {
+    if (!workerId) return;
+    setMessageLoadingId(workerId);
+    setError(null);
+    try {
+      const res = await conversationsService.create(workerId);
+      const conversationId = res.data?.id || res.data?._id;
+      if (conversationId) {
+        router.push(`/messages?c=${conversationId}`);
+      } else {
+        setError('Unable to start chat');
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to start chat');
+    } finally {
+      setMessageLoadingId(null);
+    }
+  };
+
   return (
     <div className="page-container">
       <div className="applications-header">
@@ -103,18 +129,46 @@ export default function EmployerApplicationsPage() {
                 </span>
               </div>
               <div className="application-meta">
-                <span>{application.workerId?.email || 'No email'}</span>
+                <span>
+                  {application.workerId?.allowContact
+                    ? application.workerId?.email || 'No email'
+                    : 'Contact locked'}
+                </span>
                 <span className="dot">|</span>
                 <span>{application.jobId?.location || 'Location TBD'}</span>
                 <span className="dot">|</span>
                 <span>Applied {formatDate(application.createdAt)}</span>
               </div>
+              {application.workerId?.allowContact && (
+                <div className="contact-row">
+                  {application.workerId?.phone && (
+                    <a href={`tel:${application.workerId.phone}`}>Call</a>
+                  )}
+                  {application.workerId?.email && (
+                    <a href={`mailto:${application.workerId.email}`}>Email</a>
+                  )}
+                  {(application.workerId?.chatApp || application.workerId?.chatHandle) && (
+                    <span className="muted">
+                      {application.workerId.chatApp || 'Chat'}{' '}
+                      {application.workerId.chatHandle || ''}
+                    </span>
+                  )}
+                </div>
+              )}
               <div className="application-actions">
                 {application.jobId?._id ? (
                   <Link href={`/job/${application.jobId._id}`}>View job</Link>
                 ) : (
                   <span className="muted">Job not available</span>
                 )}
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => handleMessage(application.workerId?._id)}
+                  disabled={messageLoadingId === application.workerId?._id}
+                >
+                  {messageLoadingId === application.workerId?._id ? 'Opening...' : 'Message'}
+                </button>
                 <Link href={`/employer/applications/${application._id}`}>View application</Link>
                 <select
                   value={application.status}

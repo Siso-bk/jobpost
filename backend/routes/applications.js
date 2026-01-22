@@ -91,9 +91,20 @@ router.get('/employer', auth, requireRole('employer'), async (req, res) => {
   try {
     const applications = await Application.find({ employerId: req.userId })
       .populate('jobId')
-      .populate('workerId', 'name email');
+      .populate('workerId', 'name email phone chatApp chatHandle allowContact profilePicture');
 
-    res.json(applications);
+    const sanitized = applications.map((application) => {
+      const data = application.toObject();
+      if (data.workerId && data.workerId.allowContact !== true) {
+        delete data.workerId.email;
+        delete data.workerId.phone;
+        delete data.workerId.chatApp;
+        delete data.workerId.chatHandle;
+      }
+      return data;
+    });
+
+    res.json(sanitized);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -104,7 +115,7 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const application = await Application.findById(req.params.id)
       .populate('jobId')
-      .populate('workerId')
+      .populate('workerId', 'name email phone chatApp chatHandle allowContact profilePicture')
       .populate('employerId', 'name email company');
 
     if (!application) {
@@ -118,7 +129,15 @@ router.get('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    res.json(application);
+    const data = application.toObject();
+    if (data.workerId && data.workerId.allowContact !== true) {
+      delete data.workerId.email;
+      delete data.workerId.phone;
+      delete data.workerId.chatApp;
+      delete data.workerId.chatHandle;
+    }
+
+    res.json(data);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

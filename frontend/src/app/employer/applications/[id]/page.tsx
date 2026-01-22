@@ -1,8 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { applicationsService } from '@/services/api';
+import { useParams, useRouter } from 'next/navigation';
+import { applicationsService, conversationsService } from '@/services/api';
 
 type Job = {
   _id: string;
@@ -16,6 +16,10 @@ type Worker = {
   _id: string;
   name?: string;
   email?: string;
+  phone?: string;
+  chatApp?: string;
+  chatHandle?: string;
+  allowContact?: boolean;
 };
 
 type Application = {
@@ -31,10 +35,12 @@ type Application = {
 export default function EmployerApplicationDetailPage() {
   const params = useParams();
   const applicationId = (params?.id as string) || '';
+  const router = useRouter();
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [messageLoading, setMessageLoading] = useState(false);
 
   useEffect(() => {
     if (!applicationId) return;
@@ -65,6 +71,26 @@ export default function EmployerApplicationDetailPage() {
       setError(e?.response?.data?.message || 'Failed to update status');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleMessage = async () => {
+    const workerId = application?.workerId?._id;
+    if (!workerId) return;
+    setMessageLoading(true);
+    setError(null);
+    try {
+      const res = await conversationsService.create(workerId);
+      const conversationId = res.data?.id || res.data?._id;
+      if (conversationId) {
+        router.push(`/messages?c=${conversationId}`);
+      } else {
+        setError('Unable to start chat');
+      }
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Unable to start chat');
+    } finally {
+      setMessageLoading(false);
     }
   };
 
@@ -127,8 +153,51 @@ export default function EmployerApplicationDetailPage() {
               </div>
               <div>
                 <span className="profile-label">Email</span>
-                <div className="profile-value">{application.workerId?.email || 'No email'}</div>
+                <div className="profile-value">
+                  {application.workerId?.allowContact
+                    ? application.workerId?.email
+                      ? (
+                          <a href={`mailto:${application.workerId.email}`}>
+                            {application.workerId.email}
+                          </a>
+                        )
+                      : 'No email'
+                    : 'Contact locked'}
+                </div>
               </div>
+              {application.workerId?.allowContact && (
+                <>
+                  {application.workerId?.phone && (
+                    <div>
+                      <span className="profile-label">Phone</span>
+                      <div className="profile-value">
+                        <a href={`tel:${application.workerId.phone}`}>
+                          {application.workerId.phone}
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  {(application.workerId?.chatApp || application.workerId?.chatHandle) && (
+                    <div>
+                      <span className="profile-label">Chat</span>
+                      <div className="profile-value">
+                        {application.workerId.chatApp || 'Chat'}{' '}
+                        {application.workerId.chatHandle || ''}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+              {application.workerId?._id && (
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={handleMessage}
+                  disabled={messageLoading}
+                >
+                  {messageLoading ? 'Opening...' : 'Message'}
+                </button>
+              )}
               {application.workerId?._id && (
                 <Link className="btn-ghost" href={`/profile/${application.workerId._id}`}>
                   View profile

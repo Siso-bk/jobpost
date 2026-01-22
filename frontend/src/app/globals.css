@@ -775,7 +775,8 @@ a:hover {
   justify-content: space-between;
   align-items: center;
 }
-.job-actions a {
+.job-actions a,
+.job-actions .job-link {
   font-weight: 600;
   color: var(--brand);
 }
@@ -924,6 +925,17 @@ a:hover {
   padding: 6px 10px;
   font-family: var(--font-body);
 }
+.contact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.contact-row a {
+  color: var(--brand);
+  font-weight: 600;
+}
 .status-open {
   background: rgba(34, 197, 94, 0.16);
   color: #15803d;
@@ -999,6 +1011,12 @@ a:hover {
   display: grid;
   gap: 6px;
   justify-items: end;
+}
+.dashboard-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 6px;
 }
 
 .talent-head h1 {
