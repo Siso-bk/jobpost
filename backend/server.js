@@ -26,6 +26,7 @@ const publicRoutes = require('./routes/public');
 const { startRetentionCleanup } = require('./services/retention');
 
 const app = express();
+app.disable('x-powered-by');
 
 const isProd = process.env.NODE_ENV === 'production';
 if (isProd) {

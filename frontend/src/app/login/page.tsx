@@ -108,12 +108,7 @@ function LoginPageClient() {
         <h2>Sign in</h2>
         {status && <p className="status-message">{status}</p>}
         {error && <p className="error-message">{error}</p>}
-        <div className="auth-alt">
-          <a className="btn-secondary" href="/api/personalai">
-            Continue with PersonalAI
-          </a>
-        </div>
-        <p className="status-message">Or sign in with your PersonalAI email</p>
+        <p className="status-message">Sign in with your PersonalAI email</p>
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
             <span>Email</span>
