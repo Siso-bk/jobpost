@@ -8,7 +8,9 @@ const compression = require('compression');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const requestId = require('./middleware/requestId');
 const csrf = require('./middleware/csrf');
+const { validateEnv } = require('./utils/validateEnv');
 
 const authRoutes = require('./routes/auth');
 const jobRoutes = require('./routes/jobs');
@@ -28,8 +30,12 @@ if (isProd) {
   app.set('trust proxy', 1);
 }
 
-if (!process.env.MONGODB_URI || !process.env.JWT_SECRET) {
-  const msg = 'Missing MONGODB_URI or JWT_SECRET in environment';
+const envReport = validateEnv();
+if (envReport.warnings.length) {
+  envReport.warnings.forEach((warning) => console.warn(`[env] ${warning}`));
+}
+if (envReport.errors.length) {
+  const msg = `Missing required environment variables: ${envReport.errors.join(', ')}`;
   if (isProd) {
     console.error(msg);
     process.exit(1);
@@ -48,11 +54,19 @@ if (process.env.CORS_ORIGIN) {
 corsOptions.credentials = true;
 app.use(cors(corsOptions));
 
-app.use(helmet());
+app.use(requestId());
+morgan.token('request-id', (req) => req.requestId || '-');
+const morganFormat = isProd
+  ? ':request-id :remote-addr :method :url :status :res[content-length] - :response-time ms'
+  : ':request-id :method :url :status :response-time ms - :res[content-length]';
+app.use(morgan(morganFormat));
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' }
+  })
+);
 app.use(compression());
-if (!isProd) {
-  app.use(morgan('dev'));
-}
 app.use(express.json({ limit: '3mb' }));
 app.use(cookieParser());
 app.use(csrf());
@@ -154,8 +168,9 @@ if (isProd) {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+  const requestId = req.requestId || 'unknown';
+  console.error(`[${requestId}]`, err.stack || err);
+  res.status(500).json({ message: 'Something went wrong!', requestId });
 });
 
 // Note: server starts after successful MongoDB connection above
