@@ -7,6 +7,7 @@ const validator = require('validator');
 const axios = require('axios');
 const crypto = require('crypto');
 const auth = require('../middleware/auth');
+const { authCookieOptions, clearAuthCookieOptions } = require('../utils/cookies');
 
 const PAI_API_BASE = (process.env.PAI_API_BASE || '').replace(/\/$/, '');
 const PAI_TENANT_ID = (process.env.PAI_TENANT_ID || '').trim();
@@ -81,8 +82,7 @@ async function upsertPaiUser(paiUser, role) {
 
 // Logout (clear auth cookie)
 router.post('/logout', (req, res) => {
-  const isProd = process.env.NODE_ENV === 'production';
-  res.clearCookie('token', { httpOnly: true, sameSite: 'lax', secure: isProd, path: '/' });
+  res.clearCookie('token', clearAuthCookieOptions());
   return res.json({ message: 'Logged out' });
 });
 
@@ -150,14 +150,7 @@ router.post('/register', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('token', token, authCookieOptions());
     return res.status(201).json({
       message: 'Signup successful',
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
@@ -197,14 +190,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Login successful',
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
@@ -266,14 +252,7 @@ router.post('/pai-signup/complete', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('token', token, authCookieOptions());
     return res.status(201).json({
       message: 'Signup complete',
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
@@ -316,14 +295,7 @@ router.post('/pai-login', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Login successful',
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
@@ -363,14 +335,7 @@ router.post('/pai-verify-code', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Email verified',
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
@@ -448,14 +413,7 @@ router.post('/external', async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
-    const isProd = process.env.NODE_ENV === 'production';
-    res.cookie('token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: isProd,
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Login successful',
       user: { id: user._id, name: user.name, email: user.email, role: user.role }

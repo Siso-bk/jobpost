@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { csrfCookieOptions } = require('../utils/cookies');
 
 function generateToken() {
   return crypto.randomBytes(24).toString('hex');
@@ -11,7 +12,6 @@ module.exports = function csrf() {
   return (req, res, next) => {
     const method = (req.method || 'GET').toUpperCase();
     const isUnsafe = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
-    const isProd = process.env.NODE_ENV === 'production';
     const path = req.path || '';
 
     // Skip CSRF for auth endpoints (login/register/logout/external)
@@ -25,13 +25,7 @@ module.exports = function csrf() {
     if (!isUnsafe) {
       if (!cookieToken) {
         const token = generateToken();
-        res.cookie(cookieName, token, {
-          httpOnly: false, // must be readable by browser to echo in header
-          sameSite: 'lax',
-          secure: isProd,
-          path: '/',
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        res.cookie(cookieName, token, csrfCookieOptions());
       }
       return next();
     }
