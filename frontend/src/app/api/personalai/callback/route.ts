@@ -23,13 +23,14 @@ export async function GET(req: NextRequest) {
   if (!verifier) return NextResponse.redirect(`${origin}/login?error=missing_verifier`);
 
   try {
-    const issuer = process.env.PERSONALAI_ISSUER || 'https://pai-iota.vercel.app';
+    const issuer =
+      process.env.PERSONALAI_ISSUER || process.env.PAI_API_BASE || 'https://pai-iota.vercel.app';
     const tokenEndpoint = process.env.PERSONALAI_TOKEN_ENDPOINT || '/oauth/token';
     const clientId =
       process.env.PERSONALAI_CLIENT_ID || process.env.NEXT_PUBLIC_PERSONALAI_CLIENT_ID;
     const clientSecret = process.env.PERSONALAI_CLIENT_SECRET;
 
-    if (!clientId) throw new Error('Missing PERSONALAI_CLIENT_ID');
+    if (!clientId) throw new Error('oidc_not_configured');
 
     const redirectUri = `${origin}/api/personalai/callback`;
 

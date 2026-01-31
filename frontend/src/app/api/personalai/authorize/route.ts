@@ -15,17 +15,19 @@ function absoluteUrl(base: string, path: string) {
 }
 
 export async function GET(req: NextRequest) {
-  const issuer = process.env.PERSONALAI_ISSUER || 'https://pai-iota.vercel.app';
+  const issuer =
+    process.env.PERSONALAI_ISSUER || process.env.PAI_API_BASE || 'https://pai-iota.vercel.app';
   const authEndpoint = process.env.PERSONALAI_AUTHORIZATION_ENDPOINT || '/oauth/authorize';
   const clientId = process.env.PERSONALAI_CLIENT_ID || process.env.NEXT_PUBLIC_PERSONALAI_CLIENT_ID;
   const scope = process.env.PERSONALAI_SCOPE || 'openid email profile';
-
-  if (!clientId) {
-    return new NextResponse('Missing PERSONALAI_CLIENT_ID', { status: 500 });
-  }
-
   const origin = new URL(req.url).origin;
   const redirectUri = `${origin}/api/personalai/callback`;
+
+  if (!clientId) {
+    const fallback = new URL(`${origin}/login`);
+    fallback.searchParams.set('error', 'oidc_not_configured');
+    return NextResponse.redirect(fallback);
+  }
 
   // PKCE
   const verifier = base64url(crypto.randomBytes(32));

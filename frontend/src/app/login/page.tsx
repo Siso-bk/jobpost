@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/api';
 
 export default function LoginPage() {
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [needsRole, setNeedsRole] = useState(false);
   const [role, setRole] = useState('worker');
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     let active = true;
@@ -29,6 +30,26 @@ export default function LoginPage() {
       active = false;
     };
   }, [router]);
+
+  useEffect(() => {
+    const raw = searchParams.get('error');
+    if (!raw) return;
+    let message = '';
+    if (raw === 'oidc_not_configured' || raw === 'missing_client_id') {
+      message = 'PersonalAI sign-in is not configured. Please use email/password instead.';
+    } else if (raw === 'missing_code') {
+      message = 'PersonalAI sign-in failed. Please try again.';
+    } else if (raw === 'state_mismatch' || raw === 'missing_verifier') {
+      message = 'PersonalAI sign-in was interrupted. Please try again.';
+    } else if (raw.startsWith('token_exchange_failed')) {
+      message = 'PersonalAI sign-in failed. Please try again.';
+    } else if (raw.startsWith('app_login_failed')) {
+      message = 'We could not complete sign-in. Please try again.';
+    } else if (raw === 'missing_id_token' || raw === 'missing_app_token') {
+      message = 'PersonalAI sign-in failed. Please try again.';
+    }
+    if (message) setError(message);
+  }, [searchParams]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
