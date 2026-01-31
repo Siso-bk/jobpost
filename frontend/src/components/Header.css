@@ -28,6 +28,13 @@
   justify-content: space-between;
   align-items: center;
 }
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: auto;
+}
 
 .logo {
   font-size: 20px;
@@ -42,6 +49,22 @@
   gap: 18px;
   align-items: center;
   font-size: 14px;
+}
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.nav-toggle.open {
+  background: rgba(14, 165, 164, 0.1);
+  color: var(--brand-600);
 }
 
 .nav a {
@@ -136,6 +159,16 @@
   display: grid;
   z-index: 120;
 }
+.account-dropdown.menu-grid {
+  min-width: 320px;
+  padding: 10px;
+  gap: 12px 18px;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+}
+.account-dropdown.align-left {
+  left: 0;
+  right: auto;
+}
 .account-item {
   padding: 10px 12px;
   font-size: 14px;
@@ -145,6 +178,45 @@
   text-align: left;
   cursor: pointer;
 }
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.menu-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-600);
+}
+.menu-count {
+  margin-left: auto;
+}
+.menu-title {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 8px 12px 4px;
+}
+.menu-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 0;
+}
+.menu-section {
+  display: grid;
+  gap: 6px;
+}
+.menu-section-divider {
+  border-left: 1px solid var(--line);
+  padding-left: 12px;
+}
+.account-dropdown.menu-grid .account-item {
+  padding: 8px 10px;
+}
 .account-item:hover {
   background: rgba(14, 165, 164, 0.08);
   color: var(--brand-600);
@@ -153,17 +225,52 @@
   color: var(--danger);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .header-content {
     flex-direction: column;
     gap: 12px;
+    align-items: stretch;
+  }
+  .header-top {
+    width: 100%;
+  }
+  .nav-toggle {
+    display: inline-flex;
   }
   .nav {
+    display: none;
     flex-direction: column;
     gap: 8px;
     width: 100%;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+  .nav.is-open {
+    display: flex;
   }
   .nav a {
     display: block;
+    width: 100%;
   }
+  .account-menu {
+    width: 100%;
+  }
+  .account-trigger {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .account-dropdown {
+    position: static;
+    box-shadow: none;
+    margin-top: 8px;
+  }
+  .account-dropdown.menu-grid {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+  .menu-section-divider {
+    border-left: none;
+    padding-left: 0;
+  }
+}
 }
