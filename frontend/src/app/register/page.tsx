@@ -5,29 +5,21 @@ import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 import { getDefaultRouteForRoles, normalizeRoles } from '@/lib/roles';
 
-type Step = 'email' | 'code' | 'details';
-type Flow = 'new' | 'existing';
-
 export default function RegisterPage() {
-  const [authMode, setAuthMode] = useState<'pai' | 'local'>('pai');
-  const [step, setStep] = useState<Step>('email');
-  const [flow, setFlow] = useState<Flow>('new');
+  const [step, setStep] = useState<'email' | 'verify' | 'details'>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [preToken, setPreToken] = useState<string | null>(null);
-  const [details, setDetails] = useState({ name: '', handle: '', password: '', role: 'worker' });
-  const [localDetails, setLocalDetails] = useState({
+  const [preToken, setPreToken] = useState('');
+  const [details, setDetails] = useState({
     name: '',
-    email: '',
     password: '',
-    role: 'worker',
+    handle: '',
+    role: 'worker'
   });
+  const [existingAccount, setExistingAccount] = useState(false);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
-  const [devCode, setDevCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [resendMessage, setResendMessage] = useState('');
-  const [resendLoading, setResendLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -47,72 +39,77 @@ export default function RegisterPage() {
     };
   }, [router]);
 
+  const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
+    setDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setStatus('Sending verification code...');
-    setDevCode(null);
     const normalizedEmail = email.trim().toLowerCase();
     try {
       const res = await authService.paiSignup(normalizedEmail);
-      const data = res.data || {};
-      if (data.exists) {
-        if (data.emailVerified) {
-          setError('Account already exists. Please log in.');
-          setStatus('Redirecting to login...');
-          setTimeout(() => {
-            router.push(`/login?email=${encodeURIComponent(normalizedEmail)}`);
-          }, 700);
-          return;
-        }
-        const resend = await authService.paiResend(normalizedEmail);
-        const resendBody = resend.data || {};
-        setFlow('existing');
-        setStep('code');
-        setStatus(resendBody.message || 'We sent a new verification code to your email.');
-        if (resendBody.devVerificationCode) setDevCode(resendBody.devVerificationCode);
-      } else {
-        setFlow('new');
-        setStep('code');
-        setStatus(data.message || 'Check your email for the 6-digit code.');
-        if (data.devVerificationCode) setDevCode(data.devVerificationCode);
+      const exists = Boolean(res.data?.exists);
+      if (exists && res.data?.emailVerified) {
+        setError('Account already exists. Please log in.');
+        setStatus('');
+        return;
       }
+      if (exists && !res.data?.emailVerified) {
+        setExistingAccount(true);
+        setStatus('We sent a verification code. Enter it to continue.');
+        setStep('verify');
+        try {
+          await authService.paiResend(normalizedEmail);
+        } catch {
+          // ignore resend failures, user can retry
+        }
+        return;
+      }
+      setExistingAccount(false);
+      setStatus(res.data?.message || 'Verification code sent.');
+      setStep('verify');
     } catch (err: any) {
-      setError(friendlyError(err, 'We could not send the verification code. Please try again.'));
       setStatus('');
+      setError(friendlyError(err, 'We could not send the verification code.'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCodeSubmit = async (e: React.FormEvent) => {
+  const handleVerifySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setStatus('Verifying code...');
+    const normalizedEmail = email.trim().toLowerCase();
     try {
-      if (flow === 'existing') {
-        const res = await authService.paiVerifyCode({
-          email: email.trim().toLowerCase(),
-          code: code.trim(),
-          role: details.role,
-        });
+      if (existingAccount) {
+        const res = await authService.paiVerifyCode(normalizedEmail, code.trim(), details.role);
         const roles = normalizeRoles(res.data?.user?.roles);
+        setStatus('Email verified. Redirecting...');
         router.push(getDefaultRouteForRoles(roles));
         return;
       }
-      const res = await authService.paiSignupVerify(email.trim().toLowerCase(), code.trim());
-      if (!res.data?.preToken) {
-        throw new Error('Missing verification token');
+      const res = await authService.paiSignupVerify(normalizedEmail, code.trim());
+      const token = res.data?.preToken;
+      if (!token) {
+        throw new Error('Verification failed.');
       }
-      setPreToken(res.data.preToken);
+      setPreToken(token);
+      setStatus('Code verified. Finish creating your profile.');
       setStep('details');
-      setStatus('Code verified. Complete your profile.');
-      setDevCode(null);
     } catch (err: any) {
-      setError(friendlyError(err, 'We could not verify the code. Please try again.'));
       setStatus('');
+      const codeValue = err?.response?.data?.code;
+      if (codeValue === 'jobpost_profile_required') {
+        setError('Choose a role to finish your JobPost profile.');
+      } else {
+        setError(friendlyError(err, 'We could not verify that code.'));
+      }
     } finally {
       setLoading(false);
     }
@@ -120,11 +117,6 @@ export default function RegisterPage() {
 
   const handleDetailsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!preToken) {
-      setError('Verification expired. Restart signup.');
-      setStep('email');
-      return;
-    }
     setLoading(true);
     setError('');
     setStatus('Creating your account...');
@@ -132,110 +124,47 @@ export default function RegisterPage() {
       const res = await authService.paiSignupComplete({
         preToken,
         name: details.name.trim(),
-        handle: details.handle.trim(),
         password: details.password,
-        role: details.role,
+        handle: details.handle.trim(),
+        role: details.role
       });
       const roles = normalizeRoles(res.data?.user?.roles);
       router.push(getDefaultRouteForRoles(roles));
     } catch (err: any) {
-      setError(friendlyError(err, 'We could not finish signup. Please try again.'));
       setStatus('');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLocalSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setStatus('Creating your account...');
-    try {
-      const res = await authService.localRegister({
-        name: localDetails.name.trim(),
-        email: localDetails.email.trim().toLowerCase(),
-        password: localDetails.password,
-        role: localDetails.role,
-      });
-      const roles = normalizeRoles(res.data?.user?.roles);
-      router.push(getDefaultRouteForRoles(roles));
-    } catch (err: any) {
-      const code = err?.response?.data?.code;
-      if (code === 'use_pai_login') {
-        setError('This email is managed by PersonalAI. Switch to PersonalAI signup.');
-      } else {
-        setError(friendlyError(err, 'We could not create your account. Please try again.'));
-      }
-      setStatus('');
+      setError(friendlyError(err, 'We could not create your account. Please try again.'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    if (!email.trim()) {
-      setResendMessage('Enter your email first.');
-      return;
-    }
-    setResendLoading(true);
-    setResendMessage('Sending a new code...');
-    setDevCode(null);
+    setLoading(true);
+    setError('');
+    setStatus('Sending a new code...');
+    const normalizedEmail = email.trim().toLowerCase();
     try {
-      const res = await authService.paiResend(email.trim().toLowerCase());
-      const data = res.data || {};
-      setResendMessage(data.message || 'If the account exists, a new code was sent.');
-      if (data.devVerificationCode) setDevCode(data.devVerificationCode);
+      if (existingAccount) {
+        await authService.paiResend(normalizedEmail);
+      } else {
+        await authService.paiSignup(normalizedEmail);
+      }
+      setStatus('Verification code sent.');
     } catch (err: any) {
-      setResendMessage(friendlyError(err, 'We could not resend the code. Please try again.'));
+      setStatus('');
+      setError(friendlyError(err, 'We could not resend the code.'));
     } finally {
-      setResendLoading(false);
+      setLoading(false);
     }
-  };
-
-  const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    setDetails((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    setLocalDetails((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
     <div className="auth-container">
       <div className="auth-box">
         <h2>Create Account</h2>
-        <div className="auth-alt">
-          <button
-            type="button"
-            className={authMode === 'pai' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => {
-              setAuthMode('pai');
-              setError('');
-              setStatus('');
-            }}
-          >
-            PersonalAI
-          </button>
-          <button
-            type="button"
-            className={authMode === 'local' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => {
-              setAuthMode('local');
-              setError('');
-              setStatus('');
-            }}
-          >
-            Local account
-          </button>
-        </div>
         {status && <p className="status-message">{status}</p>}
         {error && <p className="error-message">{error}</p>}
-        {devCode && <p className="status-message">Dev code: {devCode}</p>}
-
-        {authMode === 'pai' && step === 'email' && (
+        {step === 'email' && (
           <form onSubmit={handleEmailSubmit} className="auth-form">
             <label>
               <span>Email</span>
@@ -249,49 +178,48 @@ export default function RegisterPage() {
               />
             </label>
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Sending...' : 'Send code'}
+              {loading ? 'Sending...' : 'Send verification code'}
             </button>
           </form>
         )}
-
-        {authMode === 'pai' && step === 'code' && (
-          <form onSubmit={handleCodeSubmit} className="auth-form">
+        {step === 'verify' && (
+          <form onSubmit={handleVerifySubmit} className="auth-form">
             <label>
               <span>Verification code</span>
               <input
                 type="text"
                 name="code"
-                placeholder="123456"
+                inputMode="numeric"
+                placeholder="6-digit code"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 required
               />
             </label>
-            {flow === 'existing' && (
+            {existingAccount && (
               <label>
                 <span>Role</span>
-                <select name="role" value={details.role} onChange={handleDetailsChange}>
+                <select
+                  name="role"
+                  value={details.role}
+                  onChange={handleDetailsChange}
+                >
                   <option value="worker">Worker</option>
                   <option value="employer">Employer</option>
                 </select>
               </label>
             )}
             <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Verifying...' : 'Verify'}
+              {loading ? 'Verifying...' : 'Verify code'}
             </button>
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={handleResend}
-              disabled={resendLoading}
-            >
-              {resendLoading ? 'Resending...' : 'Resend code'}
-            </button>
-            {resendMessage && <p className="status-message">{resendMessage}</p>}
+            <div className="auth-alt">
+              <button type="button" className="btn-secondary" onClick={handleResend} disabled={loading}>
+                Resend code
+              </button>
+            </div>
           </form>
         )}
-
-        {authMode === 'pai' && step === 'details' && (
+        {step === 'details' && (
           <form onSubmit={handleDetailsSubmit} className="auth-form">
             <label>
               <span>Full Name</span>
@@ -305,7 +233,7 @@ export default function RegisterPage() {
               />
             </label>
             <label>
-              <span>PAI Handle</span>
+              <span>Username</span>
               <input
                 type="text"
                 name="handle"
@@ -320,7 +248,7 @@ export default function RegisterPage() {
               <input
                 type="password"
                 name="password"
-                placeholder="********"
+                placeholder="At least 8 chars, upper/lower, number"
                 value={details.password}
                 onChange={handleDetailsChange}
                 required
@@ -329,54 +257,6 @@ export default function RegisterPage() {
             <label>
               <span>Role</span>
               <select name="role" value={details.role} onChange={handleDetailsChange}>
-                <option value="worker">Worker</option>
-                <option value="employer">Employer</option>
-              </select>
-            </label>
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Creating...' : 'Create account'}
-            </button>
-          </form>
-        )}
-
-        {authMode === 'local' && (
-          <form onSubmit={handleLocalSubmit} className="auth-form">
-            <label>
-              <span>Full Name</span>
-              <input
-                type="text"
-                name="name"
-                placeholder="Jane Doe"
-                value={localDetails.name}
-                onChange={handleLocalChange}
-                required
-              />
-            </label>
-            <label>
-              <span>Email</span>
-              <input
-                type="email"
-                name="email"
-                placeholder="you@example.com"
-                value={localDetails.email}
-                onChange={handleLocalChange}
-                required
-              />
-            </label>
-            <label>
-              <span>Password</span>
-              <input
-                type="password"
-                name="password"
-                placeholder="********"
-                value={localDetails.password}
-                onChange={handleLocalChange}
-                required
-              />
-            </label>
-            <label>
-              <span>Role</span>
-              <select name="role" value={localDetails.role} onChange={handleLocalChange}>
                 <option value="worker">Worker</option>
                 <option value="employer">Employer</option>
               </select>

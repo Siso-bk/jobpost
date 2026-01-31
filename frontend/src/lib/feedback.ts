@@ -10,7 +10,8 @@ type ApiError = {
 };
 
 const CODE_MESSAGES: Record<string, string> = {
-  use_pai_login: 'This email is managed by PersonalAI. Please sign in with PersonalAI.',
+  use_pai_login: 'Please sign in with PersonalAI.',
+  pai_required: 'Please sign in with PersonalAI to continue.',
   jobpost_profile_required: 'Choose a role to finish creating your JobPost profile.',
   email_not_verified: 'Please verify your email before signing in.',
 };
@@ -39,7 +40,7 @@ export function friendlyError(err: ApiError | any, fallback = 'Something went wr
   if (code && CODE_MESSAGES[code]) return CODE_MESSAGES[code];
 
   const status = err?.response?.status;
-  const rawMessage = err?.response?.data?.message || err?.message;
+  const rawMessage = err?.response?.data?.message || err?.response?.data?.error || err?.message;
   const message = typeof rawMessage === 'string' ? rawMessage : '';
 
   if (message) {

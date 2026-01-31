@@ -9,7 +9,6 @@ function base64url(input: Buffer | string) {
 function absoluteUrl(base: string, path: string) {
   if (/^https?:\/\//i.test(path)) return path;
   const u = new URL(base);
-  // ensure no double slashes
   const p = path.startsWith('/') ? path : `/${path}`;
   return `${u.origin}${p}`;
 }
@@ -29,7 +28,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(fallback);
   }
 
-  // PKCE
   const verifier = base64url(crypto.randomBytes(32));
   const challenge = base64url(crypto.createHash('sha256').update(verifier).digest());
   const state = base64url(crypto.randomBytes(16));

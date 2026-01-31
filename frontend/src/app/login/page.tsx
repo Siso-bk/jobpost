@@ -5,15 +5,25 @@ import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 import { getDefaultRouteForRoles, normalizeRoles } from '@/lib/roles';
 
+const OIDC_ERRORS: Record<string, string> = {
+  oidc_not_configured: 'PersonalAI login is not configured yet.',
+  missing_code: 'Login was interrupted. Please try again.',
+  missing_state: 'Login validation failed. Please try again.',
+  state_mismatch: 'Login validation failed. Please try again.',
+  missing_verifier: 'Login validation failed. Please try again.',
+  token_exchange_failed: 'We could not complete PersonalAI login. Please try again.',
+  missing_id_token: 'We could not complete PersonalAI login. Please try again.',
+  external_auth_failed: 'We could not complete PersonalAI login. Please try again.'
+};
+
 function LoginPageClient() {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [role, setRole] = useState('worker');
+  const [needsRole, setNeedsRole] = useState(false);
   const [error, setError] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [authMode, setAuthMode] = useState<'pai' | 'local'>('pai');
-  const [needsRole, setNeedsRole] = useState(false);
-  const [role, setRole] = useState('worker');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -37,22 +47,8 @@ function LoginPageClient() {
   useEffect(() => {
     const raw = searchParams.get('error');
     if (!raw) return;
-    let message = '';
-    if (raw === 'oidc_not_configured' || raw === 'missing_client_id') {
-      message = 'PersonalAI sign-in is not configured. Please use email/password instead.';
-    } else if (raw === 'missing_code') {
-      message = 'PersonalAI sign-in failed. Please try again.';
-    } else if (raw === 'state_mismatch' || raw === 'missing_verifier') {
-      message = 'PersonalAI sign-in was interrupted. Please try again.';
-    } else if (raw.startsWith('token_exchange_failed')) {
-      message = 'PersonalAI sign-in failed. Please try again.';
-    } else if (raw.startsWith('app_login_failed')) {
-      message = 'We could not complete sign-in. Please try again.';
-    } else if (raw === 'missing_id_token' || raw === 'missing_app_token') {
-      message = 'PersonalAI sign-in failed. Please try again.';
-    }
-    if (message) setError(message);
-    if (message) setStatus('');
+    setError(OIDC_ERRORS[raw] || 'We could not complete sign-in. Please try again.');
+    setStatus('');
   }, [searchParams]);
 
   useEffect(() => {
@@ -73,26 +69,27 @@ function LoginPageClient() {
     setError('');
     setStatus('Signing you in...');
     try {
-      const res =
-        authMode === 'local'
-          ? await authService.localLogin(formData.email, formData.password)
-          : await authService.paiLogin(formData.email, formData.password, needsRole ? role : undefined);
+      const res = await authService.paiLogin(
+        formData.email.trim().toLowerCase(),
+        formData.password,
+        needsRole ? role : undefined
+      );
       setStatus('Signed in. Redirecting...');
       const roles = normalizeRoles(res.data?.user?.roles);
       router.push(getDefaultRouteForRoles(roles));
     } catch (err: any) {
       setStatus('');
       const code = err?.response?.data?.code;
-      if (code === 'email_not_verified') {
-        setError('Email not verified. Please register to request a new code.');
-      } else if (code === 'jobpost_profile_required') {
+      if (code === 'jobpost_profile_required') {
         setNeedsRole(true);
-        setError('Choose your role to finish creating your JobPost profile.');
-      } else if (code === 'use_pai_login') {
-        setError('This email is managed by PersonalAI. Switch to PersonalAI login.');
-      } else {
-        setError(friendlyError(err, 'We could not log you in. Please try again.'));
+        setStatus('Choose a role to finish your JobPost profile.');
+        return;
       }
+      if (code === 'email_not_verified') {
+        setError('Please verify your PersonalAI email before signing in.');
+        return;
+      }
+      setError(friendlyError(err, 'We could not log you in. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -101,35 +98,15 @@ function LoginPageClient() {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2>Login</h2>
-        <div className="auth-alt">
-          <button
-            type="button"
-            className={authMode === 'pai' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => {
-              setAuthMode('pai');
-              setNeedsRole(false);
-              setError('');
-              setStatus('');
-            }}
-          >
-            PersonalAI
-          </button>
-          <button
-            type="button"
-            className={authMode === 'local' ? 'btn-primary' : 'btn-secondary'}
-            onClick={() => {
-              setAuthMode('local');
-              setNeedsRole(false);
-              setError('');
-              setStatus('');
-            }}
-          >
-            Local account
-          </button>
-        </div>
+        <h2>Sign in</h2>
         {status && <p className="status-message">{status}</p>}
         {error && <p className="error-message">{error}</p>}
+        <div className="auth-alt">
+          <a className="btn-secondary" href="/api/personalai">
+            Continue with PersonalAI
+          </a>
+        </div>
+        <p className="status-message">Or sign in with your PersonalAI email</p>
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
             <span>Email</span>
@@ -210,10 +187,10 @@ function LoginPageClient() {
               </button>
             </div>
           </label>
-          {authMode === 'pai' && needsRole && (
+          {needsRole && (
             <label>
               <span>Role</span>
-              <select name="role" value={role} onChange={(e) => setRole(e.target.value)}>
+              <select value={role} onChange={(e) => setRole(e.target.value)}>
                 <option value="worker">Worker</option>
                 <option value="employer">Employer</option>
               </select>
@@ -223,13 +200,6 @@ function LoginPageClient() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        {authMode === 'pai' && (
-          <div className="auth-alt">
-            <a className="btn-secondary" href="/api/personalai/authorize">
-              Sign in with PersonalAI
-            </a>
-          </div>
-        )}
         <p className="auth-meta">
           Do not have an account? <a href="/register">Register here</a>
         </p>

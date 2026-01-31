@@ -127,96 +127,20 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
-// Local signup (fallback)
-router.post('/register', async (req, res) => {
-  try {
-    const name = String(req.body?.name || '').trim();
-    const email = String(req.body?.email || '').toLowerCase().trim();
-    const password = String(req.body?.password || '');
-    const role = String(req.body?.role || '').trim();
-
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ message: 'Name, email, password, and role are required' });
-    }
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: 'Valid email is required' });
-    }
-    if (!VALID_ROLES.includes(role)) {
-      return res.status(400).json({ message: 'Valid role is required' });
-    }
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
-
-    const existing = await User.findOne({ email });
-    if (existing) {
-      if (existing.provider === 'personalai') {
-        return res.status(409).json({
-          message: 'This email is managed by PersonalAI. Use PersonalAI login.',
-          code: 'use_pai_login'
-        });
-      }
-      return res.status(409).json({ message: 'Email already registered' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      roles: [role],
-      provider: 'local',
-      isVerified: true
-    });
-    await user.save();
-
-    const token = signAuthToken(user);
-    res.cookie('token', token, authCookieOptions());
-    return res.status(201).json({
-      message: 'Signup successful',
-      user: publicUser(user)
-    });
-  } catch (error) {
-    return res.status(500).json({ message: error.message || 'Local signup failed' });
-  }
+// Local signup is disabled (PAI-only)
+router.post('/register', (_req, res) => {
+  return res.status(403).json({
+    message: 'PersonalAI authentication is required.',
+    code: 'pai_required'
+  });
 });
 
-// Local login (fallback)
-router.post('/login', async (req, res) => {
-  try {
-    const email = String(req.body?.email || '').toLowerCase().trim();
-    const password = String(req.body?.password || '');
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
-    }
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: 'Valid email is required' });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    if (user.provider === 'personalai') {
-      return res.status(409).json({
-        message: 'This email is managed by PersonalAI. Use PersonalAI login.',
-        code: 'use_pai_login'
-      });
-    }
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const token = signAuthToken(user);
-    res.cookie('token', token, authCookieOptions());
-    return res.json({
-      message: 'Login successful',
-      user: publicUser(user)
-    });
-  } catch (error) {
-    return res.status(500).json({ message: error.message || 'Local login failed' });
-  }
+// Local login is disabled (PAI-only)
+router.post('/login', (_req, res) => {
+  return res.status(403).json({
+    message: 'PersonalAI authentication is required.',
+    code: 'pai_required'
+  });
 });
 
 // PAI signup: request verification code
