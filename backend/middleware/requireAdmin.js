@@ -1,24 +1,21 @@
 const User = require('../models/User');
 
-const parseList = (value) =>
-  String(value || '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
 module.exports = async function requireAdmin(req, res, next) {
   try {
-    const adminIds = parseList(process.env.ADMIN_USER_IDS);
-    if (adminIds.includes(String(req.userId))) {
-      return next();
+    const user = await User.findById(req.userId).select('role roles');
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
     }
 
-    const adminEmails = parseList(process.env.ADMIN_EMAILS).map((value) => value.toLowerCase());
-    if (adminEmails.length > 0) {
-      const user = await User.findById(req.userId).select('email');
-      if (user && adminEmails.includes(String(user.email || '').toLowerCase())) {
-        return next();
-      }
+    const roles =
+      Array.isArray(user.roles) && user.roles.length > 0
+        ? user.roles
+        : user.role
+        ? [user.role]
+        : [];
+
+    if (roles.includes('admin')) {
+      return next();
     }
 
     return res.status(403).json({ message: 'Admin access required' });

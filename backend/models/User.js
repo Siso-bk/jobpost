@@ -23,6 +23,13 @@ const userSchema = new mongoose.Schema(
       enum: ['worker', 'employer'],
       required: true
     },
+    roles: {
+      type: [String],
+      enum: ['worker', 'employer', 'admin'],
+      default: function () {
+        return this.role ? [this.role] : [];
+      }
+    },
     phone: String,
     location: String,
     bio: String,
@@ -63,5 +70,14 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre('save', function (next) {
+  if (this.role) {
+    const roles = new Set(Array.isArray(this.roles) ? this.roles : []);
+    roles.add(this.role);
+    this.roles = Array.from(roles);
+  }
+  next();
+});
 
 module.exports = mongoose.model('User', userSchema);

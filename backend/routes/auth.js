@@ -15,6 +15,32 @@ const PAI_PLATFORM = (process.env.PAI_PLATFORM || '').trim();
 const PAI_TIMEOUT_MS = 10000;
 const VALID_ROLES = ['worker', 'employer'];
 
+function buildRoles(user) {
+  const roles = Array.isArray(user?.roles) ? [...user.roles] : [];
+  if (user?.role && !roles.includes(user.role)) {
+    roles.push(user.role);
+  }
+  return roles;
+}
+
+function signAuthToken(user) {
+  return jwt.sign(
+    { id: user._id, role: user.role, roles: buildRoles(user) },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+  );
+}
+
+function publicUser(user) {
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    roles: buildRoles(user)
+  };
+}
+
 function buildPaiUrl(path) {
   if (!PAI_API_BASE) return '';
   if (!path.startsWith('/')) return `${PAI_API_BASE}/${path}`;
@@ -59,6 +85,7 @@ async function upsertPaiUser(paiUser, role) {
       email,
       password: hashedPassword,
       role,
+      roles: [role],
       provider: 'personalai',
       providerId: paiUser.id,
       isVerified: true
@@ -72,6 +99,13 @@ async function upsertPaiUser(paiUser, role) {
   if (!user.providerId) updates.providerId = paiUser.id;
   if (paiUser?.name && user.name !== paiUser.name) updates.name = paiUser.name;
   if (!user.isVerified) updates.isVerified = true;
+  const currentRoles = Array.isArray(user.roles) ? user.roles : [];
+  const desiredRoles = new Set(currentRoles);
+  if (user.role) desiredRoles.add(user.role);
+  if (role) desiredRoles.add(role);
+  if (desiredRoles.size !== currentRoles.length) {
+    updates.roles = Array.from(desiredRoles);
+  }
   if (Object.keys(updates).length) {
     user = await User.findByIdAndUpdate(user._id, updates, { new: true });
   }
@@ -89,16 +123,11 @@ router.post('/logout', (req, res) => {
 // Return current user based on session cookie
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('_id name email role');
+    const user = await User.findById(req.userId).select('_id name email role roles');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    return res.json({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    });
+    return res.json(publicUser(user));
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
@@ -147,13 +176,11 @@ router.post('/register', async (req, res) => {
     });
     await user.save();
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d'
-    });
+    const token = signAuthToken(user);
     res.cookie('token', token, authCookieOptions());
     return res.status(201).json({
       message: 'Signup successful',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: publicUser(user)
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Local signup failed' });
@@ -187,13 +214,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d'
-    });
+    const token = signAuthToken(user);
     res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Login successful',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: publicUser(user)
     });
   } catch (error) {
     return res.status(500).json({ message: error.message || 'Local login failed' });
@@ -249,13 +274,11 @@ router.post('/pai-signup/complete', async (req, res) => {
       return res.status(500).json({ message: 'PAI response missing user' });
     }
     const user = await upsertPaiUser(paiUser, role);
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d'
-    });
+    const token = signAuthToken(user);
     res.cookie('token', token, authCookieOptions());
     return res.status(201).json({
       message: 'Signup complete',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: publicUser(user)
     });
   } catch (error) {
     if (error.response) {
@@ -292,13 +315,11 @@ router.post('/pai-login', async (req, res) => {
       }
       throw err;
     }
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d'
-    });
+    const token = signAuthToken(user);
     res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Login successful',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: publicUser(user)
     });
   } catch (error) {
     if (error.response) {
@@ -332,13 +353,11 @@ router.post('/pai-verify-code', async (req, res) => {
       return res.status(500).json({ message: 'PAI response missing user' });
     }
     const user = await upsertPaiUser(paiUser, role);
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d'
-    });
+    const token = signAuthToken(user);
     res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Email verified',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: publicUser(user)
     });
   } catch (error) {
     if (error.response) {
@@ -410,13 +429,11 @@ router.post('/external', async (req, res) => {
       await user.save();
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d'
-    });
+    const token = signAuthToken(user);
     res.cookie('token', token, authCookieOptions());
     return res.json({
       message: 'Login successful',
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: publicUser(user)
     });
   } catch (error) {
     return res.status(401).json({ message: error.message || 'External auth failed' });

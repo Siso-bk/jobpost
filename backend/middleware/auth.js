@@ -14,6 +14,11 @@ const auth = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.id;
     req.userRole = decoded.role;
+    req.userRoles = Array.isArray(decoded.roles)
+      ? decoded.roles
+      : decoded.role
+      ? [decoded.role]
+      : [];
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token is not valid' });

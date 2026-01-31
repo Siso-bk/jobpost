@@ -7,6 +7,7 @@ import { authService, conversationsService, notificationsService, usersService }
 export default function Header() {
   const [hydrated, setHydrated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
@@ -35,13 +36,20 @@ export default function Header() {
       .me()
       .then((res) => {
         if (!active) return;
+        const roles = Array.isArray(res.data?.roles)
+          ? res.data.roles
+          : res.data?.role
+          ? [res.data.role]
+          : [];
         setUserRole(res.data?.role || null);
+        setUserRoles(roles);
         setUserId(res.data?.id || null);
         setUserName(res.data?.name || null);
       })
       .catch(() => {
         if (!active) return;
         setUserRole(null);
+        setUserRoles([]);
         setUserId(null);
         setUserName(null);
       })
@@ -121,6 +129,7 @@ export default function Header() {
       await authService.logout();
     } catch {}
     setUserRole(null);
+    setUserRoles([]);
     setUserId(null);
     setUserName(null);
     setProfilePicture(null);
@@ -139,6 +148,7 @@ export default function Header() {
   };
   const inboxUnread = messageUnread + notificationUnread;
   const inboxActive = isActive('/messages') || isActive('/notifications');
+  const isAdmin = userRoles.includes('admin');
   const manageActive =
     userRole === 'employer' &&
     (isActive('/employer') ||
@@ -594,29 +604,31 @@ export default function Header() {
                       </span>
                       Settings
                     </Link>
-                    <Link href="/admin" className="account-item menu-item" role="menuitem">
-                      <span className="menu-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="18" height="18">
-                          <path
-                            d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M9 12l2 2 4-4"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </span>
-                      Admin dashboard
-                    </Link>
+                    {isAdmin && (
+                      <Link href="/admin" className="account-item menu-item" role="menuitem">
+                        <span className="menu-icon" aria-hidden="true">
+                          <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path
+                              d="M12 2l7 4v6c0 5-3.5 9.5-7 10-3.5-.5-7-5-7-10V6l7-4z"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M9 12l2 2 4-4"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        Admin dashboard
+                      </Link>
+                    )}
                     <div className="menu-divider" role="separator" />
                     <button
                       type="button"
