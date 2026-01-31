@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { applicationsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Job = {
   _id: string;
@@ -39,8 +40,7 @@ export default function MyApplicationsPage() {
         setApplications(res.data || []);
         setError(null);
       } catch (e: any) {
-        const message = e?.response?.data?.message || e?.message || 'Failed to load applications';
-        setError(message);
+        setError(friendlyError(e, 'We could not load applications. Please try again.'));
         setApplications([]);
       } finally {
         setLoading(false);

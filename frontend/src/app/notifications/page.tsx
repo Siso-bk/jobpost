@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService, notificationsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type NotificationItem = {
   _id: string;
@@ -25,6 +26,7 @@ export default function NotificationsPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [marking, setMarking] = useState(false);
 
   useEffect(() => {
@@ -53,8 +55,9 @@ export default function NotificationsPage() {
       setNotifications(res.data?.notifications || []);
       setUnreadCount(res.data?.unreadCount || 0);
       setError(null);
+      setStatusMessage(null);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to load notifications');
+      setError(friendlyError(e, 'We could not load notifications. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -66,6 +69,7 @@ export default function NotificationsPage() {
 
   const handleMarkAllRead = async () => {
     setMarking(true);
+    setStatusMessage(null);
     try {
       await notificationsService.markAllRead();
       setNotifications((prev) =>
@@ -74,8 +78,9 @@ export default function NotificationsPage() {
         )
       );
       setUnreadCount(0);
+      setStatusMessage('All caught up. No unread alerts.');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to mark notifications read');
+      setError(friendlyError(e, 'We could not mark notifications as read. Please try again.'));
     } finally {
       setMarking(false);
     }
@@ -142,6 +147,7 @@ export default function NotificationsPage() {
             ))}
           </div>
         )}
+        {statusMessage && <p className="status-message">{statusMessage}</p>}
       </section>
     </div>
   );

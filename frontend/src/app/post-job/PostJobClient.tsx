@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { jobsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 export default function PostJobClient() {
   const searchParams = useSearchParams();
@@ -50,7 +51,7 @@ export default function PostJobClient() {
         setMessage('');
       })
       .catch((err: any) => {
-        setMessage(err?.response?.data?.message || 'Failed to load job');
+        setMessage(friendlyError(err, 'We could not load that job. Please try again.'));
       })
       .finally(() => setLoadingJob(false));
   }, [searchParams]);
@@ -127,7 +128,7 @@ export default function PostJobClient() {
         });
       }
     } catch (err: any) {
-      setMessage(err?.response?.data?.message || 'Failed to post job');
+      setMessage(friendlyError(err, 'We could not save the job. Please try again.'));
     } finally {
       setLoading(false);
     }

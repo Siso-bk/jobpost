@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { authService, usersService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type CvForm = {
   headline: string;
@@ -94,7 +95,7 @@ export default function WorkerCvPage() {
         });
         setError(null);
       })
-      .catch((e) => setError(e?.response?.data?.message || 'Failed to load CV'))
+      .catch((e) => setError(friendlyError(e, 'We could not load your CV. Please try again.')))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -143,7 +144,7 @@ export default function WorkerCvPage() {
         setMessage('Resume uploaded successfully.');
         setError(null);
       } catch (uploadError: any) {
-        setError(uploadError?.response?.data?.message || 'Failed to upload resume.');
+        setError(friendlyError(uploadError, 'We could not upload the resume. Please try again.'));
       } finally {
         setResumeUploading(false);
       }
@@ -178,7 +179,7 @@ export default function WorkerCvPage() {
       await usersService.updateProfile(userId, payload);
       setMessage('CV updated successfully');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to update CV');
+      setError(friendlyError(e, 'We could not update your CV. Please try again.'));
     } finally {
       setSaving(false);
     }

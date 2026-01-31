@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { applicationsService, conversationsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Job = {
   _id: string;
@@ -34,6 +35,7 @@ export default function EmployerApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [messageLoadingId, setMessageLoadingId] = useState<string | null>(null);
   const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null);
@@ -45,9 +47,9 @@ export default function EmployerApplicationsPage() {
         const res = await applicationsService.getEmployerApplications();
         setApplications(res.data || []);
         setError(null);
+        setStatusMessage(null);
       } catch (e: any) {
-        const message = e?.response?.data?.message || e?.message || 'Failed to load applications';
-        setError(message);
+        setError(friendlyError(e, 'We could not load applications. Please try again.'));
         setApplications([]);
       } finally {
         setLoading(false);
@@ -64,13 +66,15 @@ export default function EmployerApplicationsPage() {
 
   const handleStatusChange = async (applicationId: string, status: Application['status']) => {
     setSavingId(applicationId);
+    setStatusMessage(null);
     try {
       await applicationsService.updateApplicationStatus(applicationId, status);
       setApplications((prev) =>
         prev.map((app) => (app._id === applicationId ? { ...app, status } : app))
       );
+      setStatusMessage('Application status updated.');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to update status');
+      setError(friendlyError(e, 'We could not update the status. Please try again.'));
     } finally {
       setSavingId(null);
     }
@@ -80,6 +84,7 @@ export default function EmployerApplicationsPage() {
     if (!workerId) return;
     setMessageLoadingId(workerId);
     setError(null);
+    setStatusMessage(null);
     try {
       const res = await conversationsService.create(workerId);
       const conversationId = res.data?.id || res.data?._id;
@@ -89,7 +94,7 @@ export default function EmployerApplicationsPage() {
         setError('Unable to start chat');
       }
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to start chat');
+      setError(friendlyError(e, 'We could not start a chat. Please try again.'));
     } finally {
       setMessageLoadingId(null);
     }
@@ -100,11 +105,13 @@ export default function EmployerApplicationsPage() {
     if (!confirmed) return;
     setDeleteLoadingId(applicationId);
     setError(null);
+    setStatusMessage(null);
     try {
       await applicationsService.deleteApplication(applicationId);
       setApplications((prev) => prev.filter((app) => app._id !== applicationId));
+      setStatusMessage('Application deleted.');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to delete application');
+      setError(friendlyError(e, 'We could not delete the application. Please try again.'));
     } finally {
       setDeleteLoadingId(null);
     }
@@ -122,6 +129,7 @@ export default function EmployerApplicationsPage() {
         </Link>
       </div>
 
+      {statusMessage && <p className="status-message">{statusMessage}</p>}
       {error && <p className="error-message">{error}</p>}
 
       {loading ? (

@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { applicationsService, authService, usersService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type ApplyFormProps = {
   jobId: string;
@@ -63,7 +64,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
         setMessage('Resume uploaded successfully.');
         setError(null);
       } catch (uploadError: any) {
-        setError(uploadError?.response?.data?.message || 'Failed to upload resume.');
+        setError(friendlyError(uploadError, 'We could not upload the resume. Please try again.'));
       } finally {
         setResumeUploading(false);
       }
@@ -102,7 +103,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
       }
       setMessage('Saved CV loaded.');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to load saved CV.');
+      setError(friendlyError(e, 'We could not load your saved CV. Please try again.'));
     } finally {
       setCvLoading(false);
     }
@@ -119,7 +120,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
       setCoverLetter('');
       setResume('');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to submit application.');
+      setError(friendlyError(e, 'We could not submit your application. Please try again.'));
     } finally {
       setLoading(false);
     }

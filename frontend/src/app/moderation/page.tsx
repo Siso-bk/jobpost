@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService, moderationService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type ReportItem = {
   _id: string;
@@ -27,6 +28,7 @@ export default function ModerationPage() {
   const [status, setStatus] = useState('open');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const fetchReports = async (nextStatus = status) => {
     setLoading(true);
@@ -34,8 +36,9 @@ export default function ModerationPage() {
       const res = await moderationService.listReports(nextStatus);
       setReports(res.data || []);
       setError(null);
+      setStatusMessage(null);
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to load reports');
+      setError(friendlyError(e, 'We could not load reports. Please try again.'));
       setReports([]);
     } finally {
       setLoading(false);
@@ -63,6 +66,7 @@ export default function ModerationPage() {
   }, [router]);
 
   const handleResolve = async (reportId: string) => {
+    setStatusMessage(null);
     try {
       await moderationService.resolveReport(reportId);
       setReports((prev) =>
@@ -70,13 +74,15 @@ export default function ModerationPage() {
           report._id === reportId ? { ...report, status: 'resolved' } : report
         )
       );
+      setStatusMessage('Report marked as resolved.');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to resolve report');
+      setError(friendlyError(e, 'We could not resolve that report. Please try again.'));
     }
   };
 
   const handleRemoveMessage = async (messageId?: string) => {
     if (!messageId) return;
+    setStatusMessage(null);
     try {
       await moderationService.removeMessage(messageId);
       setReports((prev) =>
@@ -86,8 +92,9 @@ export default function ModerationPage() {
             : report
         )
       );
+      setStatusMessage('Message removed.');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to remove message');
+      setError(friendlyError(e, 'We could not remove that message. Please try again.'));
     }
   };
 
@@ -178,6 +185,7 @@ export default function ModerationPage() {
             ))}
           </div>
         )}
+        {statusMessage && <p className="status-message">{statusMessage}</p>}
       </section>
     </div>
   );

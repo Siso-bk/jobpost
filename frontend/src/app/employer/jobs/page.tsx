@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { jobsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Job = {
   _id: string;
@@ -17,6 +18,7 @@ export default function EmployerJobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,9 +28,9 @@ export default function EmployerJobsPage() {
         const res = await jobsService.getMyJobs();
         setJobs(res.data || []);
         setError(null);
+        setStatus(null);
       } catch (e: any) {
-        const message = e?.response?.data?.message || e?.message || 'Failed to load jobs';
-        setError(message);
+        setError(friendlyError(e, 'We could not load your jobs. Please try again.'));
         setJobs([]);
       } finally {
         setLoading(false);
@@ -42,11 +44,13 @@ export default function EmployerJobsPage() {
     if (!confirmDelete) return;
     setDeletingId(jobId);
     setError(null);
+    setStatus(null);
     try {
       await jobsService.deleteJob(jobId);
       setJobs((prev) => prev.filter((job) => job._id !== jobId));
+      setStatus('Job deleted.');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to delete job');
+      setError(friendlyError(e, 'We could not delete that job. Please try again.'));
     } finally {
       setDeletingId(null);
     }
@@ -70,6 +74,7 @@ export default function EmployerJobsPage() {
         </Link>
       </div>
 
+      {status && <p className="status-message">{status}</p>}
       {error && <p className="error-message">{error}</p>}
 
       {loading ? (

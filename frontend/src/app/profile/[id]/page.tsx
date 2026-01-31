@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { authService, blocksService, conversationsService, reportsService, usersService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type UserProfile = {
   name?: string;
@@ -110,7 +111,7 @@ export default function ProfilePage() {
           resumeUrl: res.data?.resumeUrl || '',
         });
       })
-      .catch((e) => setError(e?.response?.data?.message || 'Failed to load profile'))
+      .catch((e) => setError(friendlyError(e, 'We could not load this profile. Please try again.')))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -151,7 +152,7 @@ export default function ProfilePage() {
       await authService.logout();
       router.replace('/login');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Logout failed');
+      setError(friendlyError(e, 'We could not log you out. Please try again.'));
       setLogoutLoading(false);
     }
   };
@@ -169,7 +170,7 @@ export default function ProfilePage() {
       await usersService.deleteMe();
       router.replace('/login');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to delete account');
+      setError(friendlyError(e, 'We could not delete the account. Please try again.'));
     } finally {
       setDeleteLoading(false);
     }
@@ -206,7 +207,7 @@ export default function ProfilePage() {
         setBlockStatus({ blocked: true, blockedBy: false });
       }
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to update block status');
+      setError(friendlyError(e, 'We could not update block status. Please try again.'));
     } finally {
       setBlockLoading(false);
     }
@@ -226,7 +227,7 @@ export default function ProfilePage() {
       setReportStatus('Report submitted.');
       setReportReason('');
     } catch (e: any) {
-      setReportStatus(e?.response?.data?.message || 'Unable to submit report.');
+      setReportStatus(friendlyError(e, 'We could not submit the report. Please try again.'));
     } finally {
       setReportLoading(false);
     }
@@ -242,10 +243,10 @@ export default function ProfilePage() {
       if (conversationId) {
         router.push(`/messages?c=${conversationId}`);
       } else {
-        setError('Unable to start chat');
+        setError('We could not start a chat. Please try again.');
       }
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to start chat');
+      setError(friendlyError(e, 'We could not start a chat. Please try again.'));
     } finally {
       setChatLoading(false);
     }
@@ -351,7 +352,7 @@ export default function ProfilePage() {
       setUser(res.data?.user || null);
       setMessage('Profile updated successfully');
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Failed to update profile');
+      setError(friendlyError(e, 'We could not update your profile. Please try again.'));
     } finally {
       setSaving(false);
     }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usersService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Worker = {
   _id: string;
@@ -43,8 +44,7 @@ export default function TalentPage() {
       setWorkers(res.data || []);
       setError(null);
     } catch (e: any) {
-      const message = e?.response?.data?.message || e?.message || 'Failed to load talent';
-      setError(message);
+      setError(friendlyError(e, 'We could not load talent. Please try again.'));
       setWorkers([]);
     } finally {
       setLoading(false);

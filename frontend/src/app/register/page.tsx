@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Step = 'email' | 'code' | 'details';
 type Flow = 'new' | 'existing';
@@ -77,7 +78,7 @@ export default function RegisterPage() {
         if (data.devVerificationCode) setDevCode(data.devVerificationCode);
       }
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Unable to send verification code.');
+      setError(friendlyError(err, 'We could not send the verification code. Please try again.'));
       setStatus('');
     } finally {
       setLoading(false);
@@ -108,7 +109,7 @@ export default function RegisterPage() {
       setStatus('Code verified. Complete your profile.');
       setDevCode(null);
     } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || 'Unable to verify code.');
+      setError(friendlyError(err, 'We could not verify the code. Please try again.'));
       setStatus('');
     } finally {
       setLoading(false);
@@ -135,7 +136,7 @@ export default function RegisterPage() {
       });
       router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Unable to finish signup.');
+      setError(friendlyError(err, 'We could not finish signup. Please try again.'));
       setStatus('');
     } finally {
       setLoading(false);
@@ -160,7 +161,7 @@ export default function RegisterPage() {
       if (code === 'use_pai_login') {
         setError('This email is managed by PersonalAI. Switch to PersonalAI signup.');
       } else {
-        setError(err?.response?.data?.message || 'Unable to create account.');
+        setError(friendlyError(err, 'We could not create your account. Please try again.'));
       }
       setStatus('');
     } finally {
@@ -182,7 +183,7 @@ export default function RegisterPage() {
       setResendMessage(data.message || 'If the account exists, a new code was sent.');
       if (data.devVerificationCode) setDevCode(data.devVerificationCode);
     } catch (err: any) {
-      setResendMessage(err?.response?.data?.message || 'Unable to resend code.');
+      setResendMessage(friendlyError(err, 'We could not resend the code. Please try again.'));
     } finally {
       setResendLoading(false);
     }

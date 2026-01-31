@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { jobsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Job = {
   _id: string;
@@ -38,8 +39,7 @@ export default function JobsPage() {
       setPages(data.pages || 1);
       setError(null);
     } catch (e: any) {
-      const message = e?.response?.data?.message || e?.message || 'Failed to load jobs';
-      setError(message);
+      setError(friendlyError(e, 'We could not load jobs. Please try again.'));
       setJobs([]);
       setPages(1);
     } finally {

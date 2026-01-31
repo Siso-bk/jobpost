@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { applicationsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Job = {
   _id: string;
@@ -45,7 +46,9 @@ export default function WorkerApplicationDetailPage() {
         setApplication(res.data);
         setError(null);
       })
-      .catch((e: any) => setError(e?.response?.data?.message || 'Failed to load application'))
+      .catch((e: any) =>
+        setError(friendlyError(e, 'We could not load this application. Please try again.'))
+      )
       .finally(() => setLoading(false));
   }, [applicationId]);
 

@@ -12,6 +12,7 @@ export default function Header() {
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [messageUnread, setMessageUnread] = useState(0);
   const [notificationUnread, setNotificationUnread] = useState(0);
+  const [inboxOpen, setInboxOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -39,7 +40,7 @@ export default function Header() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!userId) return;
@@ -76,6 +77,7 @@ export default function Header() {
 
   useEffect(() => {
     setAccountOpen(false);
+    setInboxOpen(false);
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -99,6 +101,8 @@ export default function Header() {
     if (href === '/notifications') return pathname.startsWith('/notifications');
     return pathname === href || pathname.startsWith(`${href}/`);
   };
+  const inboxUnread = messageUnread + notificationUnread;
+  const inboxActive = isActive('/messages') || isActive('/notifications');
 
   return (
     <header className="header">
@@ -180,24 +184,53 @@ export default function Header() {
                   My CV
                 </Link>
               )}
-              <Link href="/messages" className={`nav-link ${isActive('/messages') ? 'active' : ''}`}>
-                Messages
-                {messageUnread > 0 && <span className="nav-badge">{messageUnread}</span>}
-              </Link>
-              <Link
-                href="/notifications"
-                className={`nav-link ${isActive('/notifications') ? 'active' : ''}`}
-              >
-                Alerts
-                {notificationUnread > 0 && (
-                  <span className="nav-badge">{notificationUnread}</span>
+              <div className="account-menu">
+                <button
+                  type="button"
+                  className={`account-trigger nav-link ${inboxActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setInboxOpen((open) => !open);
+                    setAccountOpen(false);
+                  }}
+                  aria-haspopup="menu"
+                  aria-expanded={inboxOpen}
+                >
+                  <span>Inbox</span>
+                  {inboxUnread > 0 && <span className="nav-badge">{inboxUnread}</span>}
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+                    <path
+                      d="M6 9l6 6 6-6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+                {inboxOpen && (
+                  <div className="account-dropdown" role="menu">
+                    <Link href="/messages" className="account-item" role="menuitem">
+                      Messages
+                      {messageUnread > 0 && <span className="nav-badge">{messageUnread}</span>}
+                    </Link>
+                    <Link href="/notifications" className="account-item" role="menuitem">
+                      Alerts
+                      {notificationUnread > 0 && (
+                        <span className="nav-badge">{notificationUnread}</span>
+                      )}
+                    </Link>
+                  </div>
                 )}
-              </Link>
+              </div>
               <div className="account-menu">
                 <button
                   type="button"
                   className="account-trigger"
-                  onClick={() => setAccountOpen((open) => !open)}
+                  onClick={() => {
+                    setAccountOpen((open) => !open);
+                    setInboxOpen(false);
+                  }}
                   aria-haspopup="menu"
                   aria-expanded={accountOpen}
                 >

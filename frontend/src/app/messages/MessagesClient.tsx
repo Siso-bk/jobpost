@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService, blocksService, conversationsService, reportsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type ConversationItem = {
   id: string;
@@ -111,7 +112,7 @@ export default function MessagesClient() {
         });
       })
       .catch((e) => {
-        setError(e?.response?.data?.message || 'Failed to load conversations');
+        setError(friendlyError(e, 'We could not load conversations. Please try again.'));
       })
       .finally(() => setLoading(false));
   }, [meId, queryConversationId]);
@@ -133,7 +134,7 @@ export default function MessagesClient() {
         setMessageError(null);
       })
       .catch((e) => {
-        setMessageError(e?.response?.data?.message || 'Failed to load messages');
+        setMessageError(friendlyError(e, 'We could not load messages. Please try again.'));
         setMessages([]);
       })
       .finally(() => setLoadingMessages(false));
@@ -195,7 +196,7 @@ export default function MessagesClient() {
         setBlockStatus({ blocked: true, blockedBy: false });
       }
     } catch (e: any) {
-      setMessageError(e?.response?.data?.message || 'Unable to update block status');
+      setMessageError(friendlyError(e, 'We could not update block status. Please try again.'));
     } finally {
       setBlockLoading(false);
     }
@@ -221,7 +222,7 @@ export default function MessagesClient() {
       setReportReason('');
       setReportOpen(false);
     } catch (e: any) {
-      setReportStatus(e?.response?.data?.message || 'Unable to submit report.');
+      setReportStatus(friendlyError(e, 'We could not submit the report. Please try again.'));
     } finally {
       setReportLoading(false);
     }
@@ -267,7 +268,7 @@ export default function MessagesClient() {
         });
       }
     } catch (e: any) {
-      setMessageError(e?.response?.data?.message || 'Failed to send message');
+      setMessageError(friendlyError(e, 'We could not send the message. Please try again.'));
     } finally {
       setSending(false);
     }

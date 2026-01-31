@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { applicationsService, conversationsService, jobsService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 type Job = {
   _id: string;
@@ -39,8 +40,7 @@ export default function EmployerDashboardPage() {
         setApplications(appsRes.data || []);
         setError(null);
       } catch (e: any) {
-        const message = e?.response?.data?.message || e?.message || 'Failed to load dashboard';
-        setError(message);
+        setError(friendlyError(e, 'We could not load the dashboard. Please try again.'));
         setJobs([]);
         setApplications([]);
       } finally {
@@ -73,7 +73,7 @@ export default function EmployerDashboardPage() {
         setError('Unable to start chat');
       }
     } catch (e: any) {
-      setError(e?.response?.data?.message || 'Unable to start chat');
+      setError(friendlyError(e, 'We could not start a chat. Please try again.'));
     } finally {
       setMessageLoadingId(null);
     }

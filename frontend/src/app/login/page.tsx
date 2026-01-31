@@ -2,6 +2,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/api';
+import { friendlyError } from '@/lib/feedback';
 
 function LoginPageClient() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -83,7 +84,7 @@ function LoginPageClient() {
       } else if (code === 'use_pai_login') {
         setError('This email is managed by PersonalAI. Switch to PersonalAI login.');
       } else {
-        setError(err?.response?.data?.message || 'Login failed');
+        setError(friendlyError(err, 'We could not log you in. Please try again.'));
       }
     } finally {
       setLoading(false);
