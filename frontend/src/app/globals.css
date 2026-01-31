@@ -220,6 +220,9 @@ a:hover {
   gap: 6px;
   font-size: 14px;
 }
+.auth-form .form-action-center {
+  justify-self: center;
+}
 .auth-form input,
 .auth-form select,
 .auth-form textarea {

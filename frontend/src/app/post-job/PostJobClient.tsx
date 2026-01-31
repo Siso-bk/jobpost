@@ -21,7 +21,8 @@ export default function PostJobClient() {
     currency: 'USD',
     logoUrl: '',
   });
-  const [message, setMessage] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -48,10 +49,11 @@ export default function PostJobClient() {
           currency: job.salary?.currency || 'USD',
           logoUrl: job.logoUrl || '',
         });
-        setMessage('');
+        setStatusMessage('');
+        setError('');
       })
       .catch((err: any) => {
-        setMessage(friendlyError(err, 'We could not load that job. Please try again.'));
+        setError(friendlyError(err, 'We could not load that job. Please try again.'));
       })
       .finally(() => setLoadingJob(false));
   }, [searchParams]);
@@ -67,12 +69,14 @@ export default function PostJobClient() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      setMessage('Please upload an image file.');
+      setError('Please upload an image file.');
+      setStatusMessage('');
       return;
     }
     const maxSize = 1024 * 1024;
     if (file.size > maxSize) {
-      setMessage('Logo must be under 1MB.');
+      setError('Logo must be under 1MB.');
+      setStatusMessage('');
       return;
     }
     const reader = new FileReader();
@@ -92,7 +96,8 @@ export default function PostJobClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setStatusMessage('');
+    setError('');
     try {
       const payload: any = {
         title: form.title,
@@ -110,10 +115,10 @@ export default function PostJobClient() {
       };
       if (editId) {
         await jobsService.updateJob(editId, payload);
-        setMessage('Job updated successfully');
+        setStatusMessage('Job updated. Changes are live.');
       } else {
         await jobsService.createJob(payload);
-        setMessage('Job posted successfully');
+        setStatusMessage('Job posted. Candidates can view it now.');
         setForm({
           title: '',
           description: '',
@@ -128,7 +133,7 @@ export default function PostJobClient() {
         });
       }
     } catch (err: any) {
-      setMessage(friendlyError(err, 'We could not save the job. Please try again.'));
+      setError(friendlyError(err, 'We could not save the job. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -142,7 +147,8 @@ export default function PostJobClient() {
         <p className="muted">
           Create a listing that stands out with clear responsibilities and salary range.
         </p>
-        {message && <p className={message.includes('success') ? '' : 'error-message'}>{message}</p>}
+        {statusMessage && <p className="status-message">{statusMessage}</p>}
+        {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
             <span>Job Title</span>

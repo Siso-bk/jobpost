@@ -369,7 +369,7 @@ export default function WorkerCvPage() {
               />
               <span>Make my profile discoverable to employers</span>
             </label>
-            <button type="submit" className="btn-primary" disabled={saving}>
+            <button type="submit" className="btn-primary form-action-center" disabled={saving}>
               {saving ? 'Saving...' : 'Save CV'}
             </button>
           </form>
