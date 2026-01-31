@@ -51,6 +51,13 @@ function LoginPageClient() {
     if (message) setError(message);
   }, [searchParams]);
 
+  useEffect(() => {
+    const emailParam = searchParams.get('email');
+    if (emailParam && !formData.email) {
+      setFormData((prev) => ({ ...prev, email: emailParam }));
+    }
+  }, [searchParams, formData.email]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((f) => ({ ...f, [name]: value }));

@@ -58,7 +58,10 @@ export default function RegisterPage() {
       if (data.exists) {
         if (data.emailVerified) {
           setError('Account already exists. Please log in.');
-          setStatus('');
+          setStatus('Redirecting to login...');
+          setTimeout(() => {
+            router.push(`/login?email=${encodeURIComponent(normalizedEmail)}`);
+          }, 700);
           return;
         }
         const resend = await authService.paiResend(normalizedEmail);
