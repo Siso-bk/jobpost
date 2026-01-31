@@ -14,6 +14,13 @@ const OIDC_ERRORS: Record<string, string> = {
   token_exchange_failed: 'We could not complete PersonalAI login. Please try again.',
   missing_id_token: 'We could not complete PersonalAI login. Please try again.',
   external_auth_failed: 'We could not complete PersonalAI login. Please try again.',
+  unauthorized_client: 'PersonalAI login is not enabled for this app yet.',
+  invalid_redirect_uri: 'PersonalAI login redirect URL is not allowed yet.',
+  invalid_scope: 'PersonalAI login scope is not allowed.',
+  access_denied: 'PersonalAI login was cancelled.',
+  login_required: 'Please sign in to PersonalAI to continue.',
+  invalid_request: 'PersonalAI login could not be completed. Please try again.',
+  server_error: 'PersonalAI login failed on the server. Please try again.',
 };
 
 function LoginPageClient() {
@@ -101,12 +108,7 @@ function LoginPageClient() {
         <h2>Sign in</h2>
         {status && <p className="status-message">{status}</p>}
         {error && <p className="error-message">{error}</p>}
-        <div className="auth-alt">
-          <a className="btn-secondary" href="/api/personalai">
-            Continue with PersonalAI
-          </a>
-        </div>
-        <p className="status-message">Or sign in with your PersonalAI email</p>
+        <p className="status-message">Sign in with your PersonalAI email</p>
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
             <span>Email</span>

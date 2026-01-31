@@ -17,10 +17,12 @@ export async function GET(req: NextRequest) {
   const origin = new URL(req.url).origin;
   const url = new URL(req.url);
   const code = url.searchParams.get('code');
+  const oauthError = url.searchParams.get('error');
   const state = url.searchParams.get('state');
   const expectedState = req.cookies.get('personalai_state')?.value;
   const verifier = req.cookies.get('personalai_verifier')?.value;
 
+  if (oauthError) return redirectWithError(origin, oauthError);
   if (!code) return redirectWithError(origin, 'missing_code');
   if (!state || !expectedState) return redirectWithError(origin, 'missing_state');
   if (state !== expectedState) return redirectWithError(origin, 'state_mismatch');
