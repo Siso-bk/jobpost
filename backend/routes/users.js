@@ -124,6 +124,21 @@ const uploadResumeFile = async (dataUrl, userId) =>
     allowedTypes: RESUME_TYPES,
   });
 
+const deleteGcsPrefix = async (bucket, prefix) => {
+  const [files] = await bucket.getFiles({ prefix });
+  if (!files.length) return 0;
+  const results = await Promise.allSettled(files.map((file) => file.delete()));
+  return results.filter((result) => result.status === 'fulfilled').length;
+};
+
+const deleteUserGcsAssets = async (userId) => {
+  const { bucketName, storage } = getGcsConfig();
+  const bucket = storage.bucket(bucketName);
+  const prefixes = [`profiles/${userId}/`, `company-logos/${userId}/`, `resumes/${userId}/`];
+  const counts = await Promise.all(prefixes.map((prefix) => deleteGcsPrefix(bucket, prefix)));
+  return counts.reduce((sum, count) => sum + count, 0);
+};
+
 router.post('/upload-resume', auth, requireRole('worker'), async (req, res) => {
   try {
     const { dataUrl } = req.body;
@@ -200,6 +215,14 @@ router.delete('/me', auth, async (req, res) => {
     const user = await User.findById(req.userId).select('_id role');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    try {
+      await deleteUserGcsAssets(req.userId);
+    } catch (error) {
+      return res.status(500).json({
+        message: 'Unable to delete stored files. Please try again.'
+      });
     }
 
     if (user.role === 'employer') {
