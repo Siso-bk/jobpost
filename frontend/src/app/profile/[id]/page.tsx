@@ -368,9 +368,9 @@ export default function ProfilePage() {
       };
       const res = await usersService.updateProfile(userId, payload);
       setUser(res.data?.user || null);
-      setMessage('Profile updated successfully');
+      setMessage('Changes saved. Your profile is up to date.');
     } catch (e: any) {
-      setError(friendlyError(e, 'We could not update your profile. Please try again.'));
+      setError(friendlyError(e, 'We could not save your changes. Please try again.'));
     } finally {
       setSaving(false);
     }

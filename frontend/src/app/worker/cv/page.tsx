@@ -178,9 +178,9 @@ export default function WorkerCvPage() {
         resumeUrl: form.resumeUrl || '',
       };
       await usersService.updateProfile(userId, payload);
-      setMessage('CV updated successfully');
+      setMessage('CV saved. Employers can see your latest details.');
     } catch (e: any) {
-      setError(friendlyError(e, 'We could not update your CV. Please try again.'));
+      setError(friendlyError(e, 'We could not save your CV. Please try again.'));
     } finally {
       setSaving(false);
     }
