@@ -80,6 +80,8 @@ export const jobsService = {
   getMyJobs: () => api.get('/jobs/mine'),
   createJob: (jobData: any) => api.post('/jobs', jobData),
   updateJob: (id: string, jobData: any) => api.put(`/jobs/${id}`, jobData),
+  hideJob: (id: string) => api.post(`/jobs/${id}/hide`),
+  unhideJob: (id: string) => api.post(`/jobs/${id}/unhide`),
   deleteJob: (id: string) => api.delete(`/jobs/${id}`),
 };
 
@@ -149,7 +151,14 @@ export const usersService = {
 
 export const adminService = {
   getHomeContent: () => api.get('/admin/home'),
-  updateHomeContent: (content: any) => api.put('/admin/home', { content })
+  updateHomeContent: (content: any) => api.put('/admin/home', { content }),
+  listJobs: (params: {
+    status?: string;
+    hidden?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => api.get('/admin/jobs', { params })
 };
 
 export default api;

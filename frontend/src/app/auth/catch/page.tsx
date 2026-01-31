@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
+import { getDefaultRouteForRoles, normalizeRoles } from '@/lib/roles';
 
 export default function AuthCatchPage() {
   const router = useRouter();
@@ -12,8 +13,8 @@ export default function AuthCatchPage() {
       .me()
       .then((res) => {
         if (!active) return;
-        const role = res.data?.role;
-        router.replace(role === 'employer' ? '/employer' : '/jobs');
+        const roles = normalizeRoles(res.data?.roles);
+        router.replace(getDefaultRouteForRoles(roles));
       })
       .catch(() => {
         if (!active) return;

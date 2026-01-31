@@ -161,7 +161,7 @@ router.post('/upload-resume', auth, requireRole('worker'), async (req, res) => {
 router.get('/workers', async (req, res) => {
   try {
     const { search, location, skill, availability, minExp, maxExp } = req.query;
-    const filter = { role: 'worker', isDiscoverable: true };
+    const filter = { roles: 'worker', isDiscoverable: true };
 
     if (location) {
       filter.location = { $regex: buildRegex(location) };
@@ -201,7 +201,7 @@ router.get('/workers', async (req, res) => {
     }
 
     const workers = await User.find(filter)
-      .select('name role location headline summary skills yearsExperience desiredRoles availability profilePicture portfolioUrl linkedinUrl githubUrl createdAt');
+      .select('name roles location headline summary skills yearsExperience desiredRoles availability profilePicture portfolioUrl linkedinUrl githubUrl createdAt');
 
     res.json(workers);
   } catch (error) {
@@ -212,7 +212,7 @@ router.get('/workers', async (req, res) => {
 // Delete own account
 router.delete('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('_id role');
+    const user = await User.findById(req.userId).select('_id roles');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -225,7 +225,11 @@ router.delete('/me', auth, async (req, res) => {
       });
     }
 
-    if (user.role === 'employer') {
+    const roles = Array.isArray(user.roles) ? user.roles : [];
+    const isEmployer = roles.includes('employer');
+    const isWorker = roles.includes('worker');
+
+    if (isEmployer) {
       const jobs = await Job.find({ employerId: user._id }).select('_id');
       const jobIds = jobs.map((job) => job._id);
       if (jobIds.length) {
@@ -233,7 +237,8 @@ router.delete('/me', auth, async (req, res) => {
       }
       await Application.deleteMany({ employerId: user._id });
       await Job.deleteMany({ employerId: user._id });
-    } else {
+    }
+    if (isWorker) {
       await Application.deleteMany({ workerId: user._id });
       await Job.updateMany({ applicants: user._id }, { $pull: { applicants: user._id } });
     }

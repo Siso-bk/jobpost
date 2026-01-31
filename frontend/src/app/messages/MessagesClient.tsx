@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService, blocksService, conversationsService, reportsService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { getPrimaryRoleLabel, normalizeRoles } from '@/lib/roles';
 
 type ConversationItem = {
   id: string;
@@ -10,7 +11,7 @@ type ConversationItem = {
     id: string;
     name?: string;
     profilePicture?: string;
-    role?: string;
+    roles?: string[];
     companyName?: string;
   } | null;
   lastMessageText?: string;
@@ -68,6 +69,9 @@ export default function MessagesClient() {
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeId) || null,
     [conversations, activeId]
+  );
+  const activeOtherRoleLabel = getPrimaryRoleLabel(
+    normalizeRoles(activeConversation?.other?.roles)
   );
 
   useEffect(() => {
@@ -376,7 +380,7 @@ export default function MessagesClient() {
                 <div>
                   <h2>{activeConversation.other?.name || 'Conversation'}</h2>
                   <p className="muted">
-                    {activeConversation.other?.role || 'Member'} chat
+                    {activeOtherRoleLabel} chat
                   </p>
                 </div>
                 <div className="panel-actions">

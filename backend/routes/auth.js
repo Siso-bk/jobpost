@@ -15,17 +15,14 @@ const PAI_PLATFORM = (process.env.PAI_PLATFORM || '').trim();
 const PAI_TIMEOUT_MS = 10000;
 const VALID_ROLES = ['worker', 'employer'];
 
-function buildRoles(user) {
-  const roles = Array.isArray(user?.roles) ? [...user.roles] : [];
-  if (user?.role && !roles.includes(user.role)) {
-    roles.push(user.role);
-  }
-  return roles;
+function normalizeRoles(roles) {
+  if (!Array.isArray(roles)) return [];
+  return Array.from(new Set(roles.map((role) => String(role || '').trim()).filter(Boolean)));
 }
 
 function signAuthToken(user) {
   return jwt.sign(
-    { id: user._id, role: user.role, roles: buildRoles(user) },
+    { id: user._id, roles: normalizeRoles(user.roles) },
     process.env.JWT_SECRET,
     { expiresIn: '7d' }
   );
@@ -36,8 +33,7 @@ function publicUser(user) {
     id: user._id,
     name: user.name,
     email: user.email,
-    role: user.role,
-    roles: buildRoles(user)
+    roles: normalizeRoles(user.roles)
   };
 }
 
@@ -84,7 +80,6 @@ async function upsertPaiUser(paiUser, role) {
       name: paiUser?.name || 'User',
       email,
       password: hashedPassword,
-      role,
       roles: [role],
       provider: 'personalai',
       providerId: paiUser.id,
@@ -99,9 +94,8 @@ async function upsertPaiUser(paiUser, role) {
   if (!user.providerId) updates.providerId = paiUser.id;
   if (paiUser?.name && user.name !== paiUser.name) updates.name = paiUser.name;
   if (!user.isVerified) updates.isVerified = true;
-  const currentRoles = Array.isArray(user.roles) ? user.roles : [];
+  const currentRoles = normalizeRoles(user.roles);
   const desiredRoles = new Set(currentRoles);
-  if (user.role) desiredRoles.add(user.role);
   if (role) desiredRoles.add(role);
   if (desiredRoles.size !== currentRoles.length) {
     updates.roles = Array.from(desiredRoles);
@@ -123,7 +117,7 @@ router.post('/logout', (req, res) => {
 // Return current user based on session cookie
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('_id name email role roles');
+    const user = await User.findById(req.userId).select('_id name email roles');
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -170,7 +164,7 @@ router.post('/register', async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role,
+      roles: [role],
       provider: 'local',
       isVerified: true
     });
@@ -416,7 +410,7 @@ router.post('/external', async (req, res) => {
       user = new User({
         name,
         email,
-        role: 'worker',
+        roles: ['worker'],
         provider: 'personalai',
         providerId: sub,
         isVerified: true,
@@ -426,6 +420,11 @@ router.post('/external', async (req, res) => {
     } else {
       if (!user.provider) user.provider = 'personalai';
       if (!user.providerId) user.providerId = sub;
+      const roles = normalizeRoles(user.roles);
+      if (roles.length === 0) {
+        roles.push('worker');
+        user.roles = roles;
+      }
       await user.save();
     }
 

@@ -2,8 +2,10 @@ const express = require('express');
 const { Storage } = require('@google-cloud/storage');
 const router = express.Router();
 const Job = require('../models/Job');
+const Notification = require('../models/Notification');
 const { logPaiEvent } = require('../services/pai');
 const auth = require('../middleware/auth');
+const optionalAuth = require('../middleware/optionalAuth');
 const requireRole = require('../middleware/requireRole');
 
 const MAX_LOGO_BYTES = 1024 * 1024;
@@ -92,12 +94,40 @@ const normalizeLogoUrl = async (value, userId) => {
   throw new Error('Logo must be a URL or uploaded image');
 };
 
+const notifyEmployerVisibility = async (job, actorId, action, actorIsAdmin) => {
+  if (!job?.employerId) return;
+  const verb = action === 'hide' ? 'hidden' : 'restored';
+  const isSelf = String(job.employerId) === String(actorId);
+  const title = actorIsAdmin ? `Job ${verb} by admin` : `Job ${verb}`;
+  const body = actorIsAdmin
+    ? `"${job.title || 'Your job'}" was ${verb} by an admin.`
+    : isSelf
+    ? `You ${action === 'hide' ? 'hid' : 'restored'} "${job.title || 'your job'}".`
+    : `"${job.title || 'Your job'}" was ${verb}.`;
+  try {
+    await Notification.create({
+      userId: job.employerId,
+      type: 'job.visibility',
+      title,
+      body,
+      link: '/employer/jobs',
+      data: { jobId: job._id, action }
+    });
+  } catch (error) {}
+};
+
+const canManageJob = (job, req) => {
+  if (!job || !req?.userId) return false;
+  if (job.employerId.toString() === String(req.userId)) return true;
+  return Array.isArray(req.userRoles) && req.userRoles.includes('admin');
+};
+
 // Get all jobs (with pagination and filters)
 router.get('/', async (req, res) => {
   try {
     const { title, location, jobType, category, minSalary, maxSalary, page = 1, limit = 20 } = req.query;
     
-    let filter = { status: 'open' };
+    let filter = { status: 'open', isHidden: { $ne: true } };
 
     if (title) filter.title = { $regex: title, $options: 'i' };
     if (location) filter.location = { $regex: location, $options: 'i' };
@@ -148,16 +178,22 @@ router.get('/mine', auth, requireRole('employer'), async (req, res) => {
 });
 
 // Get single job
-router.get('/:id', async (req, res) => {
+router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const job = await Job.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { views: 1 } },
-      { new: true }
-    ).populate('employerId', 'name email company');
+    const job = await Job.findById(req.params.id).populate('employerId', 'name email company');
 
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
+    }
+
+    const canViewHidden = canManageJob(job, req);
+    if (job.isHidden && !canViewHidden) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    if (!job.isHidden) {
+      job.views += 1;
+      await job.save();
     }
 
     res.json(job);
@@ -255,6 +291,66 @@ router.put('/:id', auth, requireRole('employer'), async (req, res) => {
     res.json({ message: 'Job updated successfully', job });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// Hide job (employer or admin)
+router.post('/:id/hide', auth, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    if (!canManageJob(job, req)) {
+      return res.status(403).json({ message: 'Not authorized to hide this job' });
+    }
+
+    if (!job.isHidden) {
+      job.isHidden = true;
+      await job.save();
+      await logPaiEvent(req.userId, {
+        source: 'jobpost',
+        verb: 'job.hide',
+        objectId: String(job._id),
+        props: { title: job.title, company: job.company }
+      });
+      const actorIsAdmin = Array.isArray(req.userRoles) && req.userRoles.includes('admin');
+      await notifyEmployerVisibility(job, req.userId, 'hide', actorIsAdmin);
+    }
+
+    return res.json({ message: 'Job hidden', job });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+// Unhide job (employer or admin)
+router.post('/:id/unhide', auth, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    if (!canManageJob(job, req)) {
+      return res.status(403).json({ message: 'Not authorized to unhide this job' });
+    }
+
+    if (job.isHidden) {
+      job.isHidden = false;
+      await job.save();
+      await logPaiEvent(req.userId, {
+        source: 'jobpost',
+        verb: 'job.unhide',
+        objectId: String(job._id),
+        props: { title: job.title, company: job.company }
+      });
+      const actorIsAdmin = Array.isArray(req.userRoles) && req.userRoles.includes('admin');
+      await notifyEmployerVisibility(job, req.userId, 'unhide', actorIsAdmin);
+    }
+
+    return res.json({ message: 'Job unhidden', job });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 });
 

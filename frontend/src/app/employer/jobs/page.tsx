@@ -11,6 +11,7 @@ type Job = {
   location: string;
   jobType: string;
   status: 'open' | 'closed';
+  isHidden?: boolean;
   createdAt: string;
 };
 
@@ -20,6 +21,7 @@ export default function EmployerJobsPage() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [visibilityLoadingId, setVisibilityLoadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -53,6 +55,29 @@ export default function EmployerJobsPage() {
       setError(friendlyError(e, 'We could not delete that job. Please try again.'));
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleToggleVisibility = async (job: Job) => {
+    setVisibilityLoadingId(job._id);
+    setError(null);
+    setStatus(null);
+    try {
+      if (job.isHidden) {
+        const res = await jobsService.unhideJob(job._id);
+        const updated = res.data?.job || { ...job, isHidden: false };
+        setJobs((prev) => prev.map((item) => (item._id === job._id ? updated : item)));
+        setStatus('Job is now visible to applicants.');
+      } else {
+        const res = await jobsService.hideJob(job._id);
+        const updated = res.data?.job || { ...job, isHidden: true };
+        setJobs((prev) => prev.map((item) => (item._id === job._id ? updated : item)));
+        setStatus('Job hidden from public listings.');
+      }
+    } catch (e: any) {
+      setError(friendlyError(e, 'We could not update visibility. Please try again.'));
+    } finally {
+      setVisibilityLoadingId(null);
     }
   };
 
@@ -93,7 +118,9 @@ export default function EmployerJobsPage() {
                   <h3>{job.title}</h3>
                   <p className="muted">{job.company}</p>
                 </div>
-                <span className={`status-pill status-${job.status}`}>{job.status}</span>
+                <span className={`status-pill status-${job.isHidden ? 'hidden' : job.status}`}>
+                  {job.isHidden ? 'hidden' : job.status}
+                </span>
               </div>
               <div className="application-meta">
                 <span>{job.location}</span>
@@ -105,6 +132,18 @@ export default function EmployerJobsPage() {
               <div className="application-actions">
                 <Link href={`/job/${job._id}`}>View</Link>
                 <Link href={`/post-job?id=${job._id}`}>Edit</Link>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => handleToggleVisibility(job)}
+                  disabled={visibilityLoadingId === job._id}
+                >
+                  {visibilityLoadingId === job._id
+                    ? 'Updating...'
+                    : job.isHidden
+                    ? 'Unhide'
+                    : 'Hide'}
+                </button>
                 <button
                   type="button"
                   className="btn-ghost"

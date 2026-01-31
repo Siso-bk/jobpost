@@ -20,6 +20,9 @@ router.post('/', auth, async (req, res) => {
     if (!job) {
       return res.status(404).json({ message: 'Job not found' });
     }
+    if (job.isHidden || job.status !== 'open') {
+      return res.status(400).json({ message: 'Job is not accepting applications' });
+    }
 
     const existingApplication = await Application.findOne({
       jobId,

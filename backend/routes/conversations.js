@@ -19,7 +19,7 @@ const formatConversation = (conversation, userId, unreadCount = 0) => {
           id: other._id,
           name: other.name,
           profilePicture: other.profilePicture,
-          role: other.role,
+          roles: other.roles,
           companyName: other.companyName
         }
       : null,
@@ -59,7 +59,7 @@ router.get('/', auth, async (req, res) => {
 
     const conversations = await Conversation.find({ participants: req.userId })
       .sort({ updatedAt: -1 })
-      .populate('participants', 'name profilePicture role companyName');
+      .populate('participants', 'name profilePicture roles companyName');
 
     const visible = conversations.filter((conversation) => {
       const other = conversation.participants.find(
@@ -110,7 +110,7 @@ router.post('/', auth, createLimiter, async (req, res) => {
     }
 
     const recipient = await User.findById(recipientId).select(
-      '_id name profilePicture role companyName'
+      '_id name profilePicture roles companyName'
     );
     if (!recipient) {
       return res.status(404).json({ message: 'Recipient not found' });
@@ -118,14 +118,14 @@ router.post('/', auth, createLimiter, async (req, res) => {
 
     let conversation = await Conversation.findOne({
       participants: { $all: [req.userId, recipientId] }
-    }).populate('participants', 'name profilePicture role companyName');
+    }).populate('participants', 'name profilePicture roles companyName');
 
     if (!conversation) {
       conversation = new Conversation({
         participants: [req.userId, recipientId]
       });
       await conversation.save();
-      await conversation.populate('participants', 'name profilePicture role companyName');
+      await conversation.populate('participants', 'name profilePicture roles companyName');
     }
 
     return res.json(formatConversation(conversation, req.userId));

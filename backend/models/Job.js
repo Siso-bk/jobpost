@@ -56,6 +56,10 @@ const jobSchema = new mongoose.Schema(
       enum: ['open', 'closed'],
       default: 'open'
     },
+    isHidden: {
+      type: Boolean,
+      default: false
+    },
     views: {
       type: Number,
       default: 0
@@ -67,5 +71,6 @@ const jobSchema = new mongoose.Schema(
 // Indexes for faster search and common queries
 jobSchema.index({ title: 'text', description: 'text', company: 'text', location: 'text' });
 jobSchema.index({ employerId: 1, status: 1, createdAt: -1 });
+jobSchema.index({ status: 1, isHidden: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Job', jobSchema);

@@ -1,12 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import ApplyForm from '@/components/ApplyForm';
 
 async function getJob(id: string) {
   // Next.js server components should use fetch directly.
   const base =
     process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_ORIGIN || ''}/api` || '/api';
-  const res = await fetch(`${base}/jobs/${id}`, { cache: 'no-store' });
+  const cookieHeader = cookies().toString();
+  const headers = cookieHeader ? { cookie: cookieHeader } : undefined;
+  const res = await fetch(`${base}/jobs/${id}`, { cache: 'no-store', headers });
   if (!res.ok) throw new Error('Failed to fetch job');
   return res.json();
 }

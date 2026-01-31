@@ -8,6 +8,7 @@
     "dev": "node node_modules/nodemon/bin/nodemon.js server.js",
     "build": "node --check server.js",
     "grant-admin": "node scripts/grantAdmin.js",
+    "migrate-roles": "node scripts/migrateRoles.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

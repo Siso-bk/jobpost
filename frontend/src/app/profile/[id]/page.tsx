@@ -3,11 +3,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { authService, blocksService, conversationsService, reportsService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { getRoleLabel, hasRole, normalizeRoles } from '@/lib/roles';
 
 type UserProfile = {
   name?: string;
   email?: string;
-  role?: string;
+  roles?: string[];
   location?: string;
   bio?: string;
   phone?: string;
@@ -49,7 +50,7 @@ export default function ProfilePage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [themeReady, setThemeReady] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
-  const [viewerRole, setViewerRole] = useState<string | null>(null);
+  const [viewerRoles, setViewerRoles] = useState<string[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [blockStatus, setBlockStatus] = useState({ blocked: false, blockedBy: false });
   const [blockLoading, setBlockLoading] = useState(false);
@@ -66,12 +67,12 @@ export default function ProfilePage() {
       .then((res) => {
         if (!active) return;
         setViewerId(res.data?.id || null);
-        setViewerRole(res.data?.role || null);
+        setViewerRoles(normalizeRoles(res.data?.roles));
       })
       .catch(() => {
         if (!active) return;
         setViewerId(null);
-        setViewerRole(null);
+        setViewerRoles([]);
       });
     return () => {
       active = false;
@@ -370,9 +371,11 @@ export default function ProfilePage() {
   };
 
   const isOwner = Boolean(viewerId && viewerId === userId);
-  const roleForView = user?.role || viewerRole;
-  const isEmployer = roleForView === 'employer';
-  const isWorker = roleForView === 'worker';
+  const profileRoles = normalizeRoles(user?.roles);
+  const rolesForView = profileRoles.length ? profileRoles : viewerRoles;
+  const isEmployer = hasRole(rolesForView, 'employer');
+  const isWorker = hasRole(rolesForView, 'worker');
+  const roleLabel = getRoleLabel(rolesForView);
   const canMessage = !blockStatus.blocked && !blockStatus.blockedBy;
   const deleteReady = deleteConfirm.trim().toUpperCase() === 'DELETE';
   const themeLabel = themeReady
@@ -439,7 +442,7 @@ export default function ProfilePage() {
               )}
               <div>
                 <span className="profile-label">Role</span>
-                <div className="profile-value tag">{user.role || 'N/A'}</div>
+                <div className="profile-value tag">{roleLabel}</div>
               </div>
               {user.location && (
                 <div>

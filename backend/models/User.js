@@ -18,16 +18,14 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6
     },
-    role: {
-      type: String,
-      enum: ['worker', 'employer'],
-      required: true
-    },
     roles: {
       type: [String],
       enum: ['worker', 'employer', 'admin'],
-      default: function () {
-        return this.role ? [this.role] : [];
+      required: true,
+      default: [],
+      validate: {
+        validator: (value) => Array.isArray(value) && value.length > 0,
+        message: 'At least one role is required'
       }
     },
     phone: String,
@@ -70,14 +68,5 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-userSchema.pre('save', function (next) {
-  if (this.role) {
-    const roles = new Set(Array.isArray(this.roles) ? this.roles : []);
-    roles.add(this.role);
-    this.roles = Array.from(roles);
-  }
-  next();
-});
 
 module.exports = mongoose.model('User', userSchema);

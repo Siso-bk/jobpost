@@ -160,6 +160,9 @@ export default function AdminDashboardPage() {
           <button type="button" className="btn-secondary" onClick={loadHome} disabled={loading}>
             {loading ? 'Refreshing...' : 'Refresh content'}
           </button>
+          <Link className="btn-ghost" href="/admin/jobs">
+            Manage jobs
+          </Link>
           <Link className="btn-ghost" href="/moderation">
             Moderation
           </Link>

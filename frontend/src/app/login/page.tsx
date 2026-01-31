@@ -3,6 +3,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { getDefaultRouteForRoles, normalizeRoles } from '@/lib/roles';
 
 function LoginPageClient() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -22,9 +23,9 @@ function LoginPageClient() {
       .me()
       .then((res) => {
         if (!active) return;
-        const role = res.data?.role;
-        if (role) {
-          router.replace(role === 'employer' ? '/employer' : '/jobs');
+        const roles = normalizeRoles(res.data?.roles);
+        if (roles.length) {
+          router.replace(getDefaultRouteForRoles(roles));
         }
       })
       .catch(() => {});
@@ -77,7 +78,8 @@ function LoginPageClient() {
           ? await authService.localLogin(formData.email, formData.password)
           : await authService.paiLogin(formData.email, formData.password, needsRole ? role : undefined);
       setStatus('Signed in. Redirecting...');
-      router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
+      const roles = normalizeRoles(res.data?.user?.roles);
+      router.push(getDefaultRouteForRoles(roles));
     } catch (err: any) {
       setStatus('');
       const code = err?.response?.data?.code;

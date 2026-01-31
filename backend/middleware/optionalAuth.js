@@ -1,23 +1,21 @@
 const jwt = require('jsonwebtoken');
 
-const auth = (req, res, next) => {
+const optionalAuth = (req, _res, next) => {
   try {
     let token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
       token = req.cookies && req.cookies['token'];
     }
-
     if (!token) {
-      return res.status(401).json({ message: 'No token, authorization denied' });
+      return next();
     }
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.id;
     req.userRoles = Array.isArray(decoded.roles) ? decoded.roles.filter(Boolean) : [];
-    next();
+    return next();
   } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    return next();
   }
 };
 
-module.exports = auth;
+module.exports = optionalAuth;

@@ -13,8 +13,8 @@ router.get('/reports', auth, requireAdmin, async (req, res) => {
     const filter = status === 'all' ? {} : { status };
     const reports = await Report.find(filter)
       .sort({ createdAt: -1 })
-      .populate('reporterId', 'name email role')
-      .populate('targetUserId', 'name email role')
+      .populate('reporterId', 'name email roles')
+      .populate('targetUserId', 'name email roles')
       .populate('messageId', 'body senderId recipientId createdAt')
       .populate('conversationId', '_id');
 

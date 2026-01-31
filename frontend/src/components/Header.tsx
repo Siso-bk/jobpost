@@ -3,10 +3,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { authService, conversationsService, notificationsService, usersService } from '@/services/api';
+import { hasRole, normalizeRoles } from '@/lib/roles';
 
 export default function Header() {
   const [hydrated, setHydrated] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -36,19 +36,13 @@ export default function Header() {
       .me()
       .then((res) => {
         if (!active) return;
-        const roles = Array.isArray(res.data?.roles)
-          ? res.data.roles
-          : res.data?.role
-          ? [res.data.role]
-          : [];
-        setUserRole(res.data?.role || null);
+        const roles = normalizeRoles(res.data?.roles);
         setUserRoles(roles);
         setUserId(res.data?.id || null);
         setUserName(res.data?.name || null);
       })
       .catch(() => {
         if (!active) return;
-        setUserRole(null);
         setUserRoles([]);
         setUserId(null);
         setUserName(null);
@@ -128,7 +122,6 @@ export default function Header() {
     try {
       await authService.logout();
     } catch {}
-    setUserRole(null);
     setUserRoles([]);
     setUserId(null);
     setUserName(null);
@@ -136,7 +129,7 @@ export default function Header() {
     router.replace('/login');
   };
 
-  const isAuthed = hydrated && Boolean(userRole);
+  const isAuthed = hydrated && userRoles.length > 0;
   const isActive = (href: string) => {
     if (!pathname) return false;
     if (href === '/jobs') return pathname === '/jobs' || pathname.startsWith('/job/');
@@ -148,15 +141,16 @@ export default function Header() {
   };
   const inboxUnread = messageUnread + notificationUnread;
   const inboxActive = isActive('/messages') || isActive('/notifications');
-  const isAdmin = userRoles.includes('admin');
+  const isAdmin = hasRole(userRoles, 'admin');
+  const isEmployer = hasRole(userRoles, 'employer');
+  const isWorker = hasRole(userRoles, 'worker');
   const manageActive =
-    userRole === 'employer' &&
+    isEmployer &&
     (isActive('/employer') ||
       isActive('/post-job') ||
       isActive('/employer/jobs') ||
       isActive('/employer/applications'));
-  const myActive =
-    userRole === 'worker' && (isActive('/my-applications') || isActive('/worker/cv'));
+  const myActive = isWorker && (isActive('/my-applications') || isActive('/worker/cv'));
 
   return (
     <header className="header" ref={headerRef}>
@@ -210,12 +204,12 @@ export default function Header() {
               <Link href="/jobs" className={`nav-link ${isActive('/jobs') ? 'active' : ''}`}>
                 Jobs
               </Link>
-              {userRole === 'employer' && (
+              {isEmployer && (
                 <Link href="/talent" className={`nav-link ${isActive('/talent') ? 'active' : ''}`}>
                   Talent
                 </Link>
               )}
-              {userRole === 'employer' && (
+              {isEmployer && (
                 <div className="account-menu">
                   <button
                     type="button"
@@ -364,7 +358,7 @@ export default function Header() {
                   )}
                 </div>
               )}
-              {userRole === 'worker' && (
+              {isWorker && (
                 <div className="account-menu">
                   <button
                     type="button"

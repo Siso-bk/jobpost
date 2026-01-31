@@ -82,9 +82,7 @@ export async function GET(req: NextRequest) {
     const user = appData?.user || {};
     if (!token) throw new Error('missing_app_token');
 
-    const next = NextResponse.redirect(
-      `${origin}/auth/catch?id=${encodeURIComponent(user.id || '')}&role=${encodeURIComponent(user.role || '')}`
-    );
+    const next = NextResponse.redirect(`${origin}/auth/catch?id=${encodeURIComponent(user.id || '')}`);
     const isProd = process.env.NODE_ENV === 'production';
     next.cookies.set('token', token, {
       httpOnly: true,

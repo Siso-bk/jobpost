@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { authService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { hasRole, normalizeRoles } from '@/lib/roles';
 
 type CvForm = {
   headline: string;
@@ -23,7 +24,7 @@ type CvForm = {
 
 export default function WorkerCvPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [form, setForm] = useState<CvForm>({
     headline: '',
     summary: '',
@@ -54,12 +55,12 @@ export default function WorkerCvPage() {
       .then((res) => {
         if (!active) return;
         setUserId(res.data?.id || null);
-        setUserRole(res.data?.role || null);
+        setUserRoles(normalizeRoles(res.data?.roles));
       })
       .catch(() => {
         if (!active) return;
         setUserId(null);
-        setUserRole(null);
+        setUserRoles([]);
       });
     return () => {
       active = false;
@@ -196,7 +197,8 @@ export default function WorkerCvPage() {
     );
   }
 
-  if (userRole && userRole !== 'worker') {
+  const isWorker = hasRole(userRoles, 'worker');
+  if (userRoles.length && !isWorker) {
     return (
       <div className="page-container">
         <div className="form-card">

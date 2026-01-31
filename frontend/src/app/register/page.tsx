@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { getDefaultRouteForRoles, normalizeRoles } from '@/lib/roles';
 
 type Step = 'email' | 'code' | 'details';
 type Flow = 'new' | 'existing';
@@ -35,9 +36,9 @@ export default function RegisterPage() {
       .me()
       .then((res) => {
         if (!active) return;
-        const role = res.data?.role;
-        if (role) {
-          router.replace(role === 'employer' ? '/employer' : '/jobs');
+        const roles = normalizeRoles(res.data?.roles);
+        if (roles.length) {
+          router.replace(getDefaultRouteForRoles(roles));
         }
       })
       .catch(() => {});
@@ -97,7 +98,8 @@ export default function RegisterPage() {
           code: code.trim(),
           role: details.role,
         });
-        router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
+        const roles = normalizeRoles(res.data?.user?.roles);
+        router.push(getDefaultRouteForRoles(roles));
         return;
       }
       const res = await authService.paiSignupVerify(email.trim().toLowerCase(), code.trim());
@@ -134,7 +136,8 @@ export default function RegisterPage() {
         password: details.password,
         role: details.role,
       });
-      router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
+      const roles = normalizeRoles(res.data?.user?.roles);
+      router.push(getDefaultRouteForRoles(roles));
     } catch (err: any) {
       setError(friendlyError(err, 'We could not finish signup. Please try again.'));
       setStatus('');
@@ -155,7 +158,8 @@ export default function RegisterPage() {
         password: localDetails.password,
         role: localDetails.role,
       });
-      router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
+      const roles = normalizeRoles(res.data?.user?.roles);
+      router.push(getDefaultRouteForRoles(roles));
     } catch (err: any) {
       const code = err?.response?.data?.code;
       if (code === 'use_pai_login') {

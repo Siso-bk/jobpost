@@ -9,8 +9,8 @@ type ReportItem = {
   reason: string;
   status: string;
   createdAt: string;
-  reporterId?: { name?: string; email?: string; role?: string };
-  targetUserId?: { name?: string; email?: string; role?: string };
+  reporterId?: { name?: string; email?: string; roles?: string[] };
+  targetUserId?: { name?: string; email?: string; roles?: string[] };
   messageId?: { _id: string; body?: string; createdAt?: string };
   conversationId?: { _id: string };
 };

@@ -8,7 +8,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const blocks = await Block.find({ blockerId: req.userId }).populate(
       'blockedId',
-      'name profilePicture role companyName'
+      'name profilePicture roles companyName'
     );
     const payload = blocks.map((block) => ({
       id: block._id,
@@ -18,7 +18,7 @@ router.get('/', auth, async (req, res) => {
             id: block.blockedId._id,
             name: block.blockedId.name,
             profilePicture: block.blockedId.profilePicture,
-            role: block.blockedId.role,
+            roles: block.blockedId.roles,
             companyName: block.blockedId.companyName
           }
         : null

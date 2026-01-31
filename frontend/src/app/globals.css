@@ -969,6 +969,10 @@ a:hover {
   background: rgba(107, 114, 128, 0.16);
   color: #374151;
 }
+.status-hidden {
+  background: rgba(148, 163, 184, 0.2);
+  color: #475569;
+}
 
 .dashboard-head {
   display: flex;

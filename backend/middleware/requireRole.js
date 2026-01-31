@@ -1,8 +1,8 @@
 const requireRole = (role) => (req, res, next) => {
-  if (!req.userRole) {
-    return res.status(401).json({ message: 'Role missing from token' });
+  if (!Array.isArray(req.userRoles) || req.userRoles.length === 0) {
+    return res.status(401).json({ message: 'Roles missing from token' });
   }
-  if (req.userRole !== role) {
+  if (!req.userRoles.includes(role)) {
     return res.status(403).json({ message: 'Not authorized' });
   }
   return next();

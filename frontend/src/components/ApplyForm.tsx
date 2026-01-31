@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { applicationsService, authService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { hasRole, normalizeRoles } from '@/lib/roles';
 
 type ApplyFormProps = {
   jobId: string;
@@ -15,7 +16,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
   const [cvLoading, setCvLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -24,12 +25,12 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
       .me()
       .then((res) => {
         if (!active) return;
-        setUserRole(res.data?.role || null);
+        setUserRoles(normalizeRoles(res.data?.roles));
         setUserId(res.data?.id || null);
       })
       .catch(() => {
         if (!active) return;
-        setUserRole(null);
+        setUserRoles([]);
         setUserId(null);
       });
     return () => {
@@ -126,7 +127,8 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
     }
   };
 
-  if (userRole && userRole !== 'worker') {
+  const isWorker = hasRole(userRoles, 'worker');
+  if (userRoles.length && !isWorker) {
     return (
       <div className="apply-card">
         <h3>Apply for this job</h3>

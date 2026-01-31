@@ -35,7 +35,6 @@ async function run() {
   }
 
   const roles = new Set(Array.isArray(user.roles) ? user.roles : []);
-  if (user.role) roles.add(user.role);
   roles.add('admin');
   user.roles = Array.from(roles);
   await user.save();
