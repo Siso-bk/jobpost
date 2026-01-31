@@ -147,4 +147,9 @@ export const usersService = {
   }) => api.get('/users/workers', { params: filters }),
 };
 
+export const adminService = {
+  getHomeContent: () => api.get('/admin/home'),
+  updateHomeContent: (content: any) => api.put('/admin/home', { content })
+};
+
 export default api;

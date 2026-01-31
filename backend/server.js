@@ -21,6 +21,8 @@ const blockRoutes = require('./routes/blocks');
 const reportRoutes = require('./routes/reports');
 const notificationRoutes = require('./routes/notifications');
 const moderationRoutes = require('./routes/moderation');
+const adminRoutes = require('./routes/admin');
+const publicRoutes = require('./routes/public');
 const { startRetentionCleanup } = require('./services/retention');
 
 const app = express();
@@ -85,7 +87,8 @@ app.use(
     '/api/blocks',
     '/api/reports',
     '/api/notifications',
-    '/api/moderation'
+    '/api/moderation',
+    '/api/admin'
   ],
   writeLimiter
 );
@@ -134,6 +137,8 @@ app.use('/api/blocks', blockRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/moderation', moderationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/public', publicRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

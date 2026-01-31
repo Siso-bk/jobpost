@@ -1,38 +1,51 @@
 import Link from 'next/link';
+import { DEFAULT_HOME_CONTENT, mergeHomeContent, type HomeContent } from '@/lib/homeContent';
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic';
+
+const API_BASE = (
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.BACKEND_API_URL ||
+  'http://localhost:5000/api'
+).replace(/\/$/, '');
+
+async function getHomeContent(): Promise<HomeContent> {
+  try {
+    const res = await fetch(`${API_BASE}/public/home`, { cache: 'no-store' });
+    if (!res.ok) return DEFAULT_HOME_CONTENT;
+    const data = await res.json().catch(() => ({}));
+    return mergeHomeContent(DEFAULT_HOME_CONTENT, data?.content);
+  } catch {
+    return DEFAULT_HOME_CONTENT;
+  }
+}
+
+export default async function HomePage() {
+  const content = await getHomeContent();
+
   return (
     <div className="landing">
       <section className="landing-hero">
         <div className="container hero-grid">
           <div className="hero-copy">
-            <div className="eyebrow">JobPost</div>
-            <h1>Hire and get hired with a modern job board.</h1>
-            <p>
-              Source high-signal roles, manage applicants, and connect with teams that fit your
-              goals. JobPost keeps the process fast, clear, and human.
-            </p>
+            <div className="eyebrow">{content.hero.eyebrow}</div>
+            <h1>{content.hero.title}</h1>
+            <p>{content.hero.description}</p>
             <div className="hero-actions">
-              <Link className="btn-primary" href="/jobs">
-                Explore jobs
+              <Link className="btn-primary" href={content.hero.primaryCta.href}>
+                {content.hero.primaryCta.label}
               </Link>
-              <Link className="btn-secondary" href="/post-job">
-                Post a role
+              <Link className="btn-secondary" href={content.hero.secondaryCta.href}>
+                {content.hero.secondaryCta.label}
               </Link>
             </div>
             <div className="hero-metrics">
-              <div>
-                <div className="metric">5.2k+</div>
-                <span className="muted">roles live</span>
-              </div>
-              <div>
-                <div className="metric">1.8k</div>
-                <span className="muted">hiring teams</span>
-              </div>
-              <div>
-                <div className="metric">48h</div>
-                <span className="muted">avg time to interview</span>
-              </div>
+              {content.metrics.map((metric) => (
+                <div key={metric.label}>
+                  <div className="metric">{metric.value}</div>
+                  <span className="muted">{metric.label}</span>
+                </div>
+              ))}
             </div>
           </div>
           <div className="hero-panel">
@@ -77,11 +90,9 @@ export default function HomePage() {
         <div className="container">
           <p className="muted">Trusted by teams building the future of work</p>
           <div className="logo-row">
-            <span>Polarite</span>
-            <span>Bluepine</span>
-            <span>Arcward</span>
-            <span>Monarch</span>
-            <span>Helio</span>
+            {content.logos.map((logo) => (
+              <span key={logo}>{logo}</span>
+            ))}
           </div>
         </div>
       </section>
@@ -89,30 +100,16 @@ export default function HomePage() {
       <section className="landing-section">
         <div className="container">
           <div className="section-head">
-            <h2>Everything you need to hire with confidence.</h2>
-            <p className="muted">
-              JobPost pairs clean listings with applicant workflows that feel effortless.
-            </p>
+            <h2>{content.featureSection.title}</h2>
+            <p className="muted">{content.featureSection.description}</p>
           </div>
           <div className="feature-grid">
-            <div className="feature-card">
-              <h3>Curated search</h3>
-              <p>
-                Filter by role, location, and job type. Save the searches that matter and return
-                fast.
-              </p>
-            </div>
-            <div className="feature-card">
-              <h3>Applicant ready</h3>
-              <p>
-                Structured roles, clear salary bands, and fast application flows keep the funnel
-                moving.
-              </p>
-            </div>
-            <div className="feature-card">
-              <h3>Built for speed</h3>
-              <p>Modern tech and smart caching keep every page responsive and production ready.</p>
-            </div>
+            {content.featureSection.features.map((feature) => (
+              <div className="feature-card" key={feature.title}>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -120,25 +117,17 @@ export default function HomePage() {
       <section className="landing-section soft">
         <div className="container steps">
           <div>
-            <div className="eyebrow">How it works</div>
-            <h2>Launch your next hire in three simple steps.</h2>
+            <div className="eyebrow">{content.stepsSection.eyebrow}</div>
+            <h2>{content.stepsSection.title}</h2>
           </div>
           <div className="step-grid">
-            <div className="step-card">
-              <span className="step-num">01</span>
-              <h3>Create the role</h3>
-              <p>Post polished listings with structured job details and salary clarity.</p>
-            </div>
-            <div className="step-card">
-              <span className="step-num">02</span>
-              <h3>Review applicants</h3>
-              <p>Track applications, keep notes, and move candidates fast.</p>
-            </div>
-            <div className="step-card">
-              <span className="step-num">03</span>
-              <h3>Hire with confidence</h3>
-              <p>Bring the right people on board, with less noise and more signal.</p>
-            </div>
+            {content.stepsSection.steps.map((step) => (
+              <div className="step-card" key={step.number}>
+                <span className="step-num">{step.number}</span>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -146,17 +135,15 @@ export default function HomePage() {
       <section className="landing-cta">
         <div className="container cta-card">
           <div>
-            <h2>Ready to upgrade your hiring flow?</h2>
-            <p className="muted">
-              Start with a featured listing or browse roles that match your skills.
-            </p>
+            <h2>{content.cta.title}</h2>
+            <p className="muted">{content.cta.description}</p>
           </div>
           <div className="hero-actions">
-            <Link className="btn-primary" href="/register">
-              Create account
+            <Link className="btn-primary" href={content.cta.primaryCta.href}>
+              {content.cta.primaryCta.label}
             </Link>
-            <Link className="btn-secondary" href="/jobs">
-              Browse jobs
+            <Link className="btn-secondary" href={content.cta.secondaryCta.href}>
+              {content.cta.secondaryCta.label}
             </Link>
           </div>
         </div>
