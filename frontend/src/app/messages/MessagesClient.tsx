@@ -55,6 +55,7 @@ export default function MessagesClient() {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [messageError, setMessageError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [blockStatus, setBlockStatus] = useState({ blocked: false, blockedBy: false });
   const [blockLoading, setBlockLoading] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -62,6 +63,7 @@ export default function MessagesClient() {
   const [reportLoading, setReportLoading] = useState(false);
   const [reportStatus, setReportStatus] = useState<string | null>(null);
   const messageEndRef = useRef<HTMLDivElement | null>(null);
+  const statusTimeoutRef = useRef<number | null>(null);
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeId) || null,
@@ -97,6 +99,24 @@ export default function MessagesClient() {
   }, [queryConversationId]);
 
   useEffect(() => {
+    return () => {
+      if (statusTimeoutRef.current) {
+        window.clearTimeout(statusTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const flashStatus = (text: string) => {
+    setStatusMessage(text);
+    if (statusTimeoutRef.current) {
+      window.clearTimeout(statusTimeoutRef.current);
+    }
+    statusTimeoutRef.current = window.setTimeout(() => {
+      setStatusMessage(null);
+    }, 2500);
+  };
+
+  useEffect(() => {
     if (!meId) return;
     setLoading(true);
     conversationsService
@@ -125,6 +145,7 @@ export default function MessagesClient() {
     setReportOpen(false);
     setReportReason('');
     setReportStatus(null);
+    setStatusMessage(null);
     setMessageError(null);
     setLoadingMessages(true);
     conversationsService
@@ -178,6 +199,7 @@ export default function MessagesClient() {
   }, [messages]);
 
   const handleSelectConversation = (conversationId: string) => {
+    setStatusMessage(null);
     setActiveId(conversationId);
     router.replace(`/messages?c=${conversationId}`);
   };
@@ -187,13 +209,16 @@ export default function MessagesClient() {
     if (!otherId || blockLoading) return;
     setBlockLoading(true);
     setMessageError(null);
+    setStatusMessage(null);
     try {
       if (blockStatus.blocked) {
         await blocksService.unblock(otherId);
         setBlockStatus({ blocked: false, blockedBy: false });
+        flashStatus('User unblocked. You can message them again.');
       } else {
         await blocksService.block(otherId);
         setBlockStatus({ blocked: true, blockedBy: false });
+        flashStatus('User blocked. You will no longer receive messages.');
       }
     } catch (e: any) {
       setMessageError(friendlyError(e, 'We could not update block status. Please try again.'));
@@ -212,6 +237,7 @@ export default function MessagesClient() {
     }
     setReportLoading(true);
     setReportStatus(null);
+    setStatusMessage(null);
     try {
       await reportsService.create({
         targetUserId: otherId,
@@ -221,6 +247,7 @@ export default function MessagesClient() {
       setReportStatus('Report submitted.');
       setReportReason('');
       setReportOpen(false);
+      flashStatus('Report submitted. Thanks for letting us know.');
     } catch (e: any) {
       setReportStatus(friendlyError(e, 'We could not submit the report. Please try again.'));
     } finally {
@@ -242,6 +269,7 @@ export default function MessagesClient() {
     }
     setSending(true);
     setMessageError(null);
+    setStatusMessage(null);
     try {
       const res = await conversationsService.sendMessage(activeId, trimmed);
       const newMessage = res.data?.message;
@@ -266,6 +294,7 @@ export default function MessagesClient() {
             return bTime - aTime;
           });
         });
+        flashStatus('Message sent.');
       }
     } catch (e: any) {
       setMessageError(friendlyError(e, 'We could not send the message. Please try again.'));
@@ -398,6 +427,7 @@ export default function MessagesClient() {
                   {blockStatus.blockedBy ? 'This user has blocked you.' : 'You blocked this user.'}
                 </p>
               )}
+              {statusMessage && <p className="status-message">{statusMessage}</p>}
               {loadingMessages ? (
                 <p className="loading">Loading messages...</p>
               ) : messageError ? (

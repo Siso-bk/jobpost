@@ -139,7 +139,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
     <div className="apply-card">
       <h3>Apply for this job</h3>
       <p className="muted">Share a quick cover letter and a resume link or summary.</p>
-      {message && <p>{message}</p>}
+      {message && <p className="status-message">{message}</p>}
       {error && <p className="error-message">{error}</p>}
       <form className="auth-form" onSubmit={handleSubmit}>
         <label>

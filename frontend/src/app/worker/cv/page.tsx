@@ -213,7 +213,7 @@ export default function WorkerCvPage() {
         <div className="eyebrow">Worker</div>
         <h2>My CV</h2>
         <p className="muted">Share your experience so employers can find and contact you.</p>
-        {message && <p>{message}</p>}
+        {message && <p className="status-message">{message}</p>}
         {error && <p className="error-message">{error}</p>}
         {loading ? (
           <p className="loading">Loading CV...</p>

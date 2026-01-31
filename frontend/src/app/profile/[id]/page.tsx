@@ -44,6 +44,7 @@ export default function ProfilePage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [themeReady, setThemeReady] = useState(false);
@@ -81,6 +82,7 @@ export default function ProfilePage() {
     if (!userId) return;
     setLoading(true);
     setError(null);
+    setStatusMessage(null);
     usersService
       .getUserProfile(userId)
       .then((res) => {
@@ -148,6 +150,7 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     setLogoutLoading(true);
     setError(null);
+    setStatusMessage(null);
     try {
       await authService.logout();
       router.replace('/login');
@@ -166,6 +169,7 @@ export default function ProfilePage() {
     setDeleteLoading(true);
     setError(null);
     setMessage(null);
+    setStatusMessage(null);
     try {
       await usersService.deleteMe();
       router.replace('/login');
@@ -198,13 +202,16 @@ export default function ProfilePage() {
     if (!viewerId || !userId || viewerId === userId) return;
     setBlockLoading(true);
     setError(null);
+    setStatusMessage(null);
     try {
       if (blockStatus.blocked) {
         await blocksService.unblock(userId);
         setBlockStatus({ blocked: false, blockedBy: false });
+        setStatusMessage('User unblocked. You can message them again.');
       } else {
         await blocksService.block(userId);
         setBlockStatus({ blocked: true, blockedBy: false });
+        setStatusMessage('User blocked. You will no longer receive messages.');
       }
     } catch (e: any) {
       setError(friendlyError(e, 'We could not update block status. Please try again.'));
@@ -222,10 +229,12 @@ export default function ProfilePage() {
     }
     setReportLoading(true);
     setReportStatus(null);
+    setStatusMessage(null);
     try {
       await reportsService.create({ targetUserId: userId, reason });
       setReportStatus('Report submitted.');
       setReportReason('');
+      setStatusMessage('Report submitted. Thanks for letting us know.');
     } catch (e: any) {
       setReportStatus(friendlyError(e, 'We could not submit the report. Please try again.'));
     } finally {
@@ -237,6 +246,7 @@ export default function ProfilePage() {
     if (!viewerId || !userId || isOwner) return;
     setChatLoading(true);
     setError(null);
+    setStatusMessage(null);
     try {
       const res = await conversationsService.create(userId);
       const conversationId = res.data?.id || res.data?._id;
@@ -336,6 +346,7 @@ export default function ProfilePage() {
     setSaving(true);
     setMessage(null);
     setError(null);
+    setStatusMessage(null);
     try {
       const payload = {
         ...form,
@@ -403,6 +414,7 @@ export default function ProfilePage() {
             <p className="status-message">This user has blocked you.</p>
           )}
           {loading && <p>Loading profile...</p>}
+          {statusMessage && <p className="status-message">{statusMessage}</p>}
           {error && <p className="error-message">{error}</p>}
           {!loading && user && (
             <div className="profile-list">
@@ -605,7 +617,7 @@ export default function ProfilePage() {
         {isOwner && (
           <section className="card profile-edit">
             <h2>Edit profile</h2>
-            {message && <p>{message}</p>}
+            {message && <p className="status-message">{message}</p>}
             {error && <p className="error-message">{error}</p>}
             <form className="auth-form" onSubmit={handleSave}>
               <label>

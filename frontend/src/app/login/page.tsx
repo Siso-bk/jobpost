@@ -7,6 +7,7 @@ import { friendlyError } from '@/lib/feedback';
 function LoginPageClient() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authMode, setAuthMode] = useState<'pai' | 'local'>('pai');
@@ -50,6 +51,7 @@ function LoginPageClient() {
       message = 'PersonalAI sign-in failed. Please try again.';
     }
     if (message) setError(message);
+    if (message) setStatus('');
   }, [searchParams]);
 
   useEffect(() => {
@@ -68,13 +70,16 @@ function LoginPageClient() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setStatus('Signing you in...');
     try {
       const res =
         authMode === 'local'
           ? await authService.localLogin(formData.email, formData.password)
           : await authService.paiLogin(formData.email, formData.password, needsRole ? role : undefined);
+      setStatus('Signed in. Redirecting...');
       router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
     } catch (err: any) {
+      setStatus('');
       const code = err?.response?.data?.code;
       if (code === 'email_not_verified') {
         setError('Email not verified. Please register to request a new code.');
@@ -103,6 +108,7 @@ function LoginPageClient() {
               setAuthMode('pai');
               setNeedsRole(false);
               setError('');
+              setStatus('');
             }}
           >
             PersonalAI
@@ -114,11 +120,13 @@ function LoginPageClient() {
               setAuthMode('local');
               setNeedsRole(false);
               setError('');
+              setStatus('');
             }}
           >
             Local account
           </button>
         </div>
+        {status && <p className="status-message">{status}</p>}
         {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
