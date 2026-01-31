@@ -7,12 +7,19 @@ type Step = 'email' | 'code' | 'details';
 type Flow = 'new' | 'existing';
 
 export default function RegisterPage() {
+  const [authMode, setAuthMode] = useState<'pai' | 'local'>('pai');
   const [step, setStep] = useState<Step>('email');
   const [flow, setFlow] = useState<Flow>('new');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [preToken, setPreToken] = useState<string | null>(null);
   const [details, setDetails] = useState({ name: '', handle: '', password: '', role: 'worker' });
+  const [localDetails, setLocalDetails] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'worker',
+  });
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [devCode, setDevCode] = useState<string | null>(null);
@@ -132,6 +139,32 @@ export default function RegisterPage() {
     }
   };
 
+  const handleLocalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setStatus('Creating your account...');
+    try {
+      const res = await authService.localRegister({
+        name: localDetails.name.trim(),
+        email: localDetails.email.trim().toLowerCase(),
+        password: localDetails.password,
+        role: localDetails.role,
+      });
+      router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
+    } catch (err: any) {
+      const code = err?.response?.data?.code;
+      if (code === 'use_pai_login') {
+        setError('This email is managed by PersonalAI. Switch to PersonalAI signup.');
+      } else {
+        setError(err?.response?.data?.message || 'Unable to create account.');
+      }
+      setStatus('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResend = async () => {
     if (!email.trim()) {
       setResendMessage('Enter your email first.');
@@ -157,15 +190,44 @@ export default function RegisterPage() {
     setDetails((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
+    setLocalDetails((prev) => ({ ...prev, [name]: value }));
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-box">
         <h2>Create Account</h2>
+        <div className="auth-alt">
+          <button
+            type="button"
+            className={authMode === 'pai' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => {
+              setAuthMode('pai');
+              setError('');
+              setStatus('');
+            }}
+          >
+            PersonalAI
+          </button>
+          <button
+            type="button"
+            className={authMode === 'local' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => {
+              setAuthMode('local');
+              setError('');
+              setStatus('');
+            }}
+          >
+            Local account
+          </button>
+        </div>
         {status && <p className="status-message">{status}</p>}
         {error && <p className="error-message">{error}</p>}
         {devCode && <p className="status-message">Dev code: {devCode}</p>}
 
-        {step === 'email' && (
+        {authMode === 'pai' && step === 'email' && (
           <form onSubmit={handleEmailSubmit} className="auth-form">
             <label>
               <span>Email</span>
@@ -184,7 +246,7 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === 'code' && (
+        {authMode === 'pai' && step === 'code' && (
           <form onSubmit={handleCodeSubmit} className="auth-form">
             <label>
               <span>Verification code</span>
@@ -221,7 +283,7 @@ export default function RegisterPage() {
           </form>
         )}
 
-        {step === 'details' && (
+        {authMode === 'pai' && step === 'details' && (
           <form onSubmit={handleDetailsSubmit} className="auth-form">
             <label>
               <span>Full Name</span>
@@ -259,6 +321,54 @@ export default function RegisterPage() {
             <label>
               <span>Role</span>
               <select name="role" value={details.role} onChange={handleDetailsChange}>
+                <option value="worker">Worker</option>
+                <option value="employer">Employer</option>
+              </select>
+            </label>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Creating...' : 'Create account'}
+            </button>
+          </form>
+        )}
+
+        {authMode === 'local' && (
+          <form onSubmit={handleLocalSubmit} className="auth-form">
+            <label>
+              <span>Full Name</span>
+              <input
+                type="text"
+                name="name"
+                placeholder="Jane Doe"
+                value={localDetails.name}
+                onChange={handleLocalChange}
+                required
+              />
+            </label>
+            <label>
+              <span>Email</span>
+              <input
+                type="email"
+                name="email"
+                placeholder="you@example.com"
+                value={localDetails.email}
+                onChange={handleLocalChange}
+                required
+              />
+            </label>
+            <label>
+              <span>Password</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="********"
+                value={localDetails.password}
+                onChange={handleLocalChange}
+                required
+              />
+            </label>
+            <label>
+              <span>Role</span>
+              <select name="role" value={localDetails.role} onChange={handleLocalChange}>
                 <option value="worker">Worker</option>
                 <option value="employer">Employer</option>
               </select>

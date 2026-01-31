@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [authMode, setAuthMode] = useState<'pai' | 'local'>('pai');
   const router = useRouter();
 
   useEffect(() => {
@@ -37,7 +38,10 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await authService.paiLogin(formData.email, formData.password);
+      const res =
+        authMode === 'local'
+          ? await authService.localLogin(formData.email, formData.password)
+          : await authService.paiLogin(formData.email, formData.password);
       router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
     } catch (err: any) {
       const code = err?.response?.data?.code;
@@ -45,6 +49,8 @@ export default function LoginPage() {
         setError('Email not verified. Please register to request a new code.');
       } else if (code === 'jobpost_profile_required') {
         setError('No JobPost profile found. Please register to choose your role.');
+      } else if (code === 'use_pai_login') {
+        setError('This email is managed by PersonalAI. Switch to PersonalAI login.');
       } else {
         setError(err?.response?.data?.message || 'Login failed');
       }
@@ -57,6 +63,28 @@ export default function LoginPage() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Login</h2>
+        <div className="auth-alt">
+          <button
+            type="button"
+            className={authMode === 'pai' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => {
+              setAuthMode('pai');
+              setError('');
+            }}
+          >
+            PersonalAI
+          </button>
+          <button
+            type="button"
+            className={authMode === 'local' ? 'btn-primary' : 'btn-secondary'}
+            onClick={() => {
+              setAuthMode('local');
+              setError('');
+            }}
+          >
+            Local account
+          </button>
+        </div>
         {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
@@ -142,11 +170,13 @@ export default function LoginPage() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        <div className="auth-alt">
-          <a className="btn-secondary" href="/api/personalai/authorize">
-            Sign in with PersonalAI
-          </a>
-        </div>
+        {authMode === 'pai' && (
+          <div className="auth-alt">
+            <a className="btn-secondary" href="/api/personalai/authorize">
+              Sign in with PersonalAI
+            </a>
+          </div>
+        )}
         <p className="auth-meta">
           Do not have an account? <a href="/register">Register here</a>
         </p>

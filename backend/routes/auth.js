@@ -9,7 +9,10 @@ const crypto = require('crypto');
 const auth = require('../middleware/auth');
 
 const PAI_API_BASE = (process.env.PAI_API_BASE || '').replace(/\/$/, '');
+const PAI_TENANT_ID = (process.env.PAI_TENANT_ID || '').trim();
+const PAI_PLATFORM = (process.env.PAI_PLATFORM || '').trim();
 const PAI_TIMEOUT_MS = 10000;
+const VALID_ROLES = ['worker', 'employer'];
 
 function buildPaiUrl(path) {
   if (!PAI_API_BASE) return '';
@@ -23,7 +26,10 @@ async function postToPai(path, payload) {
     error.status = 500;
     throw error;
   }
-  return axios.post(buildPaiUrl(path), payload, { timeout: PAI_TIMEOUT_MS });
+  const headers = {};
+  if (PAI_TENANT_ID) headers['x-tenant-id'] = PAI_TENANT_ID;
+  if (PAI_PLATFORM) headers['x-platform'] = PAI_PLATFORM;
+  return axios.post(buildPaiUrl(path), payload, { timeout: PAI_TIMEOUT_MS, headers });
 }
 
 async function upsertPaiUser(paiUser, role) {
@@ -95,6 +101,116 @@ router.get('/me', auth, async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+});
+
+// Local signup (fallback)
+router.post('/register', async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').toLowerCase().trim();
+    const password = String(req.body?.password || '');
+    const role = String(req.body?.role || '').trim();
+
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ message: 'Name, email, password, and role are required' });
+    }
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: 'Valid email is required' });
+    }
+    if (!VALID_ROLES.includes(role)) {
+      return res.status(400).json({ message: 'Valid role is required' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      if (existing.provider === 'personalai') {
+        return res.status(409).json({
+          message: 'This email is managed by PersonalAI. Use PersonalAI login.',
+          code: 'use_pai_login'
+        });
+      }
+      return res.status(409).json({ message: 'Email already registered' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      provider: 'local',
+      isVerified: true
+    });
+    await user.save();
+
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '7d'
+    });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    return res.status(201).json({
+      message: 'Signup successful',
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Local signup failed' });
+  }
+});
+
+// Local login (fallback)
+router.post('/login', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').toLowerCase().trim();
+    const password = String(req.body?.password || '');
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: 'Valid email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    if (user.provider === 'personalai') {
+      return res.status(409).json({
+        message: 'This email is managed by PersonalAI. Use PersonalAI login.',
+        code: 'use_pai_login'
+      });
+    }
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '7d'
+    });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('token', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProd,
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+    return res.json({
+      message: 'Login successful',
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Local login failed' });
   }
 });
 

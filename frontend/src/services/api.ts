@@ -48,6 +48,9 @@ api.interceptors.request.use(async (config) => {
 export const authService = {
   logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
+  localRegister: (payload: { name: string; email: string; password: string; role: string }) =>
+    api.post('/auth/register', payload),
+  localLogin: (email: string, password: string) => api.post('/auth/login', { email, password }),
   paiSignup: (email: string) => api.post('/auth/pai-signup', { email }),
   paiSignupVerify: (email: string, code: string) =>
     api.post('/auth/pai-signup/verify', { email, code }),
