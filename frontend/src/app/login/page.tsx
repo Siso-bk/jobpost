@@ -9,6 +9,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [authMode, setAuthMode] = useState<'pai' | 'local'>('pai');
+  const [needsRole, setNeedsRole] = useState(false);
+  const [role, setRole] = useState('worker');
   const router = useRouter();
 
   useEffect(() => {
@@ -41,14 +43,15 @@ export default function LoginPage() {
       const res =
         authMode === 'local'
           ? await authService.localLogin(formData.email, formData.password)
-          : await authService.paiLogin(formData.email, formData.password);
+          : await authService.paiLogin(formData.email, formData.password, needsRole ? role : undefined);
       router.push(res.data.user.role === 'employer' ? '/employer' : '/jobs');
     } catch (err: any) {
       const code = err?.response?.data?.code;
       if (code === 'email_not_verified') {
         setError('Email not verified. Please register to request a new code.');
       } else if (code === 'jobpost_profile_required') {
-        setError('No JobPost profile found. Please register to choose your role.');
+        setNeedsRole(true);
+        setError('Choose your role to finish creating your JobPost profile.');
       } else if (code === 'use_pai_login') {
         setError('This email is managed by PersonalAI. Switch to PersonalAI login.');
       } else {
@@ -69,6 +72,7 @@ export default function LoginPage() {
             className={authMode === 'pai' ? 'btn-primary' : 'btn-secondary'}
             onClick={() => {
               setAuthMode('pai');
+              setNeedsRole(false);
               setError('');
             }}
           >
@@ -79,6 +83,7 @@ export default function LoginPage() {
             className={authMode === 'local' ? 'btn-primary' : 'btn-secondary'}
             onClick={() => {
               setAuthMode('local');
+              setNeedsRole(false);
               setError('');
             }}
           >
@@ -166,6 +171,15 @@ export default function LoginPage() {
               </button>
             </div>
           </label>
+          {authMode === 'pai' && needsRole && (
+            <label>
+              <span>Role</span>
+              <select name="role" value={role} onChange={(e) => setRole(e.target.value)}>
+                <option value="worker">Worker</option>
+                <option value="employer">Employer</option>
+              </select>
+            </label>
+          )}
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>

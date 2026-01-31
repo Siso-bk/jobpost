@@ -61,7 +61,8 @@ export const authService = {
     password: string;
     role: string;
   }) => api.post('/auth/pai-signup/complete', payload),
-  paiLogin: (email: string, password: string) => api.post('/auth/pai-login', { email, password }),
+  paiLogin: (email: string, password: string, role?: string) =>
+    api.post('/auth/pai-login', { email, password, ...(role ? { role } : {}) }),
   paiResend: (email: string) => api.post('/auth/pai-resend', { email }),
   paiVerifyCode: (payload: { email: string; code: string; role: string }) =>
     api.post('/auth/pai-verify-code', payload),

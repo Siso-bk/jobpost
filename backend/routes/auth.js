@@ -292,9 +292,12 @@ router.post('/pai-signup/complete', async (req, res) => {
 // PAI login (email + password)
 router.post('/pai-login', async (req, res) => {
   try {
-    const { email, password } = req.body || {};
+    const { email, password, role } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
+    }
+    if (role && !VALID_ROLES.includes(role)) {
+      return res.status(400).json({ message: 'Valid role is required' });
     }
     const paiRes = await postToPai('/api/auth/login', { email, password });
     const paiUser = paiRes.data?.user;
@@ -303,7 +306,7 @@ router.post('/pai-login', async (req, res) => {
     }
     let user;
     try {
-      user = await upsertPaiUser(paiUser);
+      user = await upsertPaiUser(paiUser, role);
     } catch (err) {
       if (err.code === 'role_required') {
         return res.status(409).json({ message: err.message, code: 'jobpost_profile_required' });
