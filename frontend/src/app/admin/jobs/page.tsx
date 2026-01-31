@@ -33,7 +33,7 @@ export default function AdminJobsPage() {
       const res = await adminService.listJobs({
         ...nextFilters,
         page: nextPage,
-        limit: 20
+        limit: 20,
       });
       const data = res.data?.items ? res.data : { items: res.data, pages: 1 };
       setJobs(data.items || []);
@@ -171,11 +171,7 @@ export default function AdminJobsPage() {
                   onClick={() => handleToggleVisibility(job)}
                   disabled={actionLoadingId === job._id}
                 >
-                  {actionLoadingId === job._id
-                    ? 'Updating...'
-                    : job.isHidden
-                    ? 'Unhide'
-                    : 'Hide'}
+                  {actionLoadingId === job._id ? 'Updating...' : job.isHidden ? 'Unhide' : 'Hide'}
                 </button>
               </div>
             </div>

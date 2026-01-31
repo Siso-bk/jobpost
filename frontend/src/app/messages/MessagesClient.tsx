@@ -45,7 +45,7 @@ const formatTime = (value?: string) => {
 export default function MessagesClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const queryConversationId = searchParams.get('c');
+  const queryConversationId = searchParams?.get('c') ?? null;
   const [meId, setMeId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -188,7 +188,7 @@ export default function MessagesClient() {
       .then((res) => {
         setBlockStatus({
           blocked: Boolean(res.data?.blocked),
-          blockedBy: Boolean(res.data?.blockedBy)
+          blockedBy: Boolean(res.data?.blockedBy),
         });
       })
       .catch(() => {
@@ -246,7 +246,7 @@ export default function MessagesClient() {
       await reportsService.create({
         targetUserId: otherId,
         conversationId: activeId || undefined,
-        reason
+        reason,
       });
       setReportStatus('Report submitted.');
       setReportReason('');
@@ -288,7 +288,7 @@ export default function MessagesClient() {
                   ...conversation,
                   lastMessageText: trimmed,
                   lastMessageAt: updatedAt,
-                  updatedAt
+                  updatedAt,
                 }
               : conversation
           );
@@ -351,9 +351,7 @@ export default function MessagesClient() {
                             <span className="unread-badge">{conversation.unreadCount}</span>
                           ) : null}
                           <span className="muted">
-                            {formatShortDate(
-                              conversation.lastMessageAt || conversation.updatedAt
-                            )}
+                            {formatShortDate(conversation.lastMessageAt || conversation.updatedAt)}
                           </span>
                         </div>
                       </div>
@@ -379,9 +377,7 @@ export default function MessagesClient() {
               <div className="panel-head">
                 <div>
                   <h2>{activeConversation.other?.name || 'Conversation'}</h2>
-                  <p className="muted">
-                    {activeOtherRoleLabel} chat
-                  </p>
+                  <p className="muted">{activeOtherRoleLabel} chat</p>
                 </div>
                 <div className="panel-actions">
                   <button
@@ -397,11 +393,7 @@ export default function MessagesClient() {
                     onClick={handleToggleBlock}
                     disabled={blockLoading || Boolean(blockStatus.blockedBy)}
                   >
-                    {blockStatus.blockedBy
-                      ? 'Blocked'
-                      : blockStatus.blocked
-                      ? 'Unblock'
-                      : 'Block'}
+                    {blockStatus.blockedBy ? 'Blocked' : blockStatus.blocked ? 'Unblock' : 'Block'}
                   </button>
                 </div>
               </div>
@@ -450,9 +442,7 @@ export default function MessagesClient() {
                             className={`message-bubble ${isSender ? 'sent' : 'received'}`}
                           >
                             <p>{message.body}</p>
-                            <span className="message-time">
-                              {formatTime(message.createdAt)}
-                            </span>
+                            <span className="message-time">{formatTime(message.createdAt)}</span>
                           </div>
                         );
                       })

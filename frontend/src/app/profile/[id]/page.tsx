@@ -1,14 +1,20 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { authService, blocksService, conversationsService, reportsService, usersService } from '@/services/api';
+import {
+  authService,
+  blocksService,
+  conversationsService,
+  reportsService,
+  usersService,
+} from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
-import { getRoleLabel, hasRole, normalizeRoles } from '@/lib/roles';
+import { AppRole, getRoleLabel, hasRole, normalizeRoles } from '@/lib/roles';
 
 type UserProfile = {
   name?: string;
   email?: string;
-  roles?: string[];
+  roles?: AppRole[];
   location?: string;
   bio?: string;
   phone?: string;
@@ -50,7 +56,7 @@ export default function ProfilePage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [themeReady, setThemeReady] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
-  const [viewerRoles, setViewerRoles] = useState<string[]>([]);
+  const [viewerRoles, setViewerRoles] = useState<AppRole[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [blockStatus, setBlockStatus] = useState({ blocked: false, blockedBy: false });
   const [blockLoading, setBlockLoading] = useState(false);
@@ -191,7 +197,7 @@ export default function ProfilePage() {
       .then((res) => {
         setBlockStatus({
           blocked: Boolean(res.data?.blocked),
-          blockedBy: Boolean(res.data?.blockedBy)
+          blockedBy: Boolean(res.data?.blockedBy),
         });
       })
       .catch(() => {
@@ -405,11 +411,7 @@ export default function ProfilePage() {
                 onClick={handleToggleBlock}
                 disabled={blockLoading || blockStatus.blockedBy}
               >
-                {blockStatus.blockedBy
-                  ? 'Blocked'
-                  : blockStatus.blocked
-                  ? 'Unblock'
-                  : 'Block'}
+                {blockStatus.blockedBy ? 'Blocked' : blockStatus.blocked ? 'Unblock' : 'Block'}
               </button>
             </div>
           )}

@@ -39,14 +39,14 @@ export async function GET(req: NextRequest) {
     code,
     redirect_uri: `${origin}/api/personalai/callback`,
     client_id: clientId,
-    code_verifier: verifier
+    code_verifier: verifier,
   });
   if (clientSecret) body.set('client_secret', clientSecret);
 
   const tokenRes = await fetch(tokenUrl, {
     method: 'POST',
     headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: body.toString()
+    body: body.toString(),
   });
 
   if (!tokenRes.ok) return redirectWithError(origin, 'token_exchange_failed');
@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
   const backendRes = await fetch(`${apiBase}/auth/external`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ id_token: idToken })
+    body: JSON.stringify({ id_token: idToken }),
   });
 
   if (!backendRes.ok) return redirectWithError(origin, 'external_auth_failed');
@@ -80,14 +80,14 @@ export async function GET(req: NextRequest) {
     sameSite: 'lax',
     secure: isProd,
     path: '/',
-    maxAge: 0
+    maxAge: 0,
   });
   response.cookies.set('personalai_verifier', '', {
     httpOnly: true,
     sameSite: 'lax',
     secure: isProd,
     path: '/',
-    maxAge: 0
+    maxAge: 0,
   });
 
   return response;

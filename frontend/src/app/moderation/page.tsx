@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService, moderationService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
@@ -19,7 +19,12 @@ const formatDate = (value?: string) => {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 };
 
 export default function ModerationPage() {
@@ -30,7 +35,7 @@ export default function ModerationPage() {
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
-  const fetchReports = async (nextStatus = status) => {
+  const fetchReports = useCallback(async (nextStatus: string) => {
     setLoading(true);
     try {
       const res = await moderationService.listReports(nextStatus);
@@ -43,7 +48,7 @@ export default function ModerationPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -59,20 +64,21 @@ export default function ModerationPage() {
         if (!active) return;
         router.replace('/login');
       });
-    fetchReports();
     return () => {
       active = false;
     };
   }, [router]);
+
+  useEffect(() => {
+    fetchReports(status);
+  }, [fetchReports, status]);
 
   const handleResolve = async (reportId: string) => {
     setStatusMessage(null);
     try {
       await moderationService.resolveReport(reportId);
       setReports((prev) =>
-        prev.map((report) =>
-          report._id === reportId ? { ...report, status: 'resolved' } : report
-        )
+        prev.map((report) => (report._id === reportId ? { ...report, status: 'resolved' } : report))
       );
       setStatusMessage('Report marked as resolved.');
     } catch (e: any) {
@@ -101,7 +107,6 @@ export default function ModerationPage() {
   const handleStatusChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const next = event.target.value;
     setStatus(next);
-    fetchReports(next);
   };
 
   return (

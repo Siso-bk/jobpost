@@ -35,7 +35,10 @@ function isFriendlyMessage(message: string) {
   return true;
 }
 
-export function friendlyError(err: ApiError | any, fallback = 'Something went wrong. Please try again.') {
+export function friendlyError(
+  err: ApiError | any,
+  fallback = 'Something went wrong. Please try again.'
+) {
   const code = err?.response?.data?.code;
   if (code && CODE_MESSAGES[code]) return CODE_MESSAGES[code];
 

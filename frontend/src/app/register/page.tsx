@@ -14,7 +14,7 @@ export default function RegisterPage() {
     name: '',
     password: '',
     handle: '',
-    role: 'worker'
+    role: 'worker',
   });
   const [existingAccount, setExistingAccount] = useState(false);
   const [status, setStatus] = useState('');
@@ -126,7 +126,7 @@ export default function RegisterPage() {
         name: details.name.trim(),
         password: details.password,
         handle: details.handle.trim(),
-        role: details.role
+        role: details.role,
       });
       const roles = normalizeRoles(res.data?.user?.roles);
       router.push(getDefaultRouteForRoles(roles));
@@ -199,11 +199,7 @@ export default function RegisterPage() {
             {existingAccount && (
               <label>
                 <span>Role</span>
-                <select
-                  name="role"
-                  value={details.role}
-                  onChange={handleDetailsChange}
-                >
+                <select name="role" value={details.role} onChange={handleDetailsChange}>
                   <option value="worker">Worker</option>
                   <option value="employer">Employer</option>
                 </select>
@@ -213,7 +209,12 @@ export default function RegisterPage() {
               {loading ? 'Verifying...' : 'Verify code'}
             </button>
             <div className="auth-alt">
-              <button type="button" className="btn-secondary" onClick={handleResend} disabled={loading}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={handleResend}
+                disabled={loading}
+              >
                 Resend code
               </button>
             </div>

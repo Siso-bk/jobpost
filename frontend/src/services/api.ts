@@ -155,7 +155,7 @@ export const adminService = {
     search?: string;
     page?: number;
     limit?: number;
-  }) => api.get('/admin/jobs', { params })
+  }) => api.get('/admin/jobs', { params }),
 };
 
 export default api;

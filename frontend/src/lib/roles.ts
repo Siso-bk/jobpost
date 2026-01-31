@@ -4,7 +4,7 @@ const ROLE_ORDER: AppRole[] = ['employer', 'worker'];
 const ROLE_LABELS: Record<AppRole, string> = {
   worker: 'Worker',
   employer: 'Employer',
-  admin: 'Admin'
+  admin: 'Admin',
 };
 
 export function normalizeRoles(input?: unknown): AppRole[] {
@@ -12,7 +12,9 @@ export function normalizeRoles(input?: unknown): AppRole[] {
   const values = Array.isArray(input) ? input : [input];
   const roles: AppRole[] = [];
   for (const value of values) {
-    const normalized = String(value || '').trim().toLowerCase();
+    const normalized = String(value || '')
+      .trim()
+      .toLowerCase();
     if (normalized === 'worker' || normalized === 'employer' || normalized === 'admin') {
       roles.push(normalized);
     }

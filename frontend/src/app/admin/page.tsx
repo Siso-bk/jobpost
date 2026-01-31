@@ -69,17 +69,21 @@ export default function AdminDashboardPage() {
   const updateHero = (field: keyof HomeContent['hero'], value: string) => {
     setForm((prev) => ({
       ...prev,
-      hero: { ...prev.hero, [field]: value }
+      hero: { ...prev.hero, [field]: value },
     }));
   };
 
-  const updateHeroCta = (field: 'primaryCta' | 'secondaryCta', key: 'label' | 'href', value: string) => {
+  const updateHeroCta = (
+    field: 'primaryCta' | 'secondaryCta',
+    key: 'label' | 'href',
+    value: string
+  ) => {
     setForm((prev) => ({
       ...prev,
       hero: {
         ...prev.hero,
-        [field]: { ...prev.hero[field], [key]: value }
-      }
+        [field]: { ...prev.hero[field], [key]: value },
+      },
     }));
   };
 
@@ -110,14 +114,14 @@ export default function AdminDashboardPage() {
   const updateFeatureSection = (key: 'title' | 'description', value: string) => {
     setForm((prev) => ({
       ...prev,
-      featureSection: { ...prev.featureSection, [key]: value }
+      featureSection: { ...prev.featureSection, [key]: value },
     }));
   };
 
   const updateStepSection = (key: 'eyebrow' | 'title', value: string) => {
     setForm((prev) => ({
       ...prev,
-      stepsSection: { ...prev.stepsSection, [key]: value }
+      stepsSection: { ...prev.stepsSection, [key]: value },
     }));
   };
 
@@ -132,17 +136,21 @@ export default function AdminDashboardPage() {
   const updateCta = (key: keyof HomeContent['cta'], value: string) => {
     setForm((prev) => ({
       ...prev,
-      cta: { ...prev.cta, [key]: value }
+      cta: { ...prev.cta, [key]: value },
     }));
   };
 
-  const updateCtaLink = (field: 'primaryCta' | 'secondaryCta', key: 'label' | 'href', value: string) => {
+  const updateCtaLink = (
+    field: 'primaryCta' | 'secondaryCta',
+    key: 'label' | 'href',
+    value: string
+  ) => {
     setForm((prev) => ({
       ...prev,
       cta: {
         ...prev.cta,
-        [field]: { ...prev.cta[field], [key]: value }
-      }
+        [field]: { ...prev.cta[field], [key]: value },
+      },
     }));
   };
 
@@ -255,10 +263,7 @@ export default function AdminDashboardPage() {
           {form.logos.map((logo, index) => (
             <label key={`logo-${index}`}>
               <span>Logo {index + 1}</span>
-              <input
-                value={logo}
-                onChange={(event) => updateLogo(index, event.target.value)}
-              />
+              <input value={logo} onChange={(event) => updateLogo(index, event.target.value)} />
             </label>
           ))}
         </div>
@@ -341,7 +346,10 @@ export default function AdminDashboardPage() {
         <div className="form-grid">
           <label>
             <span>CTA title</span>
-            <input value={form.cta.title} onChange={(event) => updateCta('title', event.target.value)} />
+            <input
+              value={form.cta.title}
+              onChange={(event) => updateCta('title', event.target.value)}
+            />
           </label>
           <label>
             <span>CTA description</span>

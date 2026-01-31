@@ -182,15 +182,17 @@ export default function EmployerApplicationDetailPage() {
               <div>
                 <span className="profile-label">Email</span>
                 <div className="profile-value">
-                  {application.workerId?.allowContact
-                    ? application.workerId?.email
-                      ? (
-                          <a href={`mailto:${application.workerId.email}`}>
-                            {application.workerId.email}
-                          </a>
-                        )
-                      : 'No email'
-                    : 'Contact locked'}
+                  {application.workerId?.allowContact ? (
+                    application.workerId?.email ? (
+                      <a href={`mailto:${application.workerId.email}`}>
+                        {application.workerId.email}
+                      </a>
+                    ) : (
+                      'No email'
+                    )
+                  ) : (
+                    'Contact locked'
+                  )}
                 </div>
               </div>
               {application.workerId?.allowContact && (

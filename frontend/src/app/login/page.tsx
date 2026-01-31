@@ -13,7 +13,7 @@ const OIDC_ERRORS: Record<string, string> = {
   missing_verifier: 'Login validation failed. Please try again.',
   token_exchange_failed: 'We could not complete PersonalAI login. Please try again.',
   missing_id_token: 'We could not complete PersonalAI login. Please try again.',
-  external_auth_failed: 'We could not complete PersonalAI login. Please try again.'
+  external_auth_failed: 'We could not complete PersonalAI login. Please try again.',
 };
 
 function LoginPageClient() {
@@ -45,14 +45,14 @@ function LoginPageClient() {
   }, [router]);
 
   useEffect(() => {
-    const raw = searchParams.get('error');
+    const raw = searchParams?.get('error');
     if (!raw) return;
     setError(OIDC_ERRORS[raw] || 'We could not complete sign-in. Please try again.');
     setStatus('');
   }, [searchParams]);
 
   useEffect(() => {
-    const emailParam = searchParams.get('email');
+    const emailParam = searchParams?.get('email');
     if (emailParam && !formData.email) {
       setFormData((prev) => ({ ...prev, email: emailParam }));
     }

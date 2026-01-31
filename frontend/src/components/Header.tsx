@@ -2,12 +2,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { authService, conversationsService, notificationsService, usersService } from '@/services/api';
-import { hasRole, normalizeRoles } from '@/lib/roles';
+import {
+  authService,
+  conversationsService,
+  notificationsService,
+  usersService,
+} from '@/services/api';
+import { AppRole, hasRole, normalizeRoles } from '@/lib/roles';
 
 export default function Header() {
   const [hydrated, setHydrated] = useState(false);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [userRoles, setUserRoles] = useState<AppRole[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
@@ -303,7 +308,11 @@ export default function Header() {
                       </div>
                       <div className="menu-section menu-section-divider">
                         <div className="menu-title">Hiring</div>
-                        <Link href="/employer/jobs" className="account-item menu-item" role="menuitem">
+                        <Link
+                          href="/employer/jobs"
+                          className="account-item menu-item"
+                          role="menuitem"
+                        >
                           <span className="menu-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" width="18" height="18">
                               <path
@@ -387,7 +396,11 @@ export default function Header() {
                   {myOpen && (
                     <div className="account-dropdown align-left" role="menu">
                       <div className="menu-title">My workspace</div>
-                      <Link href="/my-applications" className="account-item menu-item" role="menuitem">
+                      <Link
+                        href="/my-applications"
+                        className="account-item menu-item"
+                        role="menuitem"
+                      >
                         <span className="menu-icon" aria-hidden="true">
                           <svg viewBox="0 0 24 24" width="18" height="18">
                             <path
@@ -576,7 +589,11 @@ export default function Header() {
                       </span>
                       Profile
                     </Link>
-                    <Link href="/profile/settings" className="account-item menu-item" role="menuitem">
+                    <Link
+                      href="/profile/settings"
+                      className="account-item menu-item"
+                      role="menuitem"
+                    >
                       <span className="menu-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" width="18" height="18">
                           <circle

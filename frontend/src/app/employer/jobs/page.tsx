@@ -141,8 +141,8 @@ export default function EmployerJobsPage() {
                   {visibilityLoadingId === job._id
                     ? 'Updating...'
                     : job.isHidden
-                    ? 'Unhide'
-                    : 'Hide'}
+                      ? 'Unhide'
+                      : 'Hide'}
                 </button>
                 <button
                   type="button"

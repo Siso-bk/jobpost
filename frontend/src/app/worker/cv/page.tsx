@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { authService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
-import { hasRole, normalizeRoles } from '@/lib/roles';
+import { AppRole, hasRole, normalizeRoles } from '@/lib/roles';
 
 type CvForm = {
   headline: string;
@@ -24,7 +24,7 @@ type CvForm = {
 
 export default function WorkerCvPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [userRoles, setUserRoles] = useState<AppRole[]>([]);
   const [form, setForm] = useState<CvForm>({
     headline: '',
     summary: '',
