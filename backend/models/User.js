@@ -59,6 +59,24 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    savedJobs: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Job'
+        }
+      ],
+      default: []
+    },
+    savedWorkers: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        }
+      ],
+      default: []
+    },
     isVerified: {
       type: Boolean,
       default: false

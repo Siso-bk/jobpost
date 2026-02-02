@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usersService } from '@/services/api';
+import { authService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
 type Worker = {
@@ -29,6 +29,9 @@ export default function TalentPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedWorkers, setSavedWorkers] = useState<string[]>([]);
+  const [isEmployer, setIsEmployer] = useState(false);
+  const [saveLoading, setSaveLoading] = useState<Record<string, boolean>>({});
 
   const fetchWorkers = async () => {
     setLoading(true);
@@ -56,6 +59,26 @@ export default function TalentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        const roles: string[] = Array.isArray(res.data?.roles) ? res.data.roles : [];
+        setIsEmployer(roles.includes('employer'));
+        setSavedWorkers(Array.isArray(res.data?.savedWorkers) ? res.data.savedWorkers : []);
+      })
+      .catch(() => {
+        if (!active) return;
+        setIsEmployer(false);
+        setSavedWorkers([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target as HTMLInputElement;
     setFilters((prev) => ({ ...prev, [name]: value }));
@@ -64,6 +87,34 @@ export default function TalentPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchWorkers();
+  };
+
+  const updateSavedWorkers = (workerId: string, add: boolean) => {
+    setSavedWorkers((prev) => {
+      if (add) {
+        if (prev.includes(workerId)) return prev;
+        return [...prev, workerId];
+      }
+      return prev.filter((id) => id !== workerId);
+    });
+  };
+
+  const handleToggleSavedWorker = async (workerId: string, currentlySaved: boolean) => {
+    if (!isEmployer) return;
+    setSaveLoading((prev) => ({ ...prev, [workerId]: true }));
+    try {
+      if (currentlySaved) {
+        await usersService.unsaveWorker(workerId);
+        updateSavedWorkers(workerId, false);
+      } else {
+        await usersService.saveWorker(workerId);
+        updateSavedWorkers(workerId, true);
+      }
+    } catch (err: any) {
+      setError(friendlyError(err, 'We could not update your saved candidates.'));
+    } finally {
+      setSaveLoading((prev) => ({ ...prev, [workerId]: false }));
+    }
   };
 
   return (
@@ -144,12 +195,30 @@ export default function TalentPage() {
                     <span>{worker.name ? worker.name.slice(0, 2).toUpperCase() : 'WP'}</span>
                   )}
                 </div>
-                <div>
+                <div className="talent-card-head-body">
                   <h3>{worker.name || 'Unnamed worker'}</h3>
                   <p className="muted">
                     {worker.headline || 'Professional available for opportunities'}
                   </p>
                 </div>
+                {isEmployer && (
+                  <button
+                    type="button"
+                    className={`talent-save-button ${savedWorkers.includes(worker._id) ? 'saved' : ''}`}
+                    onClick={() => handleToggleSavedWorker(worker._id, savedWorkers.includes(worker._id))}
+                    disabled={Boolean(saveLoading[worker._id])}
+                    aria-pressed={savedWorkers.includes(worker._id)}
+                    title={savedWorkers.includes(worker._id) ? 'Remove saved candidate' : 'Save candidate'}
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M12 4.5a2 2 0 0 0-2 2v10.585l-3.293-3.293a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l5-5a1 1 0 0 0-1.414-1.414L14 17.085V6.5a2 2 0 0 0-2-2z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span>{savedWorkers.includes(worker._id) ? 'Saved' : 'Save'}</span>
+                  </button>
+                )}
               </div>
               <div className="talent-meta">
                 <span>{worker.location || 'Location flexible'}</span>

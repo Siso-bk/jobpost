@@ -1,6 +1,7 @@
 const express = require('express');
 const { Storage } = require('@google-cloud/storage');
 const router = express.Router();
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Job = require('../models/Job');
 const Application = require('../models/Application');
@@ -154,6 +155,80 @@ router.post('/upload-resume', auth, requireRole('worker'), async (req, res) => {
     return res.json({ url });
   } catch (error) {
     return res.status(400).json({ message: error.message });
+  }
+});
+
+const handleSavedJobsResponse = async (userId, res) => {
+  const user = await User.findById(userId).select('savedJobs savedWorkers');
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  return res.json({
+    savedJobs: (user.savedJobs || []).map((id) => String(id)),
+    savedWorkers: (user.savedWorkers || []).map((id) => String(id))
+  });
+};
+
+router.post('/me/saved-jobs/:jobId', auth, requireRole('worker'), async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({ message: 'Invalid job identifier' });
+    }
+    const job = await Job.findById(jobId).select('_id');
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    await User.findByIdAndUpdate(req.userId, { $addToSet: { savedJobs: job._id } });
+    return handleSavedJobsResponse(req.userId, res);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete('/me/saved-jobs/:jobId', auth, requireRole('worker'), async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(jobId)) {
+      return res.status(400).json({ message: 'Invalid job identifier' });
+    }
+    await User.findByIdAndUpdate(req.userId, { $pull: { savedJobs: jobId } });
+    return handleSavedJobsResponse(req.userId, res);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.post('/me/saved-workers/:workerId', auth, requireRole('employer'), async (req, res) => {
+  try {
+    const { workerId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(workerId)) {
+      return res.status(400).json({ message: 'Invalid worker identifier' });
+    }
+    if (workerId === req.userId) {
+      return res.status(400).json({ message: 'Cannot save yourself' });
+    }
+    const worker = await User.findById(workerId).select('roles');
+    if (!worker || !Array.isArray(worker.roles) || !worker.roles.includes('worker')) {
+      return res.status(404).json({ message: 'Worker not found' });
+    }
+    await User.findByIdAndUpdate(req.userId, { $addToSet: { savedWorkers: worker._id } });
+    return handleSavedJobsResponse(req.userId, res);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete('/me/saved-workers/:workerId', auth, requireRole('employer'), async (req, res) => {
+  try {
+    const { workerId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(workerId)) {
+      return res.status(400).json({ message: 'Invalid worker identifier' });
+    }
+    await User.findByIdAndUpdate(req.userId, { $pull: { savedWorkers: workerId } });
+    return handleSavedJobsResponse(req.userId, res);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 });
 

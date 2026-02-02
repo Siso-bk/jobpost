@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { jobsService } from '@/services/api';
+import { authService, jobsService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
 type Job = {
@@ -23,12 +23,35 @@ export default function JobsPage() {
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [savedJobs, setSavedJobs] = useState<string[]>([]);
+  const [isWorker, setIsWorker] = useState(false);
+  const [saveLoading, setSaveLoading] = useState<Record<string, boolean>>({});
   const skeletons = Array.from({ length: 6 }, (_, index) => index);
 
   useEffect(() => {
     fetchJobs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  useEffect(() => {
+    let active = true;
+    authService
+      .me()
+      .then((res) => {
+        if (!active) return;
+        const roles: string[] = Array.isArray(res.data?.roles) ? res.data.roles : [];
+        setIsWorker(roles.includes('worker'));
+        setSavedJobs(Array.isArray(res.data?.savedJobs) ? res.data.savedJobs : []);
+      })
+      .catch(() => {
+        if (!active) return;
+        setIsWorker(false);
+        setSavedJobs([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const fetchJobs = async () => {
     setLoading(true);
@@ -55,6 +78,34 @@ export default function JobsPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     fetchJobs();
+  };
+
+  const updateSavedJobs = (jobId: string, add: boolean) => {
+    setSavedJobs((prev) => {
+      if (add) {
+        if (prev.includes(jobId)) return prev;
+        return [...prev, jobId];
+      }
+      return prev.filter((id) => id !== jobId);
+    });
+  };
+
+  const handleToggleSaveJob = async (jobId: string, currentlySaved: boolean) => {
+    if (!isWorker) return;
+    setSaveLoading((prev) => ({ ...prev, [jobId]: true }));
+    try {
+      if (currentlySaved) {
+        await usersService.unsaveJob(jobId);
+        updateSavedJobs(jobId, false);
+      } else {
+        await usersService.saveJob(jobId);
+        updateSavedJobs(jobId, true);
+      }
+    } catch (err: any) {
+      setError(friendlyError(err, 'We could not update your saved jobs.'));
+    } finally {
+      setSaveLoading((prev) => ({ ...prev, [jobId]: false }));
+    }
   };
 
   const getInitials = (company: string) => {
@@ -191,6 +242,25 @@ export default function JobsPage() {
                         <span>{job.location}</span>
                       </div>
                     </div>
+                    {isWorker && (
+                      <button
+                        type="button"
+                        className={`job-save-button ${savedJobs.includes(job._id) ? 'saved' : ''}`}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleToggleSaveJob(job._id, savedJobs.includes(job._id));
+                        }}
+                        disabled={Boolean(saveLoading[job._id])}
+                        aria-pressed={savedJobs.includes(job._id)}
+                        title={savedJobs.includes(job._id) ? 'Remove saved job' : 'Save job'}
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M6 4h12v16l-6-4-6 4z" fill="currentColor" />
+                        </svg>
+                        <span>{savedJobs.includes(job._id) ? 'Saved' : 'Save'}</span>
+                      </button>
+                    )}
                   </div>
                   <div className="job-tags">
                     <span className="pill">{formatJobType(job.jobType)}</span>

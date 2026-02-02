@@ -14,6 +14,7 @@ const PAI_TENANT_ID = (process.env.PAI_TENANT_ID || '').trim();
 const PAI_PLATFORM = (process.env.PAI_PLATFORM || '').trim();
 const PAI_TIMEOUT_MS = 10000;
 const VALID_ROLES = ['worker', 'employer'];
+const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,128}$/;
 
 function normalizeRoles(roles) {
   if (!Array.isArray(roles)) return [];
@@ -33,7 +34,9 @@ function publicUser(user) {
     id: user._id,
     name: user.name,
     email: user.email,
-    roles: normalizeRoles(user.roles)
+    roles: normalizeRoles(user.roles),
+    savedJobs: (user.savedJobs || []).map((id) => String(id)),
+    savedWorkers: (user.savedWorkers || []).map((id) => String(id))
   };
 }
 
@@ -117,7 +120,9 @@ router.post('/logout', (req, res) => {
 // Return current user based on session cookie
 router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('_id name email roles');
+    const user = await User.findById(req.userId).select(
+      '_id name email roles savedJobs savedWorkers'
+    );
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -285,6 +290,46 @@ router.post('/pai-verify-code', async (req, res) => {
       return res.status(409).json({ message: error.message, code: 'jobpost_profile_required' });
     }
     return res.status(error.status || 502).json({ message: error.message || 'PAI verify failed' });
+  }
+});
+
+// Forgot password via PersonalAI code
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const email = (req.body?.email || '').trim().toLowerCase();
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: 'Valid email is required' });
+    }
+    const paiRes = await postToPai('/api/auth/forgot', { identifier: email });
+    return res.status(paiRes.status).json(paiRes.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'Forgot password failed' });
+  }
+});
+
+// Reset password using the code from email
+router.post('/reset-password', async (req, res) => {
+  try {
+    const email = (req.body?.email || '').trim().toLowerCase();
+    const code = (req.body?.code || '').trim();
+    const newPassword = req.body?.newPassword || '';
+    if (!validator.isEmail(email) || !/^\d{6}$/.test(code) || !STRONG_PASSWORD.test(newPassword)) {
+      return res.status(400).json({ message: 'Email, 6-digit code, and strong password are required' });
+    }
+    const paiRes = await postToPai('/api/auth/reset-code', {
+      email,
+      code,
+      newPassword
+    });
+    return res.status(paiRes.status).json(paiRes.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'Password reset failed' });
   }
 });
 
