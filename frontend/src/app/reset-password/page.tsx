@@ -3,13 +3,23 @@ import React, { useEffect, useState } from 'react';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
+type Step = 'verify' | 'reset';
+
 export default function ResetPasswordPage() {
+  const [step, setStep] = useState<Step>('verify');
   const [formData, setFormData] = useState({
     email: '',
     code: '',
     password: '',
     confirm: ''
   });
+  const [status, setStatus] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [resetToken, setResetToken] = useState<string | null>(null);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
@@ -18,20 +28,33 @@ export default function ResetPasswordPage() {
       setFormData((prev) => ({ ...prev, email: prefilled }));
     }
   }, []);
-  const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [completed, setCompleted] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError('');
+    setStatus('Verifying code...');
+    setLoading(true);
+    try {
+      const res = await authService.verifyResetCode(formData.email.trim().toLowerCase(), formData.code.trim());
+      setResetToken(res.data?.resetToken || null);
+      setStep('reset');
+      setStatus('Code verified. Enter a new password below.');
+    } catch (err: any) {
+      setStatus('');
+      setError(friendlyError(err, 'We could not verify that code.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!resetToken) return;
     if (formData.password !== formData.confirm) {
       setError('Passwords must match.');
       return;
@@ -40,13 +63,11 @@ export default function ResetPasswordPage() {
     setStatus('Resetting password...');
     setLoading(true);
     try {
-      await authService.resetPassword(
-        formData.email.trim().toLowerCase(),
-        formData.code.trim(),
-        formData.password
-      );
+      await authService.resetWithToken(resetToken, formData.password);
       setStatus('Password reset successfully. Sign in with your new password.');
-      setCompleted(true);
+      setStep('verify');
+      setFormData((prev) => ({ ...prev, password: '', confirm: '' }));
+      setResetToken(null);
     } catch (err: any) {
       setStatus('');
       setError(friendlyError(err, 'We could not reset your password.'));
@@ -55,12 +76,12 @@ export default function ResetPasswordPage() {
     }
   };
 
-  const canSubmit =
-    formData.email.trim() &&
-    formData.code.trim().length === 6 &&
+  const canVerify = formData.email.trim() && formData.code.trim().length === 6;
+  const canReset =
     formData.password &&
     formData.confirm &&
-    formData.password === formData.confirm;
+    formData.password === formData.confirm &&
+    Boolean(resetToken);
 
   return (
     <div className="auth-container">
@@ -68,8 +89,8 @@ export default function ResetPasswordPage() {
         <h2>Reset Password</h2>
         {status && <p className="status-message">{status}</p>}
         {error && <p className="error-message">{error}</p>}
-        {!completed && (
-          <form onSubmit={handleSubmit} className="auth-form">
+        {step === 'verify' && (
+          <form onSubmit={handleVerify} className="auth-form">
             <label>
               <span>Email</span>
               <input
@@ -94,6 +115,13 @@ export default function ResetPasswordPage() {
                 required
               />
             </label>
+            <button type="submit" className="btn-primary" disabled={loading || !canVerify}>
+              {loading ? 'Verifying...' : 'Verify code'}
+            </button>
+          </form>
+        )}
+        {step === 'reset' && (
+          <form onSubmit={handleReset} className="auth-form">
             <label>
               <span>New Password</span>
               <div className="password-field">
@@ -228,15 +256,10 @@ export default function ResetPasswordPage() {
                 </button>
               </div>
             </label>
-            <button type="submit" className="btn-primary" disabled={loading || !canSubmit}>
+            <button type="submit" className="btn-primary" disabled={loading || !canReset}>
               {loading ? 'Resetting...' : 'Reset password'}
             </button>
           </form>
-        )}
-        {completed && (
-          <p className="status-message">
-            Password reset complete. <a href="/login">Sign in</a>
-          </p>
         )}
         <p className="auth-meta">
           Need a new code? <a href="/forgot-password">Request another code</a>
