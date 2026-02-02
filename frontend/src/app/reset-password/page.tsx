@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
@@ -10,10 +11,19 @@ export default function ResetPasswordPage() {
     password: '',
     confirm: ''
   });
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const prefilled = searchParams?.get('email');
+    if (prefilled) {
+      setFormData((prev) => ({ ...prev, email: prefilled }));
+    }
+  }, [searchParams]);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -66,6 +76,7 @@ export default function ResetPasswordPage() {
                 type="email"
                 name="email"
                 placeholder="you@example.com"
+                autoComplete="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -85,25 +96,137 @@ export default function ResetPasswordPage() {
             </label>
             <label>
               <span>New Password</span>
-              <input
-                type="password"
-                name="password"
-                placeholder="At least 8 chars, upper/lower, number"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="password-field">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  placeholder="At least 8 chars, upper/lower, number"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path
+                        d="M3 4l18 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M2 12s3.5-6 10-6c2.2 0 4.1.5 5.6 1.4M22 12s-3.5 6-10 6c-2.7 0-5-.9-6.8-2.2"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path
+                        d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </label>
             <label>
               <span>Confirm Password</span>
-              <input
-                type="password"
-                name="confirm"
-                placeholder="Repeat new password"
-                value={formData.confirm}
-                onChange={handleChange}
-                required
-              />
+              <div className="password-field">
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  name="confirm"
+                  placeholder="Repeat new password"
+                  value={formData.confirm}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="icon-button"
+                  onClick={() => setShowConfirm((prev) => !prev)}
+                  aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                >
+                  {showConfirm ? (
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path
+                        d="M3 4l18 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M2 12s3.5-6 10-6c2.2 0 4.1.5 5.6 1.4M22 12s-3.5 6-10 6c-2.7 0-5-.9-6.8-2.2"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                      <path
+                        d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="3"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </label>
             <button type="submit" className="btn-primary" disabled={loading || !canSubmit}>
               {loading ? 'Resetting...' : 'Reset password'}

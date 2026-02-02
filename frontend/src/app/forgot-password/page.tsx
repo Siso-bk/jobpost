@@ -54,7 +54,7 @@ export default function ForgotPasswordPage() {
         {codeSent && (
           <p className="status-message">
             Once you receive the code, go to{' '}
-            <a href="/reset-password">
+            <a href="/reset-password" className="highlight-link">
               Reset Password
             </a>{' '}
             to finish.
