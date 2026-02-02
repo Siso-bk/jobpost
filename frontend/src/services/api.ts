@@ -65,7 +65,7 @@ export const authService = {
     api.post('/auth/pai-verify-code', { email, code, role }),
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
   resetPassword: (email: string, code: string, newPassword: string) =>
-    api.post('/auth/reset-password', { email, code, newPassword })
+    api.post('/auth/reset-password', { email, code, newPassword }),
 };
 
 export const jobsService = {
@@ -150,7 +150,7 @@ export const usersService = {
   saveJob: (jobId: string) => api.post(`/users/me/saved-jobs/${jobId}`),
   unsaveJob: (jobId: string) => api.delete(`/users/me/saved-jobs/${jobId}`),
   saveWorker: (workerId: string) => api.post(`/users/me/saved-workers/${workerId}`),
-  unsaveWorker: (workerId: string) => api.delete(`/users/me/saved-workers/${workerId}`)
+  unsaveWorker: (workerId: string) => api.delete(`/users/me/saved-workers/${workerId}`),
 };
 
 export const adminService = {

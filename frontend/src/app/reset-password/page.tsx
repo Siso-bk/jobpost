@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
@@ -11,13 +10,14 @@ export default function ResetPasswordPage() {
     password: '',
     confirm: ''
   });
-  const searchParams = useSearchParams();
   useEffect(() => {
-    const prefilled = searchParams?.get('email');
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const prefilled = params.get('email');
     if (prefilled) {
       setFormData((prev) => ({ ...prev, email: prefilled }));
     }
-  }, [searchParams]);
+  }, []);
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
