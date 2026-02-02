@@ -1,5 +1,6 @@
 'use client';
 import React, { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
@@ -201,6 +202,9 @@ function LoginPageClient() {
           <button type="submit" className="btn-primary" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
+          <div className="auth-alt">
+            <Link href="/forgot-password">Forgot password?</Link>
+          </div>
         </form>
         <p className="auth-meta">
           Do not have an account? <a href="/register">Register here</a>

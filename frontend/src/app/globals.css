@@ -253,11 +253,18 @@ a:hover {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+  justify-content: center;
 }
 .auth-meta {
   margin-top: 12px;
   font-size: 14px;
   opacity: 0.9;
+  text-align: center;
+}
+.auth-alt a,
+.auth-meta a {
+  color: var(--brand);
+  font-weight: 600;
 }
 
 .form-card {
