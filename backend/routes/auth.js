@@ -333,6 +333,40 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+router.post('/reset-verify', async (req, res) => {
+  try {
+    const identifier = (req.body?.identifier || req.body?.email || '').trim().toLowerCase();
+    const code = (req.body?.code || '').trim();
+    if (!identifier || !code) {
+      return res.status(400).json({ message: 'Email and code are required' });
+    }
+    const paiRes = await postToPai('/api/auth/reset-verify', { identifier, code });
+    return res.status(paiRes.status).json(paiRes.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'Code verification failed' });
+  }
+});
+
+router.post('/reset', async (req, res) => {
+  try {
+    const token = (req.body?.token || '').trim();
+    const newPassword = req.body?.newPassword || '';
+    if (!token || !STRONG_PASSWORD.test(newPassword)) {
+      return res.status(400).json({ message: 'Reset token and strong password are required' });
+    }
+    const paiRes = await postToPai('/api/auth/reset', { token, newPassword });
+    return res.status(paiRes.status).json(paiRes.data);
+  } catch (error) {
+    if (error.response) {
+      return res.status(error.response.status).json(error.response.data);
+    }
+    return res.status(error.status || 502).json({ message: error.message || 'Password reset failed' });
+  }
+});
+
 // External auth using PersonalAI id_token
 router.post('/external', async (req, res) => {
   try {

@@ -11,7 +11,7 @@ export default function ResetPasswordPage() {
     email: '',
     code: '',
     password: '',
-    confirm: ''
+    confirm: '',
   });
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -40,7 +40,10 @@ export default function ResetPasswordPage() {
     setStatus('Verifying code...');
     setLoading(true);
     try {
-      const res = await authService.verifyResetCode(formData.email.trim().toLowerCase(), formData.code.trim());
+      const res = await authService.verifyResetCode(
+        formData.email.trim().toLowerCase(),
+        formData.code.trim()
+      );
       setResetToken(res.data?.resetToken || null);
       setStep('reset');
       setStatus('Code verified. Enter a new password below.');

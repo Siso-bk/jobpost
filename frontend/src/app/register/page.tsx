@@ -53,14 +53,15 @@ export default function RegisterPage() {
     try {
       const res = await authService.paiSignup(normalizedEmail);
       const exists = Boolean(res.data?.exists);
-      if (exists && res.data?.emailVerified) {
+      const profileComplete = Boolean(res.data?.profileCompleted);
+      if (exists && profileComplete) {
         setError('Account already exists. Please log in.');
         setStatus('');
         return;
       }
-      if (exists && !res.data?.emailVerified) {
+      if (exists) {
         setExistingAccount(true);
-        setStatus('We sent a verification code. Enter it to continue.');
+        setStatus('We sent a verification code. Enter it to continue setting up JobPost.');
         setStep('verify');
         try {
           await authService.paiResend(normalizedEmail);

@@ -66,6 +66,10 @@ export const authService = {
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
   resetPassword: (email: string, code: string, newPassword: string) =>
     api.post('/auth/reset-password', { email, code, newPassword }),
+  verifyResetCode: (identifier: string, code: string) =>
+    api.post('/auth/reset-verify', { identifier, code }),
+  resetWithToken: (token: string, newPassword: string) =>
+    api.post('/auth/reset', { token, newPassword }),
 };
 
 export const jobsService = {
