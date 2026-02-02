@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
@@ -9,6 +10,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -17,8 +19,9 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     try {
       await authService.forgotPassword(email.trim().toLowerCase());
-      setStatus('Verification code sent. Check your email for the 6-digit code.');
+      setStatus('Verification code sent. Redirecting to enter the code...');
       setCodeSent(true);
+      router.push(`/reset-password?email=${encodeURIComponent(email.trim().toLowerCase())}`);
     } catch (err: any) {
       setStatus('');
       setError(friendlyError(err, 'We could not send the verification code.'));
