@@ -5,6 +5,8 @@ import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 import { getDefaultRouteForRoles, normalizeRoles } from '@/lib/roles';
 
+type StatusTone = 'info' | 'success' | 'fail';
+
 export default function RegisterPage() {
   const [step, setStep] = useState<'email' | 'verify' | 'details'>('email');
   const [email, setEmail] = useState('');
@@ -17,7 +19,7 @@ export default function RegisterPage() {
     role: 'worker',
   });
   const [existingAccount, setExistingAccount] = useState(false);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<{ tone: StatusTone; message: string } | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -48,7 +50,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setStatus('Sending verification code...');
+    setStatus({ tone: 'info', message: 'Sending verification code...' });
     const normalizedEmail = email.trim().toLowerCase();
     try {
       const res = await authService.paiSignup(normalizedEmail);
@@ -56,12 +58,15 @@ export default function RegisterPage() {
       const profileComplete = Boolean(res.data?.profileCompleted);
       if (exists && profileComplete) {
         setError('Account already exists. Please log in.');
-        setStatus('');
+        setStatus(null);
         return;
       }
       if (exists) {
         setExistingAccount(true);
-        setStatus('We sent a verification code. Enter it to continue setting up JobPost.');
+        setStatus({
+          tone: 'success',
+          message: 'We sent a verification code. Enter it to continue setting up JobPost.',
+        });
         setStep('verify');
         try {
           await authService.paiResend(normalizedEmail);
@@ -71,10 +76,10 @@ export default function RegisterPage() {
         return;
       }
       setExistingAccount(false);
-      setStatus(res.data?.message || 'Verification code sent.');
+      setStatus({ tone: 'success', message: res.data?.message || 'Verification code sent.' });
       setStep('verify');
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       setError(friendlyError(err, 'We could not send the verification code.'));
     } finally {
       setLoading(false);
@@ -85,13 +90,13 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setStatus('Verifying code...');
+    setStatus({ tone: 'info', message: 'Verifying code...' });
     const normalizedEmail = email.trim().toLowerCase();
     try {
       if (existingAccount) {
         const res = await authService.paiVerifyCode(normalizedEmail, code.trim(), details.role);
         const roles = normalizeRoles(res.data?.user?.roles);
-        setStatus('Email verified. Redirecting...');
+        setStatus({ tone: 'success', message: 'Email verified. Redirecting...' });
         router.push(getDefaultRouteForRoles(roles));
         return;
       }
@@ -101,10 +106,10 @@ export default function RegisterPage() {
         throw new Error('Verification failed.');
       }
       setPreToken(token);
-      setStatus('Code verified. Finish creating your profile.');
+      setStatus({ tone: 'success', message: 'Code verified. Finish creating your profile.' });
       setStep('details');
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       const codeValue = err?.response?.data?.code;
       if (codeValue === 'jobpost_profile_required') {
         setError('Choose a role to finish your JobPost profile.');
@@ -120,7 +125,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setStatus('Creating your account...');
+    setStatus({ tone: 'info', message: 'Creating your account...' });
     try {
       const res = await authService.paiSignupComplete({
         preToken,
@@ -129,10 +134,11 @@ export default function RegisterPage() {
         handle: details.handle.trim(),
         role: details.role,
       });
+      setStatus({ tone: 'success', message: 'Account created. Redirecting...' });
       const roles = normalizeRoles(res.data?.user?.roles);
       router.push(getDefaultRouteForRoles(roles));
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       setError(friendlyError(err, 'We could not create your account. Please try again.'));
     } finally {
       setLoading(false);
@@ -142,7 +148,7 @@ export default function RegisterPage() {
   const handleResend = async () => {
     setLoading(true);
     setError('');
-    setStatus('Sending a new code...');
+    setStatus({ tone: 'info', message: 'Sending a new code...' });
     const normalizedEmail = email.trim().toLowerCase();
     try {
       if (existingAccount) {
@@ -150,9 +156,9 @@ export default function RegisterPage() {
       } else {
         await authService.paiSignup(normalizedEmail);
       }
-      setStatus('Verification code sent.');
+      setStatus({ tone: 'success', message: 'Verification code sent.' });
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       setError(friendlyError(err, 'We could not resend the code.'));
     } finally {
       setLoading(false);
@@ -163,7 +169,9 @@ export default function RegisterPage() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Create Account</h2>
-        {status && <p className="status-message">{status}</p>}
+        {status && (
+          <p className={`status-message status-${status.tone}`}>{status.message}</p>
+        )}
         {error && <p className="error-message">{error}</p>}
         {step === 'email' && (
           <form onSubmit={handleEmailSubmit} className="auth-form">

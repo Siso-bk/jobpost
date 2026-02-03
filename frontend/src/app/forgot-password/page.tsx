@@ -4,9 +4,11 @@ import { useRouter } from 'next/navigation';
 import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
+type StatusTone = 'info' | 'success' | 'fail';
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<{ tone: StatusTone; message: string } | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
@@ -15,15 +17,18 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
-    setStatus('Sending verification code...');
+    setStatus({ tone: 'info', message: 'Sending verification code...' });
     setLoading(true);
     try {
       await authService.forgotPassword(email.trim().toLowerCase());
-      setStatus('Verification code sent. Redirecting to enter the code...');
+      setStatus({
+        tone: 'success',
+        message: 'Verification code sent. Redirecting to enter the code...',
+      });
       setCodeSent(true);
       router.push(`/reset-password?email=${encodeURIComponent(email.trim().toLowerCase())}`);
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       setError(friendlyError(err, 'We could not send the verification code.'));
     } finally {
       setLoading(false);
@@ -34,7 +39,9 @@ export default function ForgotPasswordPage() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Forgot Password</h2>
-        {status && <p className="status-message">{status}</p>}
+        {status && (
+          <p className={`status-message status-${status.tone}`}>{status.message}</p>
+        )}
         {error && <p className="error-message">{error}</p>}
         {!codeSent && (
           <form onSubmit={handleSubmit} className="auth-form">

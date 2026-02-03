@@ -24,12 +24,14 @@ const OIDC_ERRORS: Record<string, string> = {
   server_error: 'PersonalAI login failed on the server. Please try again.',
 };
 
+type StatusTone = 'info' | 'success' | 'fail';
+
 function LoginPageClient() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [role, setRole] = useState('worker');
   const [needsRole, setNeedsRole] = useState(false);
   const [error, setError] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<{ tone: StatusTone; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
@@ -56,7 +58,7 @@ function LoginPageClient() {
     const raw = searchParams?.get('error');
     if (!raw) return;
     setError(OIDC_ERRORS[raw] || 'We could not complete sign-in. Please try again.');
-    setStatus('');
+    setStatus(null);
   }, [searchParams]);
 
   useEffect(() => {
@@ -75,22 +77,22 @@ function LoginPageClient() {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setStatus('Signing you in...');
+    setStatus({ tone: 'info', message: 'Signing you in...' });
     try {
       const res = await authService.paiLogin(
         formData.email.trim().toLowerCase(),
         formData.password,
         needsRole ? role : undefined
       );
-      setStatus('Signed in. Redirecting...');
+      setStatus({ tone: 'success', message: 'Signed in. Redirecting...' });
       const roles = normalizeRoles(res.data?.user?.roles);
       router.push(getDefaultRouteForRoles(roles));
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       const code = err?.response?.data?.code;
       if (code === 'jobpost_profile_required') {
         setNeedsRole(true);
-        setStatus('Choose a role to finish your JobPost profile.');
+        setStatus({ tone: 'fail', message: 'Choose a role to finish your JobPost profile.' });
         return;
       }
       if (code === 'email_not_verified') {
@@ -107,7 +109,9 @@ function LoginPageClient() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Sign in</h2>
-        {status && <p className="status-message">{status}</p>}
+        {status && (
+          <p className={`status-message status-${status.tone}`}>{status.message}</p>
+        )}
         {error && <p className="error-message">{error}</p>}
         <p className="status-message">Sign in with your PersonalAI email</p>
         <form onSubmit={handleSubmit} className="auth-form">

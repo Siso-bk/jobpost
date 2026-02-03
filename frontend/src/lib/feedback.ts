@@ -25,11 +25,27 @@ const STATUS_MESSAGES: Record<number, string> = {
   429: 'Too many requests. Please wait a moment and try again.',
 };
 
+const UNFRIENDLY_MESSAGES = new Set([
+  'code verification failed',
+  'external auth failed',
+  'forgot password failed',
+  'pai_api_base is not configured',
+  'pai login failed',
+  'pai resend failed',
+  'pai response missing user',
+  'pai signup failed',
+  'pai user missing email',
+  'pai verification failed',
+  'pai verify failed',
+  'password reset failed',
+]);
+
 const TECHNICAL_PATTERN =
   /(mongo|e11000|cast to objectid|validationerror|stack|error:|syntaxerror|referenceerror|typeerror)/i;
 
 function isFriendlyMessage(message: string) {
   if (!message) return false;
+  if (UNFRIENDLY_MESSAGES.has(message.trim().toLowerCase())) return false;
   if (message.length > 180) return false;
   if (TECHNICAL_PATTERN.test(message)) return false;
   return true;

@@ -4,6 +4,7 @@ import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
 type Step = 'verify' | 'reset';
+type StatusTone = 'info' | 'success' | 'fail';
 
 export default function ResetPasswordPage() {
   const [step, setStep] = useState<Step>('verify');
@@ -13,7 +14,7 @@ export default function ResetPasswordPage() {
     password: '',
     confirm: '',
   });
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState<{ tone: StatusTone; message: string } | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -37,7 +38,7 @@ export default function ResetPasswordPage() {
   const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
-    setStatus('Verifying code...');
+    setStatus({ tone: 'info', message: 'Verifying code...' });
     setLoading(true);
     try {
       const res = await authService.verifyResetCode(
@@ -46,9 +47,9 @@ export default function ResetPasswordPage() {
       );
       setResetToken(res.data?.resetToken || null);
       setStep('reset');
-      setStatus('Code verified. Enter a new password below.');
+      setStatus({ tone: 'success', message: 'Code verified. Enter a new password below.' });
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       setError(friendlyError(err, 'We could not verify that code.'));
     } finally {
       setLoading(false);
@@ -60,19 +61,23 @@ export default function ResetPasswordPage() {
     if (!resetToken) return;
     if (formData.password !== formData.confirm) {
       setError('Passwords must match.');
+      setStatus(null);
       return;
     }
     setError('');
-    setStatus('Resetting password...');
+    setStatus({ tone: 'info', message: 'Resetting password...' });
     setLoading(true);
     try {
       await authService.resetWithToken(resetToken, formData.password);
-      setStatus('Password reset successfully. Sign in with your new password.');
+      setStatus({
+        tone: 'success',
+        message: 'Password reset successfully. Sign in with your new password.',
+      });
       setStep('verify');
       setFormData((prev) => ({ ...prev, password: '', confirm: '' }));
       setResetToken(null);
     } catch (err: any) {
-      setStatus('');
+      setStatus(null);
       setError(friendlyError(err, 'We could not reset your password.'));
     } finally {
       setLoading(false);
@@ -90,7 +95,9 @@ export default function ResetPasswordPage() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Reset Password</h2>
-        {status && <p className="status-message">{status}</p>}
+        {status && (
+          <p className={`status-message status-${status.tone}`}>{status.message}</p>
+        )}
         {error && <p className="error-message">{error}</p>}
         {step === 'verify' && (
           <form onSubmit={handleVerify} className="auth-form">
