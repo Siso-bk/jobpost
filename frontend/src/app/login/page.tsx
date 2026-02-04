@@ -109,9 +109,7 @@ function LoginPageClient() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Sign in</h2>
-        {status && (
-          <p className={`status-message status-${status.tone}`}>{status.message}</p>
-        )}
+        {status && <p className={`status-message status-${status.tone}`}>{status.message}</p>}
         {error && <p className="error-message">{error}</p>}
         <p className="status-message">Sign in with your PersonalAI email</p>
         <form onSubmit={handleSubmit} className="auth-form">

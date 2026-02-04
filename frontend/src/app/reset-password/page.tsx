@@ -5,6 +5,8 @@ import { friendlyError } from '@/lib/feedback';
 
 type Step = 'verify' | 'reset';
 type StatusTone = 'info' | 'success' | 'fail';
+const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,128}$/;
+const PASSWORD_HINT = 'Use at least 8 characters with uppercase, lowercase, and a number.';
 
 export default function ResetPasswordPage() {
   const [step, setStep] = useState<Step>('verify');
@@ -59,6 +61,11 @@ export default function ResetPasswordPage() {
   const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!resetToken) return;
+    if (!STRONG_PASSWORD.test(formData.password)) {
+      setError(PASSWORD_HINT);
+      setStatus(null);
+      return;
+    }
     if (formData.password !== formData.confirm) {
       setError('Passwords must match.');
       setStatus(null);
@@ -85,19 +92,19 @@ export default function ResetPasswordPage() {
   };
 
   const canVerify = formData.email.trim() && formData.code.trim().length === 6;
+  const passwordStrong = STRONG_PASSWORD.test(formData.password);
   const canReset =
     formData.password &&
     formData.confirm &&
     formData.password === formData.confirm &&
-    Boolean(resetToken);
+    Boolean(resetToken) &&
+    passwordStrong;
 
   return (
     <div className="auth-container">
       <div className="auth-box">
         <h2>Reset Password</h2>
-        {status && (
-          <p className={`status-message status-${status.tone}`}>{status.message}</p>
-        )}
+        {status && <p className={`status-message status-${status.tone}`}>{status.message}</p>}
         {error && <p className="error-message">{error}</p>}
         {step === 'verify' && (
           <form onSubmit={handleVerify} className="auth-form">
@@ -198,6 +205,7 @@ export default function ResetPasswordPage() {
                   )}
                 </button>
               </div>
+              <span className="muted">{PASSWORD_HINT}</span>
             </label>
             <label>
               <span>Confirm Password</span>

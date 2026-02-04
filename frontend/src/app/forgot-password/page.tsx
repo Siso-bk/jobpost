@@ -39,9 +39,7 @@ export default function ForgotPasswordPage() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Forgot Password</h2>
-        {status && (
-          <p className={`status-message status-${status.tone}`}>{status.message}</p>
-        )}
+        {status && <p className={`status-message status-${status.tone}`}>{status.message}</p>}
         {error && <p className="error-message">{error}</p>}
         {!codeSent && (
           <form onSubmit={handleSubmit} className="auth-form">

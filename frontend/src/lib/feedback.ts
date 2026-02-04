@@ -70,6 +70,12 @@ export function friendlyError(
     if (normalized.includes('not found')) {
       return 'We could not find what you were looking for.';
     }
+    if (normalized.includes('strong password')) {
+      return 'Use at least 8 characters with uppercase, lowercase, and a number.';
+    }
+    if (normalized.includes('reset token')) {
+      return 'That reset link is invalid or expired. Request a new code and try again.';
+    }
     if (normalized.includes('network error') || normalized.includes('failed to fetch')) {
       return 'We could not reach the server. Please try again.';
     }

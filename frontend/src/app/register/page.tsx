@@ -169,9 +169,7 @@ export default function RegisterPage() {
     <div className="auth-container">
       <div className="auth-box">
         <h2>Create Account</h2>
-        {status && (
-          <p className={`status-message status-${status.tone}`}>{status.message}</p>
-        )}
+        {status && <p className={`status-message status-${status.tone}`}>{status.message}</p>}
         {error && <p className="error-message">{error}</p>}
         {step === 'email' && (
           <form onSubmit={handleEmailSubmit} className="auth-form">
