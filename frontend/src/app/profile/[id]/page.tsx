@@ -349,6 +349,39 @@ export default function ProfilePage() {
     return items.length > 0 ? items.join(', ') : '';
   };
 
+  const normalizeExternalUrl = (value?: string) => {
+    const trimmed = value?.trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return '';
+    return `https://${trimmed}`;
+  };
+
+  const getDisplayUrl = (value?: string) => {
+    const normalized = normalizeExternalUrl(value);
+    if (!normalized) return '';
+    try {
+      const url = new URL(normalized);
+      const host = url.hostname.replace(/^www\./i, '');
+      const path = url.pathname && url.pathname !== '/' ? url.pathname : '';
+      return `${host}${path}`;
+    } catch {
+      return normalized.replace(/^https?:\/\//i, '');
+    }
+  };
+
+  const renderProfileLink = (label: string, value?: string) => {
+    const normalized = normalizeExternalUrl(value);
+    if (!normalized) return null;
+    const display = getDisplayUrl(value);
+    return (
+      <a className="profile-link" href={normalized} target="_blank" rel="noreferrer">
+        <span className="profile-link-label">{label}</span>
+        <span className="profile-link-meta">{display || normalized}</span>
+      </a>
+    );
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -500,9 +533,11 @@ export default function ProfilePage() {
                 <div>
                   <span className="profile-label">Links</span>
                   <div className="profile-value">
-                    {user.portfolioUrl && <span>{user.portfolioUrl} </span>}
-                    {user.linkedinUrl && <span>{user.linkedinUrl} </span>}
-                    {user.githubUrl && <span>{user.githubUrl}</span>}
+                    <div className="profile-links">
+                      {renderProfileLink('Website / Social', user.portfolioUrl)}
+                      {renderProfileLink('LinkedIn', user.linkedinUrl)}
+                      {renderProfileLink('GitHub', user.githubUrl)}
+                    </div>
                   </div>
                 </div>
               )}
@@ -534,10 +569,12 @@ export default function ProfilePage() {
               {isEmployer && (user.companyName || user.companyWebsite) && (
                 <div>
                   <span className="profile-label">Company</span>
-                  <div className="profile-value">
-                    {user.companyName || 'Company'}{' '}
-                    {user.companyWebsite ? `(${user.companyWebsite})` : ''}
-                  </div>
+                  <div className="profile-value">{user.companyName || 'Company'}</div>
+                  {user.companyWebsite && (
+                    <div className="profile-links">
+                      {renderProfileLink('Website / Social', user.companyWebsite)}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -682,9 +719,10 @@ export default function ProfilePage() {
                     />
                   </label>
                   <label>
-                    <span>Company website</span>
+                    <span>Company website or social link</span>
                     <input
                       name="companyWebsite"
+                      placeholder="https://..."
                       value={form.companyWebsite || ''}
                       onChange={handleChange}
                     />
@@ -793,9 +831,10 @@ export default function ProfilePage() {
                     </select>
                   </label>
                   <label>
-                    <span>Portfolio URL</span>
+                    <span>Website or social link</span>
                     <input
                       name="portfolioUrl"
+                      placeholder="https://..."
                       value={form.portfolioUrl || ''}
                       onChange={handleChange}
                     />

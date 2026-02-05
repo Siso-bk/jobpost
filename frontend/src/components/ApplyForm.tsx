@@ -123,7 +123,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
           profile.yearsExperience !== undefined
             ? `Experience: ${profile.yearsExperience} years`
             : null,
-          profile.portfolioUrl ? `Portfolio: ${profile.portfolioUrl}` : null,
+          profile.portfolioUrl ? `Website / Social: ${profile.portfolioUrl}` : null,
           profile.linkedinUrl ? `LinkedIn: ${profile.linkedinUrl}` : null,
           profile.githubUrl ? `GitHub: ${profile.githubUrl}` : null,
         ].filter(Boolean);

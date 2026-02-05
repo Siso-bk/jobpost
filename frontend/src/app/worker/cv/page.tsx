@@ -279,7 +279,7 @@ export default function WorkerCvPage() {
               </label>
             </div>
             <label>
-              <span>Portfolio URL</span>
+              <span>Website or social link</span>
               <input
                 name="portfolioUrl"
                 value={form.portfolioUrl}
