@@ -295,6 +295,10 @@ a:hover {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: start;
+}
+.form-grid + .form-grid {
+  margin-top: 16px;
 }
 .form-card label {
   display: grid;

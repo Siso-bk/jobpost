@@ -6,12 +6,15 @@ import { getMaskedAssetUrl, isInternalAssetUrl } from '@/lib/assets';
 import { friendlyError } from '@/lib/feedback';
 import { SALARY_PERIODS, SalaryPeriod } from '@/lib/salary';
 
+type StatusTone = 'info' | 'success' | 'fail';
+
 export default function PostJobClient() {
   const searchParams = useSearchParams();
   const [editId, setEditId] = useState<string | null>(null);
   const [loadingJob, setLoadingJob] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const statusTimeoutRef = useRef<number | null>(null);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -26,12 +29,32 @@ export default function PostJobClient() {
     logoUrl: '',
     imageUrls: [] as string[],
   });
-  const [statusMessage, setStatusMessage] = useState('');
+  const [status, setStatus] = useState<{ tone: StatusTone; message: string } | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const maxImages = 4;
   const maxImageBytes = 2 * 1024 * 1024;
   const logoUrlMasked = isInternalAssetUrl(form.logoUrl);
+
+  useEffect(() => {
+    return () => {
+      if (statusTimeoutRef.current) {
+        window.clearTimeout(statusTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const flashStatus = (tone: StatusTone, message: string, autoDismiss = true) => {
+    setStatus({ tone, message });
+    if (statusTimeoutRef.current) {
+      window.clearTimeout(statusTimeoutRef.current);
+    }
+    if (autoDismiss && (tone === 'success' || tone === 'fail')) {
+      statusTimeoutRef.current = window.setTimeout(() => {
+        setStatus(null);
+      }, 3500);
+    }
+  };
 
   useEffect(() => {
     const id = searchParams?.get('id') ?? '';
@@ -59,7 +82,7 @@ export default function PostJobClient() {
           logoUrl: job.logoUrl || '',
           imageUrls: Array.isArray(job.imageUrls) ? job.imageUrls : [],
         });
-        setStatusMessage('');
+        setStatus(null);
         setError('');
       })
       .catch((err: any) => {
@@ -80,13 +103,13 @@ export default function PostJobClient() {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setError('Please upload an image file.');
-      setStatusMessage('');
+      setStatus(null);
       return;
     }
     const maxSize = 1024 * 1024;
     if (file.size > maxSize) {
       setError('Logo must be under 1MB.');
-      setStatusMessage('');
+      setStatus(null);
       return;
     }
     const reader = new FileReader();
@@ -111,7 +134,7 @@ export default function PostJobClient() {
     const remaining = maxImages - form.imageUrls.length;
     if (remaining <= 0) {
       setError(`You can upload up to ${maxImages} images.`);
-      setStatusMessage('');
+      setStatus(null);
       if (imageInputRef.current) imageInputRef.current.value = '';
       return;
     }
@@ -131,7 +154,7 @@ export default function PostJobClient() {
       } else {
         setError('Please choose valid images.');
       }
-      setStatusMessage('');
+      setStatus(null);
       if (imageInputRef.current) imageInputRef.current.value = '';
       return;
     }
@@ -145,7 +168,7 @@ export default function PostJobClient() {
     } else {
       setError('');
     }
-    setStatusMessage('');
+    setStatus(null);
 
     try {
       const dataUrls = await Promise.all(valid.map(readFileAsDataUrl));
@@ -174,7 +197,7 @@ export default function PostJobClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setStatusMessage('');
+    flashStatus('info', editId ? 'Updating job...' : 'Posting job...', false);
     setError('');
     try {
       const payload: any = {
@@ -195,10 +218,10 @@ export default function PostJobClient() {
       };
       if (editId) {
         await jobsService.updateJob(editId, payload);
-        setStatusMessage('Job updated. Changes are live.');
+        flashStatus('success', 'Job updated successfully.');
       } else {
         await jobsService.createJob(payload);
-        setStatusMessage('Job posted. Candidates can view it now.');
+        flashStatus('success', 'Job posted successfully.');
         setForm({
           title: '',
           description: '',
@@ -221,7 +244,8 @@ export default function PostJobClient() {
         }
       }
     } catch (err: any) {
-      setError(friendlyError(err, 'We could not save the job. Please try again.'));
+      const reason = friendlyError(err, 'We could not save the job. Please try again.');
+      flashStatus('fail', `Failed to ${editId ? 'update' : 'post'} job: ${reason}`);
     } finally {
       setLoading(false);
     }
@@ -235,7 +259,7 @@ export default function PostJobClient() {
         <p className="muted">
           Create a listing that stands out with clear responsibilities and salary range.
         </p>
-        {statusMessage && <p className="status-message">{statusMessage}</p>}
+        {status && <p className={`status-message status-${status.tone}`}>{status.message}</p>}
         {error && <p className="error-message">{error}</p>}
         <form onSubmit={handleSubmit} className="auth-form">
           <label>
