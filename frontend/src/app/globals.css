@@ -586,23 +586,32 @@ a:hover {
   display: grid;
   gap: 12px;
   padding-right: 6px;
+  justify-items: start;
+  align-items: start;
 }
 .message-bubble {
-  max-width: 70%;
+  max-width: min(70%, 520px);
+  width: fit-content;
+  min-width: 0;
   padding: 10px 12px;
   border-radius: 14px;
   display: grid;
   gap: 6px;
   font-size: 14px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .message-bubble p {
   margin: 0;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .message-bubble.sent {
   margin-left: auto;
   background: var(--brand);
   color: #fff;
+  justify-self: end;
 }
 .message-bubble.received {
   background: rgba(15, 23, 42, 0.06);
@@ -1376,6 +1385,104 @@ a:hover {
   color: var(--muted);
   font-size: 14px;
   margin: 6px 0 0;
+}
+.job-image-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  margin-top: 10px;
+}
+.job-image-thumb {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.04);
+}
+.job-image-thumb img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+}
+.job-image-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  border: none;
+  background: rgba(15, 23, 42, 0.72);
+  color: #fff;
+}
+
+.job-gallery {
+  margin-top: 10px;
+}
+.job-gallery-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.job-gallery-thumb {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  padding: 0;
+  cursor: pointer;
+}
+.job-gallery-thumb img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+.job-gallery-thumb:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+.job-gallery-modal {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 200;
+}
+.job-gallery-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(15, 23, 42, 0.72);
+}
+.job-gallery-modal-content {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  max-width: min(92vw, 900px);
+  max-height: 90vh;
+  display: grid;
+  gap: 12px;
+  box-shadow: var(--shadow);
+  z-index: 1;
+}
+.job-gallery-modal-content img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: rgba(15, 23, 42, 0.04);
+}
+.job-gallery-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.job-gallery-open {
+  justify-self: end;
+  color: var(--brand);
+  font-weight: 600;
 }
 
 /* Landing */

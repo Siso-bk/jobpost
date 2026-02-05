@@ -9,7 +9,10 @@ const optionalAuth = require('../middleware/optionalAuth');
 const requireRole = require('../middleware/requireRole');
 
 const MAX_LOGO_BYTES = 1024 * 1024;
+const MAX_JOB_IMAGES = 4;
+const MAX_JOB_IMAGE_BYTES = 2 * 1024 * 1024;
 const LOGO_TYPES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']);
+const IMAGE_TYPES = LOGO_TYPES;
 
 const getGcsConfig = () => {
   const bucketName = process.env.GCS_BUCKET_NAME;
@@ -81,6 +84,33 @@ const uploadLogo = async (dataUrl, userId) => {
   return publicBase ? `${publicBase}/${filename}` : `https://storage.googleapis.com/${bucketName}/${filename}`;
 };
 
+const uploadJobImage = async (dataUrl, userId) => {
+  const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/.exec(dataUrl);
+  if (!match) {
+    throw new Error('Invalid image data');
+  }
+
+  const contentType = match[1];
+  if (!IMAGE_TYPES.has(contentType)) {
+    throw new Error('Unsupported image type');
+  }
+
+  const buffer = Buffer.from(match[2], 'base64');
+  if (buffer.length > MAX_JOB_IMAGE_BYTES) {
+    throw new Error('Image must be under 2MB');
+  }
+
+  const ext = extensionForType(contentType);
+  const suffix = Math.random().toString(36).slice(2, 8);
+  const filename = `job-images/${userId}/${Date.now()}-${suffix}.${ext}`;
+
+  const { bucketName, publicBase, storage } = getGcsConfig();
+  const file = storage.bucket(bucketName).file(filename);
+  await file.save(buffer, { metadata: { contentType }, resumable: false, validation: 'md5' });
+
+  return publicBase ? `${publicBase}/${filename}` : `https://storage.googleapis.com/${bucketName}/${filename}`;
+};
+
 const normalizeLogoUrl = async (value, userId) => {
   if (value === undefined) return undefined;
   const trimmed = String(value).trim();
@@ -92,6 +122,32 @@ const normalizeLogoUrl = async (value, userId) => {
     return trimmed;
   }
   throw new Error('Logo must be a URL or uploaded image');
+};
+
+const normalizeImageUrls = async (value, userId) => {
+  if (value === undefined) return undefined;
+  const list = Array.isArray(value) ? value : [value];
+  const trimmed = list
+    .map((item) => String(item || '').trim())
+    .filter((item) => item.length);
+  if (!trimmed.length) return [];
+  if (trimmed.length > MAX_JOB_IMAGES) {
+    throw new Error(`You can upload up to ${MAX_JOB_IMAGES} images`);
+  }
+
+  const resolved = [];
+  for (const entry of trimmed) {
+    if (entry.startsWith('data:image/')) {
+      resolved.push(await uploadJobImage(entry, userId));
+      continue;
+    }
+    if (/^https?:\/\//.test(entry)) {
+      resolved.push(entry);
+      continue;
+    }
+    throw new Error('Images must be URLs or uploaded files');
+  }
+  return resolved;
 };
 
 const notifyEmployerVisibility = async (job, actorId, action, actorIsAdmin) => {
@@ -205,7 +261,19 @@ router.get('/:id', optionalAuth, async (req, res) => {
 // Post new job (employer only)
 router.post('/', auth, requireRole('employer'), async (req, res) => {
   try {
-    const { title, description, company, location, salary, jobType, category, skills, experienceLevel, logoUrl } = req.body;
+    const {
+      title,
+      description,
+      company,
+      location,
+      salary,
+      jobType,
+      category,
+      skills,
+      experienceLevel,
+      logoUrl,
+      imageUrls
+    } = req.body;
 
     if (!title || !description || !company || !location || !jobType) {
       return res.status(400).json({ message: 'Required fields missing' });
@@ -215,6 +283,15 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
     if (logoUrl !== undefined) {
       try {
         resolvedLogoUrl = await normalizeLogoUrl(logoUrl, req.userId);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+
+    let resolvedImageUrls;
+    if (imageUrls !== undefined) {
+      try {
+        resolvedImageUrls = await normalizeImageUrls(imageUrls, req.userId);
       } catch (error) {
         return res.status(400).json({ message: error.message });
       }
@@ -231,7 +308,8 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
       skills: skills || [],
       experienceLevel,
       employerId: req.userId,
-      logoUrl: resolvedLogoUrl
+      logoUrl: resolvedLogoUrl,
+      imageUrls: resolvedImageUrls
     });
 
     await job.save();
@@ -268,6 +346,13 @@ router.put('/:id', auth, requireRole('employer'), async (req, res) => {
     if (req.body.logoUrl !== undefined) {
       try {
         job.logoUrl = await normalizeLogoUrl(req.body.logoUrl, req.userId);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+    if (req.body.imageUrls !== undefined) {
+      try {
+        job.imageUrls = await normalizeImageUrls(req.body.imageUrls, req.userId);
       } catch (error) {
         return res.status(400).json({ message: error.message });
       }

@@ -8,6 +8,7 @@ import {
   reportsService,
   usersService,
 } from '@/services/api';
+import { getMaskedAssetUrl, isInternalAssetUrl } from '@/lib/assets';
 import { friendlyError } from '@/lib/feedback';
 import { AppRole, getRoleLabel, hasRole, normalizeRoles } from '@/lib/roles';
 
@@ -65,6 +66,7 @@ export default function ProfilePage() {
   const [reportLoading, setReportLoading] = useState(false);
   const photoInputRef = useRef<HTMLInputElement | null>(null);
   const companyLogoInputRef = useRef<HTMLInputElement | null>(null);
+  const companyLogoMasked = isInternalAssetUrl(form.companyLogo);
 
   useEffect(() => {
     let active = true;
@@ -691,11 +693,10 @@ export default function ProfilePage() {
                     <span>Company logo URL</span>
                     <input
                       name="companyLogo"
-                      value={
-                        form.companyLogo && form.companyLogo.startsWith('data:image/')
-                          ? ''
-                          : form.companyLogo || ''
+                      placeholder={
+                        companyLogoMasked ? 'Uploaded logo stored in JobPost' : 'https://...'
                       }
+                      value={getMaskedAssetUrl(form.companyLogo)}
                       onChange={handleChange}
                     />
                   </label>

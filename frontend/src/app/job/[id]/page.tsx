@@ -2,6 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import ApplyForm from '@/components/ApplyForm';
+import JobImageGallery from '@/components/JobImageGallery';
+import { formatSalary } from '@/lib/salary';
 
 async function getJob(id: string) {
   // Next.js server components should use fetch directly.
@@ -46,9 +48,13 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
         {job.salary && (
           <div className="detail-card">
             <strong>Salary</strong>
-            <div className="job-meta">
-              ${job.salary.min} - ${job.salary.max} {job.salary.currency}
-            </div>
+            <div className="job-meta">{formatSalary(job.salary)}</div>
+          </div>
+        )}
+        {Array.isArray(job.imageUrls) && job.imageUrls.length > 0 && (
+          <div className="detail-card">
+            <strong>Images</strong>
+            <JobImageGallery images={job.imageUrls} />
           </div>
         )}
         <div className="detail-card">

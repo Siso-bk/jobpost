@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { authService, jobsService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { formatSalary, Salary } from '@/lib/salary';
 
 type Job = {
   _id: string;
@@ -11,7 +12,7 @@ type Job = {
   company: string;
   location: string;
   jobType: string;
-  salary?: { min: number; max: number; currency: string };
+  salary?: Salary;
   views?: number;
   logoUrl?: string;
 };
@@ -265,9 +266,7 @@ export default function JobsPage() {
                   <div className="job-tags">
                     <span className="pill">{formatJobType(job.jobType)}</span>
                     {job.salary && (
-                      <span className="pill">
-                        ${job.salary.min} - ${job.salary.max} {job.salary.currency}
-                      </span>
+                      <span className="pill">{formatSalary(job.salary)}</span>
                     )}
                   </div>
                   <p className="job-desc">{job.description?.slice(0, 140)}...</p>

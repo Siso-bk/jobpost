@@ -70,7 +70,7 @@ app.use(
   })
 );
 app.use(compression());
-app.use(express.json({ limit: '3mb' }));
+app.use(express.json({ limit: '12mb' }));
 app.use(cookieParser());
 app.use(csrf());
 

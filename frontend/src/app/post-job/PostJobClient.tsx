@@ -2,13 +2,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { jobsService } from '@/services/api';
+import { getMaskedAssetUrl, isInternalAssetUrl } from '@/lib/assets';
 import { friendlyError } from '@/lib/feedback';
+import { SALARY_PERIODS, SalaryPeriod } from '@/lib/salary';
 
 export default function PostJobClient() {
   const searchParams = useSearchParams();
   const [editId, setEditId] = useState<string | null>(null);
   const [loadingJob, setLoadingJob] = useState(false);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -19,11 +22,16 @@ export default function PostJobClient() {
     min: '',
     max: '',
     currency: 'USD',
+    period: 'year' as SalaryPeriod,
     logoUrl: '',
+    imageUrls: [] as string[],
   });
   const [statusMessage, setStatusMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const maxImages = 4;
+  const maxImageBytes = 2 * 1024 * 1024;
+  const logoUrlMasked = isInternalAssetUrl(form.logoUrl);
 
   useEffect(() => {
     const id = searchParams?.get('id') ?? '';
@@ -47,7 +55,9 @@ export default function PostJobClient() {
           min: job.salary?.min ? String(job.salary.min) : '',
           max: job.salary?.max ? String(job.salary.max) : '',
           currency: job.salary?.currency || 'USD',
+          period: (job.salary?.period as SalaryPeriod) || 'year',
           logoUrl: job.logoUrl || '',
+          imageUrls: Array.isArray(job.imageUrls) ? job.imageUrls : [],
         });
         setStatusMessage('');
         setError('');
@@ -86,6 +96,74 @@ export default function PostJobClient() {
     reader.readAsDataURL(file);
   };
 
+  const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read image'));
+      reader.readAsDataURL(file);
+    });
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const remaining = maxImages - form.imageUrls.length;
+    if (remaining <= 0) {
+      setError(`You can upload up to ${maxImages} images.`);
+      setStatusMessage('');
+      if (imageInputRef.current) imageInputRef.current.value = '';
+      return;
+    }
+
+    const selected = files.slice(0, remaining);
+    const invalidType = selected.filter((file) => !file.type.startsWith('image/'));
+    const tooLarge = selected.filter((file) => file.size > maxImageBytes);
+    const valid = selected.filter(
+      (file) => file.type.startsWith('image/') && file.size <= maxImageBytes
+    );
+
+    if (!valid.length) {
+      if (invalidType.length) {
+        setError('Please upload image files only.');
+      } else if (tooLarge.length) {
+        setError('Each image must be under 2MB.');
+      } else {
+        setError('Please choose valid images.');
+      }
+      setStatusMessage('');
+      if (imageInputRef.current) imageInputRef.current.value = '';
+      return;
+    }
+
+    if (invalidType.length) {
+      setError('Some files were skipped because they are not images.');
+    } else if (tooLarge.length) {
+      setError('Some images were skipped because they are over 2MB.');
+    } else if (files.length > remaining) {
+      setError(`Only ${remaining} more image${remaining === 1 ? '' : 's'} allowed.`);
+    } else {
+      setError('');
+    }
+    setStatusMessage('');
+
+    try {
+      const dataUrls = await Promise.all(valid.map(readFileAsDataUrl));
+      setForm((prev) => ({ ...prev, imageUrls: [...prev.imageUrls, ...dataUrls] }));
+    } catch {
+      setError('We could not read those images. Please try again.');
+    } finally {
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleRemoveLogo = () => {
     setForm((f) => ({ ...f, logoUrl: '' }));
     if (logoInputRef.current) {
@@ -107,10 +185,12 @@ export default function PostJobClient() {
         jobType: form.jobType,
         status: form.status,
         logoUrl: form.logoUrl,
+        imageUrls: form.imageUrls,
         salary: {
           min: form.min ? Number(form.min) : undefined,
           max: form.max ? Number(form.max) : undefined,
           currency: form.currency,
+          period: form.period,
         },
       };
       if (editId) {
@@ -129,8 +209,16 @@ export default function PostJobClient() {
           min: '',
           max: '',
           currency: 'USD',
+          period: 'year' as SalaryPeriod,
           logoUrl: '',
+          imageUrls: [],
         });
+        if (logoInputRef.current) {
+          logoInputRef.current.value = '';
+        }
+        if (imageInputRef.current) {
+          imageInputRef.current.value = '';
+        }
       }
     } catch (err: any) {
       setError(friendlyError(err, 'We could not save the job. Please try again.'));
@@ -174,8 +262,8 @@ export default function PostJobClient() {
             <span>Company Logo URL</span>
             <input
               name="logoUrl"
-              placeholder="https://..."
-              value={form.logoUrl && form.logoUrl.startsWith('data:image/') ? '' : form.logoUrl}
+              placeholder={logoUrlMasked ? 'Uploaded logo stored in JobPost' : 'https://...'}
+              value={getMaskedAssetUrl(form.logoUrl)}
               onChange={handleChange}
             />
           </label>
@@ -194,6 +282,34 @@ export default function PostJobClient() {
                 >
                   x
                 </button>
+              </div>
+            )}
+          </label>
+          <label>
+            <span>Job Images</span>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+            />
+            <span className="upload-hint">Upload up to {maxImages} images (2MB each)</span>
+            {form.imageUrls.length > 0 && (
+              <div className="job-image-grid">
+                {form.imageUrls.map((src, index) => (
+                  <div key={`${src}-${index}`} className="job-image-thumb">
+                    <img src={src} alt={`Job image ${index + 1}`} />
+                    <button
+                      type="button"
+                      className="icon-button job-image-remove"
+                      onClick={() => handleRemoveImage(index)}
+                      aria-label="Remove image"
+                    >
+                      x
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </label>
@@ -250,6 +366,16 @@ export default function PostJobClient() {
                 value={form.currency}
                 onChange={handleChange}
               />
+            </label>
+            <label>
+              <span>Per</span>
+              <select name="period" value={form.period} onChange={handleChange}>
+                {SALARY_PERIODS.map((period) => (
+                  <option key={period} value={period}>
+                    {period}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           <button type="submit" className="btn-primary" disabled={loading || loadingJob}>

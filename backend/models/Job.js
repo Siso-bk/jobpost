@@ -16,6 +16,10 @@ const jobSchema = new mongoose.Schema(
       required: true
     },
     logoUrl: String,
+    imageUrls: {
+      type: [String],
+      default: []
+    },
     location: {
       type: String,
       required: true
@@ -26,6 +30,11 @@ const jobSchema = new mongoose.Schema(
       currency: {
         type: String,
         default: 'USD'
+      },
+      period: {
+        type: String,
+        enum: ['hour', 'day', 'week', 'month', 'year'],
+        default: 'year'
       }
     },
     jobType: {

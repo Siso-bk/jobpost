@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { applicationsService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
+import { formatSalary, Salary } from '@/lib/salary';
 
 type Job = {
   _id: string;
@@ -10,7 +11,7 @@ type Job = {
   company: string;
   location: string;
   jobType: string;
-  salary?: { min: number; max: number; currency: string };
+  salary?: Salary;
 };
 
 type Employer = {
@@ -107,9 +108,7 @@ export default function MyApplicationsPage() {
                   </div>
                   {job?.salary && (
                     <div className="job-tags">
-                      <span className="pill">
-                        ${job.salary.min} - ${job.salary.max} {job.salary.currency}
-                      </span>
+                      <span className="pill">{formatSalary(job.salary)}</span>
                     </div>
                   )}
                   <div className="application-actions">
