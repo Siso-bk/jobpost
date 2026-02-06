@@ -5,6 +5,13 @@ import Header from '../components/Header';
 export const metadata = {
   title: 'JobPost',
   description: 'Job posting platform',
+  icons: {
+    icon: [
+      { url: '/jobpost-logo/favicon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/jobpost-logo/logo-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/jobpost-logo/app-icon-1024.png', sizes: '1024x1024', type: 'image/png' }],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
