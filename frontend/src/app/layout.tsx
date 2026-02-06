@@ -7,8 +7,8 @@ export const metadata = {
   description: 'Job posting platform',
   icons: {
     icon: [
+      { url: '/jobpost-logo/favicon-16.png', sizes: '16x16', type: 'image/png' },
       { url: '/jobpost-logo/favicon-32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/jobpost-logo/logo-512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [{ url: '/jobpost-logo/app-icon-1024.png', sizes: '1024x1024', type: 'image/png' }],
   },
