@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const WIDGET_ORIGIN =
   process.env.NEXT_PUBLIC_PAICHAT_WIDGET_ORIGIN || 'https://paichat-seven.vercel.app';
@@ -24,7 +24,7 @@ export default function PAIchatWidget() {
     setWidgetSrc(`${WIDGET_ORIGIN}/widget?${params.toString()}`);
   }, []);
 
-  const fetchToken = async () => {
+  const fetchToken = useCallback(async () => {
     setStatus('');
     try {
       const res = await fetch('/api/paichat/token', { credentials: 'include' });
@@ -40,13 +40,13 @@ export default function PAIchatWidget() {
     } catch (err: any) {
       setStatus(err?.message || 'Sign in to use PAIchat.');
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (open && !token) {
       void fetchToken();
     }
-  }, [open]);
+  }, [open, token, fetchToken]);
 
   useEffect(() => {
     const handler = (event: MessageEvent) => {

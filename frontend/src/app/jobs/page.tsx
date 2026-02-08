@@ -64,7 +64,11 @@ export default function JobsPage() {
   const fetchJobs = async (overrideFilters = filters, overridePage = page) => {
     setLoading(true);
     try {
-      const res = await jobsService.getAllJobs({ ...overrideFilters, page: overridePage, limit: 12 });
+      const res = await jobsService.getAllJobs({
+        ...overrideFilters,
+        page: overridePage,
+        limit: 12,
+      });
       const data = res.data?.items ? res.data : { items: res.data, pages: 1 };
       setJobs(data.items);
       setPages(data.pages || 1);
@@ -132,7 +136,7 @@ export default function JobsPage() {
         const data = await res.json().catch(() => null);
         throw new Error(data?.message || 'Sign in to get personalized suggestions.');
       }
-      const data = (await res.json());
+      const data = await res.json();
       const nextFilters = {
         title: data?.filters?.title || '',
         location: data?.filters?.location || '',
@@ -334,9 +338,7 @@ export default function JobsPage() {
                   </div>
                   <div className="job-tags">
                     <span className="pill">{formatJobType(job.jobType)}</span>
-                    {job.salary && (
-                      <span className="pill">{formatSalary(job.salary)}</span>
-                    )}
+                    {job.salary && <span className="pill">{formatSalary(job.salary)}</span>}
                   </div>
                   <p className="job-desc">{job.description?.slice(0, 140)}...</p>
                   <div className="job-actions">
