@@ -1,4 +1,4 @@
-import './globals.css';
+﻿import './globals.css';
 import React from 'react';
 import Header from '../components/Header';
 import PAIchatWidget from '../components/PAIchatWidget';
