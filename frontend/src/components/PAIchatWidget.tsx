@@ -85,13 +85,16 @@ export default function PAIchatWidget() {
 </span>
       </button>
       <div className="paichat-panel" aria-hidden={!open}>
-        <div className="paichat-panel-head">
-          <div>
+        <div className="paichat-panel-head">          <div>
             <div className="paichat-title">PAIchat</div>
-            <div className="paichat-subtitle">Personal assistant for JobPost</div>
           </div>
-          <button type="button" className="paichat-close" onClick={() => setOpen(false)}>
-            Close
+          <button
+            type="button"
+            className="paichat-close"
+            onClick={() => setOpen(false)}
+            aria-label="Close PAIchat"
+          >
+            <span aria-hidden="true">×</span>
           </button>
         </div>
         {status && (

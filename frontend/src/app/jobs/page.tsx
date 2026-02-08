@@ -16,6 +16,11 @@ type Job = {
   views?: number;
   logoUrl?: string;
 };
+type SuggestionPayload = {
+  filters: Partial<{ title: string; location: string; jobType: string }>;
+  reasons?: string[];
+};
+
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -27,6 +32,8 @@ export default function JobsPage() {
   const [savedJobs, setSavedJobs] = useState<string[]>([]);
   const [isWorker, setIsWorker] = useState(false);
   const [saveLoading, setSaveLoading] = useState<Record<string, boolean>>({});
+  const [suggestions, setSuggestions] = useState<SuggestionPayload | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
   const skeletons = Array.from({ length: 6 }, (_, index) => index);
 
   useEffect(() => {
@@ -54,10 +61,10 @@ export default function JobsPage() {
     };
   }, []);
 
-  const fetchJobs = async () => {
+  const fetchJobs = async (overrideFilters = filters, overridePage = page) => {
     setLoading(true);
     try {
-      const res = await jobsService.getAllJobs({ ...filters, page, limit: 12 });
+      const res = await jobsService.getAllJobs({ ...overrideFilters, page: overridePage, limit: 12 });
       const data = res.data?.items ? res.data : { items: res.data, pages: 1 };
       setJobs(data.items);
       setPages(data.pages || 1);
@@ -78,7 +85,9 @@ export default function JobsPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchJobs();
+    setSuggestions(null);
+    setPage(1);
+    fetchJobs(filters, 1);
   };
 
   const updateSavedJobs = (jobId: string, add: boolean) => {
@@ -112,6 +121,40 @@ export default function JobsPage() {
   const getInitials = (company: string) => {
     const parts = company.trim().split(/\s+/).slice(0, 2);
     return parts.map((part) => part[0]?.toUpperCase()).join('') || 'JP';
+  };
+
+  const handleSuggestions = async () => {
+    setSuggesting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/paichat/suggestions', { credentials: 'include' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'Sign in to get personalized suggestions.');
+      }
+      const data = (await res.json());
+      const nextFilters = {
+        title: data?.filters?.title || '',
+        location: data?.filters?.location || '',
+        jobType: data?.filters?.jobType || '',
+      };
+      setFilters(nextFilters);
+      setSuggestions({ filters: nextFilters, reasons: data?.reasons || [] });
+      setPage(1);
+      await fetchJobs(nextFilters, 1);
+    } catch (err: any) {
+      setError(friendlyError(err, err?.message || 'We could not load suggestions.'));
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
+  const clearSuggestions = () => {
+    const cleared = { title: '', location: '', jobType: '' };
+    setFilters(cleared);
+    setSuggestions(null);
+    setPage(1);
+    fetchJobs(cleared, 1);
   };
 
   const getLogoColor = (company: string) => {
@@ -171,8 +214,34 @@ export default function JobsPage() {
 
       <section className="page-container">
         <div className="results-head">
-          <h2>Latest roles</h2>
-          <span className="muted">{loading ? 'Loading roles...' : `${jobs.length} roles`}</span>
+          <div>
+            <h2>{suggestions ? 'Recommended for you' : 'Latest roles'}</h2>
+            {suggestions?.reasons?.length ? (
+              <div className="suggestions-reasons">
+                {suggestions.reasons.map((reason) => (
+                  <span key={reason} className="suggestion-chip">
+                    {reason}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="results-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleSuggestions}
+              disabled={suggesting}
+            >
+              {suggesting ? 'Personalizing...' : 'Suggestions'}
+            </button>
+            {suggestions ? (
+              <button type="button" className="btn-ghost" onClick={clearSuggestions}>
+                Reset
+              </button>
+            ) : null}
+            <span className="muted">{loading ? 'Loading roles...' : `${jobs.length} roles`}</span>
+          </div>
         </div>
 
         {error && (

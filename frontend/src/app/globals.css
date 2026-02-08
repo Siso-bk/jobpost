@@ -805,6 +805,29 @@ a:hover {
   align-items: baseline;
   margin: 22px 0 12px;
 }
+.results-actions {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.suggestions-reasons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: rgba(14, 165, 164, 0.12);
+  color: var(--brand-600);
+}
 .results-head h2 {
   font-family: var(--font-head);
   margin: 0;
@@ -1810,7 +1833,7 @@ a:hover {
   width: min(420px, calc(100vw - 32px));
   height: min(560px, calc(100vh - 160px));
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: none;
   border-radius: 18px;
   box-shadow: var(--shadow);
   overflow: hidden;
@@ -1839,7 +1862,7 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--line);
   background: rgba(15, 23, 42, 0.03);
 }
@@ -1853,12 +1876,18 @@ a:hover {
   color: var(--muted);
 }
 .paichat-close {
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: rgba(15, 23, 42, 0.04);
   color: var(--text);
   border-radius: 999px;
-  padding: 6px 12px;
+  padding: 0;
+  display: grid;
+  place-items: center;
   cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
 }
 .paichat-status {
   display: flex;
