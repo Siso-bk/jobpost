@@ -1,6 +1,7 @@
 import './globals.css';
 import React from 'react';
-import Header from '../components/Header';\r\nimport PAIchatWidget from '../components/PAIchatWidget';
+import Header from '../components/Header';
+import PAIchatWidget from '../components/PAIchatWidget';
 
 export const metadata = {
   title: 'JobPost',

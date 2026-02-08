@@ -22,7 +22,8 @@ const reportRoutes = require('./routes/reports');
 const notificationRoutes = require('./routes/notifications');
 const moderationRoutes = require('./routes/moderation');
 const adminRoutes = require('./routes/admin');
-const publicRoutes = require('./routes/public');\r\nconst paichatRoutes = require('./routes/paichat');
+const publicRoutes = require('./routes/public');
+const paichatRoutes = require('./routes/paichat');
 const { startRetentionCleanup } = require('./services/retention');
 
 const app = express();
@@ -139,7 +140,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/public', publicRoutes);\r\napp.use('/api/paichat', paichatRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/api/paichat', paichatRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
