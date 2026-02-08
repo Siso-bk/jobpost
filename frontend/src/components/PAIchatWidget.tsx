@@ -78,8 +78,11 @@ export default function PAIchatWidget() {
         aria-label={open ? 'Close PAIchat' : 'Open PAIchat'}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="paichat-fab-dot" />
-        <span className="paichat-fab-text">PAIchat</span>
+        <span className="paichat-fab-icon" aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+  </svg>
+</span>
       </button>
       <div className="paichat-panel" aria-hidden={!open}>
         <div className="paichat-panel-head">
