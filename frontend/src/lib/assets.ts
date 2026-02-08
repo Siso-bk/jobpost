@@ -1,5 +1,11 @@
 const STORAGE_HOSTS = ['storage.googleapis.com', 'googleapis.com'];
-const INTERNAL_PATHS = ['/job-logos/', '/company-logos/', '/profiles/', '/job-images/', '/resumes/'];
+const INTERNAL_PATHS = [
+  '/job-logos/',
+  '/company-logos/',
+  '/profiles/',
+  '/job-images/',
+  '/resumes/',
+];
 
 export const isInternalAssetUrl = (value?: string) => {
   if (!value) return false;
@@ -12,4 +18,4 @@ export const isInternalAssetUrl = (value?: string) => {
 };
 
 export const getMaskedAssetUrl = (value?: string) =>
-  isInternalAssetUrl(value) ? '' : value || '';
+  (isInternalAssetUrl(value) ? '' : value || '');

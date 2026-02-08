@@ -90,7 +90,10 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
         flashStatus('success', 'Resume uploaded successfully.');
         setError(null);
       } catch (uploadError: any) {
-        const reason = friendlyError(uploadError, 'We could not upload the resume. Please try again.');
+        const reason = friendlyError(
+      uploadError,
+      'We could not upload the resume. Please try again.'
+    );
         flashStatus('fail', `Failed to upload resume: ${reason}`);
         setError(null);
       } finally {

@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
@@ -162,16 +163,20 @@ app.get('/api/db-health', async (req, res) => {
   }
 });
 
-// Serve frontend in production
-if (isProd) {
+// Serve frontend in production (optional)
+if (isProd && process.env.SERVE_FRONTEND === 'true') {
   const buildPath = path.join(__dirname, '..', 'frontend', 'build');
-  app.use(express.static(buildPath));
-  app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-      return res.status(404).json({ message: 'Not found' });
-    }
-    res.sendFile(path.join(buildPath, 'index.html'));
-  });
+  if (fs.existsSync(path.join(buildPath, 'index.html'))) {
+    app.use(express.static(buildPath));
+    app.get('*', (req, res) => {
+      if (req.path.startsWith('/api')) {
+        return res.status(404).json({ message: 'Not found' });
+      }
+      res.sendFile(path.join(buildPath, 'index.html'));
+    });
+  } else {
+    console.warn('Frontend build not found. Skipping static frontend serving.');
+  }
 }
 
 // Error handling middleware
