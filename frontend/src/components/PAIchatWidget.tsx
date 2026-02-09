@@ -62,7 +62,15 @@ export default function PAIchatWidget() {
       window.removeEventListener('message', handler);
     };
   }, []);
-
+  useEffect(() => {
+    if (!widgetReady || !token) return;
+    const target = iframeRef.current?.contentWindow;
+    if (!target) return;
+    target.postMessage(
+      { type: 'PAICHAT_WIDGET_TOKEN', token, title: DEFAULT_TITLE, theme: DEFAULT_THEME },
+      WIDGET_ORIGIN
+    );
+  }, [widgetReady, token]);
   useEffect(() => {
     if (!open) {
       setWidgetReady(false);
@@ -124,3 +132,5 @@ export default function PAIchatWidget() {
     </div>
   );
 }
+
+
