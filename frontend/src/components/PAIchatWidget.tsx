@@ -58,7 +58,18 @@ export default function PAIchatWidget() {
       }
     };
     window.addEventListener('message', handler);
-    return (
+    return () => {
+      window.removeEventListener('message', handler);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setWidgetReady(false);
+    }
+  }, [open]);
+
+  return (
     <div className={`paichat-launcher ${open ? 'open' : ''}`}>
       <button
         type="button"
@@ -102,7 +113,12 @@ export default function PAIchatWidget() {
           </div>
         )}
         {widgetSrc ? (
-          <iframe ref={iframeRef} className="paichat-frame" src={widgetSrc} title="PAIchat" />
+          <iframe
+            ref={iframeRef}
+            className="paichat-frame"
+            src={widgetSrc}
+            title="PAIchat"
+          />
         ) : null}
       </div>
     </div>
