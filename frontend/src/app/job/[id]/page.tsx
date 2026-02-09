@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import ApplyForm from '@/components/ApplyForm';
@@ -16,8 +16,39 @@ async function getJob(id: string) {
   return res.json();
 }
 
+const normalizeExternalUrl = (value?: string) => {
+  const trimmed = value?.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return '';
+  return `https://${trimmed}`;
+};
+
+const displayUrl = (value?: string) => {
+  const normalized = normalizeExternalUrl(value);
+  if (!normalized) return '';
+  try {
+    const url = new URL(normalized);
+    const host = url.hostname.replace(/^www\./i, '');
+    const path = url.pathname && url.pathname !== '/' ? url.pathname : '';
+    return `${host}${path}`;
+  } catch {
+    return normalized.replace(/^https?:\/\//i, '');
+  }
+};
+
+const buildApplyLink = (jobId: string) => {
+  const base = process.env.NEXT_PUBLIC_ORIGIN || process.env.NEXT_PUBLIC_SITE_URL || '';
+  const path = `/job/${jobId}#apply`;
+  if (!base) return path;
+  return `${base.replace(/\/$/, '')}${path}`;
+};
+
 export default async function JobDetail({ params }: { params: { id: string } }) {
   const job = await getJob(params.id);
+  const applyLink = buildApplyLink(job._id);
+  const companyLink = normalizeExternalUrl(job.companyLink);
+  const companyLabel = displayUrl(job.companyLink) || companyLink;
   return (
     <div className="job-detail">
       <div className="detail-card">
@@ -57,6 +88,21 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
             <JobImageGallery images={job.imageUrls} />
           </div>
         )}
+                <div className="detail-card">
+          <strong>Links</strong>
+          <div className="job-links">
+            <a className="job-link" href={applyLink}>
+              <span className="job-link-label">Apply link</span>
+              <span className="job-link-meta">{applyLink}</span>
+            </a>
+            {companyLink && (
+              <a className="job-link" href={companyLink} target="_blank" rel="noreferrer">
+                <span className="job-link-label">Company link</span>
+                <span className="job-link-meta">{companyLabel}</span>
+              </a>
+            )}
+          </div>
+        </div>
         <div className="detail-card">
           <strong>Description</strong>
           <p className="job-desc" style={{ whiteSpace: 'pre-wrap' }}>
@@ -68,3 +114,5 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+

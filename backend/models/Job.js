@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const jobSchema = new mongoose.Schema(
   {
@@ -15,6 +15,7 @@ const jobSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    companyLink: String,
     logoUrl: String,
     imageUrls: {
       type: [String],
@@ -83,3 +84,5 @@ jobSchema.index({ employerId: 1, status: 1, createdAt: -1 });
 jobSchema.index({ status: 1, isHidden: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Job', jobSchema);
+
+

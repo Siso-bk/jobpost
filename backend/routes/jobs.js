@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const { Storage } = require('@google-cloud/storage');
 const router = express.Router();
 const Job = require('../models/Job');
@@ -150,6 +150,19 @@ const normalizeImageUrls = async (value, userId) => {
   return resolved;
 };
 
+const normalizeCompanyLink = (value) => {
+  if (value === undefined) return undefined;
+  const trimmed = String(value).trim();
+  if (trimmed === '') return '';
+  if (/^https?:\/\//.test(trimmed)) {
+    return trimmed;
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    throw new Error('Company link must start with http or https');
+  }
+  return `https://${trimmed}`;
+};
+
 const notifyEmployerVisibility = async (job, actorId, action, actorIsAdmin) => {
   if (!job?.employerId) return;
   const verb = action === 'hide' ? 'hidden' : 'restored';
@@ -265,6 +278,7 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
       title,
       description,
       company,
+      companyLink,
       location,
       salary,
       jobType,
@@ -280,6 +294,15 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
     }
 
     let resolvedLogoUrl;
+    let resolvedCompanyLink;
+    if (companyLink !== undefined) {
+      try {
+        resolvedCompanyLink = normalizeCompanyLink(companyLink);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+
     if (logoUrl !== undefined) {
       try {
         resolvedLogoUrl = await normalizeLogoUrl(logoUrl, req.userId);
@@ -301,6 +324,7 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
       title,
       description,
       company,
+      companyLink: resolvedCompanyLink,
       location,
       salary,
       jobType,
@@ -343,6 +367,13 @@ router.put('/:id', auth, requireRole('employer'), async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this job' });
     }
 
+    if (req.body.companyLink !== undefined) {
+      try {
+        job.companyLink = normalizeCompanyLink(req.body.companyLink);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
     if (req.body.logoUrl !== undefined) {
       try {
         job.logoUrl = await normalizeLogoUrl(req.body.logoUrl, req.userId);
@@ -469,3 +500,10 @@ router.delete('/:id', auth, requireRole('employer'), async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
+
+
+

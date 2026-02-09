@@ -552,6 +552,7 @@ a:hover {
 .conversation-avatar img {
   width: 100%;
   height: 100%;
+  flex: 1;
   object-fit: cover;
 }
 .conversation-body {
@@ -931,6 +932,7 @@ a:hover {
 .job-logo img {
   width: 100%;
   height: 100%;
+  flex: 1;
   object-fit: cover;
 }
 .job-card-head {
@@ -938,8 +940,38 @@ a:hover {
   gap: 6px;
   flex: 1;
 }
-.job-save-button {
+
+.job-card-actions {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.job-share-button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 6px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.job-share-button svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.job-share-button:hover {
+  border-color: var(--brand);
+  color: var(--brand-600);
+  background: rgba(14, 165, 164, 0.08);
+}
+.job-save-button {
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--muted);
@@ -1246,6 +1278,7 @@ a:hover {
 .talent-avatar img {
   width: 100%;
   height: 100%;
+  flex: 1;
   object-fit: cover;
 }
 .talent-meta {
@@ -1298,6 +1331,10 @@ a:hover {
 .icon-button {
   width: 32px;
   height: 32px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(15, 23, 42, 0.06);
@@ -1842,13 +1879,14 @@ a:hover {
   transform-origin: bottom right;
   pointer-events: none;
   transition: all 0.2s ease;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
 }
 .paichat-panel::after {
   content: '';
   position: absolute;
-  inset: 64px 0 0 0;
+  inset: 0 0 auto 0;
+  height: 48px;
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(15, 23, 42, 0));
   pointer-events: none;
 }
@@ -1878,6 +1916,10 @@ a:hover {
 .paichat-close {
   width: 32px;
   height: 32px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   border: 1px solid var(--line);
   background: rgba(15, 23, 42, 0.04);
   color: var(--text);
@@ -1911,6 +1953,7 @@ a:hover {
 .paichat-frame {
   width: 100%;
   height: 100%;
+  flex: 1;
   border: none;
   background: transparent;
 }
@@ -1947,3 +1990,37 @@ a:hover {
     border-radius: 16px;
   }
 }
+.job-links {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  margin-top: 8px;
+}
+.job-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(15, 23, 42, 0.04);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.job-link:hover {
+  border-color: var(--brand);
+  box-shadow: var(--shadow);
+}
+.job-link-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+.job-link-meta {
+  font-size: 14px;
+  font-weight: 600;
+  word-break: break-word;
+}
+

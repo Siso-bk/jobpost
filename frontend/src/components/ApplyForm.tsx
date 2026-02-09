@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useEffect, useRef, useState } from 'react';
 import { applicationsService, authService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
@@ -164,7 +164,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
   const isWorker = hasRole(userRoles, 'worker');
   if (userRoles.length && !isWorker) {
     return (
-      <div className="apply-card">
+      <div className="apply-card" id="apply">
         <h3>Apply for this job</h3>
         <p className="muted">Only worker accounts can apply to jobs.</p>
       </div>
@@ -172,7 +172,7 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
   }
 
   return (
-    <div className="apply-card">
+    <div className="apply-card" id="apply">
       <h3>Apply for this job</h3>
       <p className="muted">Share a quick cover letter and a resume link or summary.</p>
       {status && <p className={`status-message status-${status.tone}`}>{status.message}</p>}
@@ -217,3 +217,4 @@ export default function ApplyForm({ jobId }: ApplyFormProps) {
     </div>
   );
 }
+

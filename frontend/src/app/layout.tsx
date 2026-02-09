@@ -6,6 +6,7 @@ import PAIchatWidget from '../components/PAIchatWidget';
 export const metadata = {
   title: 'JobPost',
   description: 'Job posting platform',
+  manifest: '/site.webmanifest',
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any', type: 'image/x-icon' },
@@ -52,3 +53,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   );
 }
+

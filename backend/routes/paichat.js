@@ -46,11 +46,13 @@ router.get('/token', auth, async (req, res) => {
     const message = err?.response?.data?.error || err?.message || 'PAIchat token request failed.';
     return res.status(status).json({ message });
   }
+});
 
 router.get('/suggestions', auth, async (req, res) => {
   const user = await User.findById(req.userId)
     .select('location desiredRoles skills headline')
     .lean();
+
   if (!user) {
     return res.status(404).json({ message: 'User not found.' });
   }
@@ -80,8 +82,6 @@ router.get('/suggestions', auth, async (req, res) => {
   }
 
   return res.json({ filters, reasons });
-});
-
 });
 
 module.exports = router;

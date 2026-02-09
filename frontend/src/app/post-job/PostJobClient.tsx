@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { jobsService } from '@/services/api';
@@ -19,6 +19,7 @@ export default function PostJobClient() {
     title: '',
     description: '',
     company: '',
+    companyLink: '',
     location: '',
     jobType: 'full-time',
     status: 'open',
@@ -72,6 +73,7 @@ export default function PostJobClient() {
           title: job.title || '',
           description: job.description || '',
           company: job.company || '',
+          companyLink: job.companyLink || '',
           location: job.location || '',
           jobType: job.jobType || 'full-time',
           status: job.status || 'open',
@@ -204,6 +206,7 @@ export default function PostJobClient() {
         title: form.title,
         description: form.description,
         company: form.company,
+        companyLink: form.companyLink,
         location: form.location,
         jobType: form.jobType,
         status: form.status,
@@ -226,6 +229,7 @@ export default function PostJobClient() {
           title: '',
           description: '',
           company: '',
+          companyLink: '',
           location: '',
           jobType: 'full-time',
           status: 'open',
@@ -280,6 +284,15 @@ export default function PostJobClient() {
               value={form.company}
               onChange={handleChange}
               required
+            />
+          </label>
+          <label>
+            <span>Company link (website or social)</span>
+            <input
+              name="companyLink"
+              placeholder="https://company.com"
+              value={form.companyLink}
+              onChange={handleChange}
             />
           </label>
           <label>
@@ -418,3 +431,9 @@ export default function PostJobClient() {
     </div>
   );
 }
+
+
+
+
+
+

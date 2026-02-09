@@ -1,5 +1,5 @@
-'use client';
-import React, { useEffect, useState } from 'react';
+﻿'use client';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { authService, jobsService, usersService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
@@ -34,12 +34,49 @@ export default function JobsPage() {
   const [saveLoading, setSaveLoading] = useState<Record<string, boolean>>({});
   const [suggestions, setSuggestions] = useState<SuggestionPayload | null>(null);
   const [suggesting, setSuggesting] = useState(false);
+  const [shareNote, setShareNote] = useState<{ tone: 'success' | 'fail'; message: string } | null>(null);
+  const [initReady, setInitReady] = useState(false);
+  const shareTimeoutRef = useRef<number | null>(null);
   const skeletons = Array.from({ length: 6 }, (_, index) => index);
 
   useEffect(() => {
+    if (!initReady) return;
     fetchJobs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, initReady]);
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+
+    const detectLocation = async () => {
+      try {
+        const res = await fetch('https://ipwho.is/', { signal: controller.signal });
+        const data = await res.json().catch(() => ({}));
+        if (!active) return;
+        const city = typeof data?.city === 'string' ? data.city.trim() : '';
+        const country = typeof data?.country === 'string' ? data.country.trim() : '';
+        const locationValue = city && country ? `${city}, ${country}` : city || country;
+        if (locationValue) {
+          setFilters((prev) => {
+            if (prev.location || prev.title || prev.jobType) return prev;
+            return { ...prev, location: locationValue };
+          });
+        }
+      } catch (error) {
+        // Ignore location lookup errors.
+      } finally {
+        if (active) setInitReady(true);
+      }
+    };
+
+    detectLocation();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -60,6 +97,24 @@ export default function JobsPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (shareTimeoutRef.current) {
+        window.clearTimeout(shareTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const flashShareNote = (tone: 'success' | 'fail', message: string) => {
+    setShareNote({ tone, message });
+    if (shareTimeoutRef.current) {
+      window.clearTimeout(shareTimeoutRef.current);
+    }
+    shareTimeoutRef.current = window.setTimeout(() => {
+      setShareNote(null);
+    }, 3000);
+  };
 
   const fetchJobs = async (overrideFilters = filters, overridePage = page) => {
     setLoading(true);
@@ -134,7 +189,10 @@ export default function JobsPage() {
       const res = await fetch('/api/paichat/suggestions', { credentials: 'include' });
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        throw new Error(data?.message || 'Sign in to get personalized suggestions.');
+        if (res.status === 401) {
+          throw new Error('Sign in to get personalized suggestions.');
+        }
+        throw new Error(data?.message || 'We could not load personalized suggestions.');
       }
       const data = await res.json();
       const nextFilters = {
@@ -177,6 +235,41 @@ export default function JobsPage() {
       return job.views >= 50;
     }
     return index < 2;
+  };
+  const buildShareLink = (jobId: string) => {
+    const base =
+      process.env.NEXT_PUBLIC_ORIGIN ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : '');
+    const path = `/job/${jobId}#apply`;
+    if (!base) return path;
+    return `${base.replace(/\/$/, '')}${path}`;
+  };
+
+  const handleShareJob = async (event: React.MouseEvent<HTMLButtonElement>, job: Job) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const link = buildShareLink(job._id);
+    const title = `${job.title} at ${job.company}`;
+    const text = `Apply for ${job.title} at ${job.company}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url: link });
+        flashShareNote('success', 'Share sheet opened.');
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+        flashShareNote('success', 'Link copied.');
+        return;
+      }
+      window.prompt('Copy this link', link);
+      flashShareNote('success', 'Link ready to copy.');
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
+      flashShareNote('fail', 'Could not share the link.');
+    }
   };
 
   return (
@@ -253,6 +346,11 @@ export default function JobsPage() {
             {error}
           </p>
         )}
+        {shareNote && (
+          <p className={`status-message status-${shareNote.tone}`} style={{ textAlign: 'center' }}>
+            {shareNote.message}
+          </p>
+        )}
 
         {loading ? (
           <div className="jobs-grid">
@@ -290,6 +388,7 @@ export default function JobsPage() {
               const logoColor = getLogoColor(job.company);
               const initials = getInitials(job.company);
               const jobLabel = `View ${job.title} at ${job.company}`;
+              const isSaved = savedJobs.includes(job._id);
               return (
                 <Link
                   key={job._id}
@@ -316,25 +415,41 @@ export default function JobsPage() {
                         <span>{job.location}</span>
                       </div>
                     </div>
-                    {isWorker && (
+                    <div className="job-card-actions">
                       <button
                         type="button"
-                        className={`job-save-button ${savedJobs.includes(job._id) ? 'saved' : ''}`}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          handleToggleSaveJob(job._id, savedJobs.includes(job._id));
-                        }}
-                        disabled={Boolean(saveLoading[job._id])}
-                        aria-pressed={savedJobs.includes(job._id)}
-                        title={savedJobs.includes(job._id) ? 'Remove saved job' : 'Save job'}
+                        className="job-share-button"
+                        onClick={(event) => handleShareJob(event, job)}
+                        title="Share job"
+                        aria-label="Share job"
                       >
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M6 4h12v16l-6-4-6 4z" fill="currentColor" />
+                          <path
+                            d="M12 3l4 4h-3v6h-2V7H8l4-4zm-6 8v8h12v-8h2v10H4V11h2z"
+                            fill="currentColor"
+                          />
                         </svg>
-                        <span>{savedJobs.includes(job._id) ? 'Saved' : 'Save'}</span>
                       </button>
-                    )}
+                      {isWorker && (
+                        <button
+                          type="button"
+                          className={`job-save-button ${isSaved ? 'saved' : ''}`}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            handleToggleSaveJob(job._id, isSaved);
+                          }}
+                          disabled={Boolean(saveLoading[job._id])}
+                          aria-pressed={isSaved}
+                          title={isSaved ? 'Remove saved job' : 'Save job'}
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 4h12v16l-6-4-6 4z" fill="currentColor" />
+                          </svg>
+                          <span>{isSaved ? 'Saved' : 'Save'}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="job-tags">
                     <span className="pill">{formatJobType(job.jobType)}</span>
@@ -382,3 +497,10 @@ export default function JobsPage() {
     </div>
   );
 }
+
+
+
+
+
+
+

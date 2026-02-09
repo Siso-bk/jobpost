@@ -58,18 +58,7 @@ export default function PAIchatWidget() {
       }
     };
     window.addEventListener('message', handler);
-    return () => window.removeEventListener('message', handler);
-  }, []);
-
-  useEffect(() => {
-    if (!widgetReady || !token) return;
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: 'PAICHAT_WIDGET_TOKEN', token, title: DEFAULT_TITLE, theme: DEFAULT_THEME },
-      WIDGET_ORIGIN
-    );
-  }, [widgetReady, token]);
-
-  return (
+    return (
     <div className={`paichat-launcher ${open ? 'open' : ''}`}>
       <button
         type="button"
@@ -79,24 +68,27 @@ export default function PAIchatWidget() {
         onClick={() => setOpen((prev) => !prev)}
       >
         <span className="paichat-fab-icon" aria-hidden="true">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
-  </svg>
-</span>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15a4 4 0 0 1-4 4H7l-4 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+          </svg>
+        </span>
       </button>
       <div className="paichat-panel" aria-hidden={!open}>
-        <div className="paichat-panel-head">          <div>
-            <div className="paichat-title">PAIchat</div>
-          </div>
-          <button
-            type="button"
-            className="paichat-close"
-            onClick={() => setOpen(false)}
-            aria-label="Close PAIchat"
-          >
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          className="paichat-close"
+          onClick={() => setOpen(false)}
+          aria-label="Close PAIchat"
+        >
+          <span aria-hidden="true">×</span>
+        </button>
         {status && (
           <div className="paichat-status">
             {status}
