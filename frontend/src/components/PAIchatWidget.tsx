@@ -1,9 +1,16 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const WIDGET_ORIGIN =
+const RAW_WIDGET_ORIGIN =
   process.env.NEXT_PUBLIC_PAICHAT_WIDGET_ORIGIN || 'https://paichat-seven.vercel.app';
+const WIDGET_ORIGIN = (() => {
+  try {
+    return new URL(RAW_WIDGET_ORIGIN).origin;
+  } catch {
+    return RAW_WIDGET_ORIGIN.replace(/\/$/, '');
+  }
+})();
 const DEFAULT_TITLE = process.env.NEXT_PUBLIC_PAICHAT_WIDGET_TITLE || 'PAIchat';
 const DEFAULT_THEME = process.env.NEXT_PUBLIC_PAICHAT_WIDGET_THEME || 'auto';
 
@@ -62,15 +69,28 @@ export default function PAIchatWidget() {
       window.removeEventListener('message', handler);
     };
   }, []);
-  useEffect(() => {
-    if (!widgetReady || !token) return;
+
+  const sendToken = useCallback(() => {
+    if (!token) return;
     const target = iframeRef.current?.contentWindow;
     if (!target) return;
     target.postMessage(
       { type: 'PAICHAT_WIDGET_TOKEN', token, title: DEFAULT_TITLE, theme: DEFAULT_THEME },
       WIDGET_ORIGIN
     );
-  }, [widgetReady, token]);
+  }, [token]);
+
+  useEffect(() => {
+    if (!widgetReady || !token) return;
+    sendToken();
+  }, [widgetReady, token, sendToken]);
+
+  useEffect(() => {
+    if (open && token) {
+      sendToken();
+    }
+  }, [open, token, sendToken]);
+
   useEffect(() => {
     if (!open) {
       setWidgetReady(false);
@@ -106,7 +126,7 @@ export default function PAIchatWidget() {
           onClick={() => setOpen(false)}
           aria-label="Close PAIchat"
         >
-          <span aria-hidden="true">×</span>
+          <span aria-hidden="true">�</span>
         </button>
         {status && (
           <div className="paichat-status">
@@ -121,7 +141,16 @@ export default function PAIchatWidget() {
           </div>
         )}
         {widgetSrc ? (
-          <iframe ref={iframeRef} className="paichat-frame" src={widgetSrc} title="PAIchat" />
+          <iframe
+            ref={iframeRef}
+            className="paichat-frame"
+            src={widgetSrc}
+            title="PAIchat"
+            onLoad={() => {
+              setWidgetReady(true);
+              sendToken();
+            }}
+          />
         ) : null}
       </div>
     </div>
