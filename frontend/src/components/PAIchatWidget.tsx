@@ -126,7 +126,7 @@ export default function PAIchatWidget() {
           onClick={() => setOpen(false)}
           aria-label="Close PAIchat"
         >
-          <span aria-hidden="true">×</span>
+          <span aria-hidden="true">Ã—</span>
         </button>
         {status && (
           <div className="paichat-status">
