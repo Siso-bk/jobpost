@@ -72,7 +72,25 @@ export const authService = {
     api.post('/auth/reset', { token, newPassword }),
 };
 
-export const jobsService = {
+export type JobsService = {
+  getAllJobs: (filters: {
+    title?: string;
+    location?: string;
+    jobType?: string;
+    page?: number;
+    limit?: number;
+  }) => ReturnType<typeof api.get>;
+  getJobById: (id: string) => ReturnType<typeof api.get>;
+  getMyJobs: () => ReturnType<typeof api.get>;
+  listLocations: () => ReturnType<typeof api.get>;
+  createJob: (jobData: any) => ReturnType<typeof api.post>;
+  updateJob: (id: string, jobData: any) => ReturnType<typeof api.put>;
+  hideJob: (id: string) => ReturnType<typeof api.post>;
+  unhideJob: (id: string) => ReturnType<typeof api.post>;
+  deleteJob: (id: string) => ReturnType<typeof api.delete>;
+};
+
+export const jobsService: JobsService = {
   getAllJobs: (filters: {
     title?: string;
     location?: string;
@@ -82,6 +100,7 @@ export const jobsService = {
   }) => api.get('/jobs', { params: filters }),
   getJobById: (id: string) => api.get(`/jobs/${id}`),
   getMyJobs: () => api.get('/jobs/mine'),
+  listLocations: () => api.get('/jobs/locations'),
   createJob: (jobData: any) => api.post('/jobs', jobData),
   updateJob: (id: string, jobData: any) => api.put(`/jobs/${id}`, jobData),
   hideJob: (id: string) => api.post(`/jobs/${id}/hide`),

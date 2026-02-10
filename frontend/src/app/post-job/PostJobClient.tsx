@@ -12,6 +12,7 @@ export default function PostJobClient() {
   const searchParams = useSearchParams();
   const [editId, setEditId] = useState<string | null>(null);
   const [loadingJob, setLoadingJob] = useState(false);
+  const [locationOptions, setLocationOptions] = useState<string[]>([]);
   const logoInputRef = useRef<HTMLInputElement | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
   const statusTimeoutRef = useRef<number | null>(null);
@@ -38,6 +39,22 @@ export default function PostJobClient() {
   const maxImageBytes = 2 * 1024 * 1024;
   const logoUrlMasked = isInternalAssetUrl(form.logoUrl);
 
+  const normalizeLocationOptions = (values: string[]) => {
+    const cleaned = values.map((value) => value.trim()).filter(Boolean);
+    const unique = Array.from(new Set(cleaned));
+    unique.sort((a, b) => {
+      const aRemote = /remote/i.test(a);
+      const bRemote = /remote/i.test(b);
+      if (aRemote && !bRemote) return -1;
+      if (!aRemote && bRemote) return 1;
+      return a.localeCompare(b);
+    });
+    if (!unique.some((value) => /remote/i.test(value))) {
+      unique.unshift('Remote');
+    }
+    return unique;
+  };
+
   useEffect(() => {
     return () => {
       if (statusTimeoutRef.current) {
@@ -59,6 +76,28 @@ export default function PostJobClient() {
   };
 
   useEffect(() => {
+    let active = true;
+    jobsService
+      .listLocations()
+      .then((res: any) => {
+        if (!active) return;
+        const items = Array.isArray(res.data?.items)
+          ? res.data.items
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+        setLocationOptions(normalizeLocationOptions(items));
+      })
+      .catch(() => {
+        if (!active) return;
+        setLocationOptions(['Remote']);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const id = searchParams?.get('id') ?? '';
     if (!id) {
       setEditId(null);
@@ -68,7 +107,7 @@ export default function PostJobClient() {
     setLoadingJob(true);
     jobsService
       .getJobById(id)
-      .then((res) => {
+      .then((res: any) => {
         const job = res.data;
         setForm({
           title: job.title || '',
@@ -307,7 +346,9 @@ export default function PostJobClient() {
               value={form.applyLink}
               onChange={handleChange}
             />
-            <span className="muted">Optional. If set, JobPost will send applicants to this link.</span>
+            <span className="muted">
+              Optional. If set, JobPost will send applicants to this link.
+            </span>
           </label>
           <label>
             <span>Company Logo URL</span>
@@ -368,11 +409,17 @@ export default function PostJobClient() {
             <span>Location</span>
             <input
               name="location"
+              list="location-options"
               placeholder="Remote or city"
               value={form.location}
               onChange={handleChange}
               required
             />
+            <datalist id="location-options">
+              {locationOptions.map((location) => (
+                <option key={location} value={location} />
+              ))}
+            </datalist>
           </label>
           <label>
             <span>Job Type</span>
@@ -445,9 +492,3 @@ export default function PostJobClient() {
     </div>
   );
 }
-
-
-
-
-
-

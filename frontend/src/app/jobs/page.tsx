@@ -21,10 +21,10 @@ type SuggestionPayload = {
   reasons?: string[];
 };
 
-
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filters, setFilters] = useState({ title: '', location: '', jobType: '' });
+  const [locationOptions, setLocationOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
@@ -34,16 +34,56 @@ export default function JobsPage() {
   const [saveLoading, setSaveLoading] = useState<Record<string, boolean>>({});
   const [suggestions, setSuggestions] = useState<SuggestionPayload | null>(null);
   const [suggesting, setSuggesting] = useState(false);
-  const [shareNote, setShareNote] = useState<{ tone: 'success' | 'fail'; message: string } | null>(null);
+  const [shareNote, setShareNote] = useState<{ tone: 'success' | 'fail'; message: string } | null>(
+    null
+  );
   const [initReady, setInitReady] = useState(false);
   const shareTimeoutRef = useRef<number | null>(null);
   const skeletons = Array.from({ length: 6 }, (_, index) => index);
+
+  const normalizeLocationOptions = (values: string[]) => {
+    const cleaned = values.map((value) => value.trim()).filter(Boolean);
+    const unique = Array.from(new Set(cleaned));
+    unique.sort((a, b) => {
+      const aRemote = /remote/i.test(a);
+      const bRemote = /remote/i.test(b);
+      if (aRemote && !bRemote) return -1;
+      if (!aRemote && bRemote) return 1;
+      return a.localeCompare(b);
+    });
+    if (!unique.some((value) => /remote/i.test(value))) {
+      unique.unshift('Remote');
+    }
+    return unique;
+  };
 
   useEffect(() => {
     if (!initReady) return;
     fetchJobs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, initReady]);
+
+  useEffect(() => {
+    let active = true;
+    jobsService
+      .listLocations()
+      .then((res) => {
+        if (!active) return;
+        const items = Array.isArray(res.data?.items)
+          ? res.data.items
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+        setLocationOptions(normalizeLocationOptions(items));
+      })
+      .catch(() => {
+        if (!active) return;
+        setLocationOptions(['Remote']);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -219,6 +259,17 @@ export default function JobsPage() {
     fetchJobs(cleared, 1);
   };
 
+  const locationChoices = React.useMemo(() => {
+    const base = normalizeLocationOptions(locationOptions);
+    if (!filters.location || base.includes(filters.location)) {
+      return base;
+    }
+    if (base.length && /remote/i.test(base[0])) {
+      return [base[0], filters.location, ...base.slice(1)];
+    }
+    return [filters.location, ...base];
+  }, [filters.location, locationOptions]);
+
   const getLogoColor = (company: string) => {
     let hash = 0;
     for (let i = 0; i < company.length; i += 1) {
@@ -289,12 +340,14 @@ export default function JobsPage() {
               value={filters.title}
               onChange={handleChange}
             />
-            <input
-              name="location"
-              placeholder="City, state, or remote"
-              value={filters.location}
-              onChange={handleChange}
-            />
+            <select name="location" value={filters.location} onChange={handleChange}>
+              <option value="">All locations</option>
+              {locationChoices.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </select>
             <select name="jobType" value={filters.jobType} onChange={handleChange}>
               <option value="">All Job Types</option>
               <option value="full-time">Full Time</option>
@@ -497,10 +550,3 @@ export default function JobsPage() {
     </div>
   );
 }
-
-
-
-
-
-
-

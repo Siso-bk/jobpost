@@ -17,5 +17,4 @@ export const isInternalAssetUrl = (value?: string) => {
   return STORAGE_HOSTS.some((host) => lower.includes(host));
 };
 
-export const getMaskedAssetUrl = (value?: string) =>
-  (isInternalAssetUrl(value) ? '' : value || '');
+export const getMaskedAssetUrl = (value?: string) => (isInternalAssetUrl(value) ? '' : value || '');

@@ -27,7 +27,7 @@ export default function EmployerJobsPage() {
     const fetchJobs = async () => {
       setLoading(true);
       try {
-        const res = await jobsService.getMyJobs();
+        const res: any = await jobsService.getMyJobs();
         setJobs(res.data || []);
         setError(null);
         setStatus(null);

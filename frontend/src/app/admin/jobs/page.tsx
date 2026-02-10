@@ -68,7 +68,7 @@ export default function AdminJobsPage() {
     setError(null);
     setStatusMessage(null);
     try {
-      const res = job.isHidden
+      const res: any = job.isHidden
         ? await jobsService.unhideJob(job._id)
         : await jobsService.hideJob(job._id);
       const updated = res.data?.job || { ...job, isHidden: !job.isHidden };

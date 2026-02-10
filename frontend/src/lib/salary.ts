@@ -16,13 +16,14 @@ export const formatSalary = (salary?: Salary) => {
   const { min, max, currency, period } = salary;
   const hasMin = typeof min === 'number' && !Number.isNaN(min);
   const hasMax = typeof max === 'number' && !Number.isNaN(max);
-  const range = hasMin && hasMax
-    ? `${formatNumber(min)} - ${formatNumber(max)}`
-    : hasMin
-      ? `${formatNumber(min)}`
-      : hasMax
-        ? `${formatNumber(max)}`
-        : '';
+  const range =
+    hasMin && hasMax
+      ? `${formatNumber(min)} - ${formatNumber(max)}`
+      : hasMin
+        ? `${formatNumber(min)}`
+        : hasMax
+          ? `${formatNumber(max)}`
+          : '';
   const currencyLabel = currency ? currency.toUpperCase() : '';
   const base = [range, currencyLabel].filter(Boolean).join(' ');
   if (!base) return '';

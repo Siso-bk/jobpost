@@ -206,10 +206,7 @@ export default function TalentPage() {
                     type="button"
                     className={`talent-save-button ${savedWorkers.includes(worker._id) ? 'saved' : ''}`}
                     onClick={() =>
-                      handleToggleSavedWorker(
-                        worker._id,
-                        savedWorkers.includes(worker._id)
-                      )
+                      handleToggleSavedWorker(worker._id, savedWorkers.includes(worker._id))
                     }
                     disabled={Boolean(saveLoading[worker._id])}
                     aria-pressed={savedWorkers.includes(worker._id)}

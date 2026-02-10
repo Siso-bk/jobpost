@@ -90,8 +90,8 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
             <JobImageGallery images={job.imageUrls} />
           </div>
         )}
-                <div className="detail-card">
-          <strong>Links</strong>
+        <div className="detail-card">
+          {/* <strong>Links</strong> */}
           <div className="job-links">
             {externalApplyLink ? (
               <a
@@ -101,7 +101,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
                 rel="noreferrer"
               >
                 <span className="job-link-label">Apply on company site</span>
-                <span className="job-link-meta">{externalApplyLabel}</span>
+                {/* <span className="job-link-meta">{externalApplyLabel}</span> */}
               </a>
             ) : (
               <a className="job-link" href={internalApplyLink}>
@@ -128,5 +128,3 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
     </div>
   );
 }
-
-

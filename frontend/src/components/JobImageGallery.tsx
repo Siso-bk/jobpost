@@ -54,12 +54,7 @@ export default function JobImageGallery({ images }: JobImageGalleryProps) {
               x
             </button>
             <img src={activeImage} alt="Job image preview" />
-            <a
-              className="job-gallery-open"
-              href={activeImage}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a className="job-gallery-open" href={activeImage} target="_blank" rel="noreferrer">
               Open full size
             </a>
           </div>

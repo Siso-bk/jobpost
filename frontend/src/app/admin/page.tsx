@@ -342,15 +342,11 @@ export default function AdminDashboardPage() {
                   </a>
                 )}
                 {item.createdAt && (
-                  <div className="knowledge-meta">
-                    {new Date(item.createdAt).toLocaleString()}
-                  </div>
+                  <div className="knowledge-meta">{new Date(item.createdAt).toLocaleString()}</div>
                 )}
               </div>
               <div
-                className={`knowledge-status ${
-                  item.status === 'failed' ? 'failed' : 'success'
-                }`}
+                className={`knowledge-status ${item.status === 'failed' ? 'failed' : 'success'}`}
               >
                 {item.status === 'failed' ? 'Failed' : 'Added'}
               </div>

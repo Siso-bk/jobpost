@@ -396,7 +396,9 @@ a:hover {
   background: rgba(15, 23, 42, 0.04);
   color: var(--text);
   text-decoration: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .profile-link:hover {
   border-color: var(--brand);
@@ -972,7 +974,10 @@ a:hover {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border 0.2s ease, color 0.2s ease, background 0.2s ease;
+  transition:
+    border 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
 }
 .job-share-button svg {
   width: 16px;
@@ -995,7 +1000,10 @@ a:hover {
   gap: 6px;
   font-size: 12px;
   cursor: pointer;
-  transition: border 0.2s ease, color 0.2s ease, background 0.2s ease;
+  transition:
+    border 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
 }
 .job-save-button svg {
   width: 16px;
@@ -1261,7 +1269,10 @@ a:hover {
   gap: 6px;
   font-size: 12px;
   cursor: pointer;
-  transition: border 0.2s ease, background 0.2s ease, color 0.2s ease;
+  transition:
+    border 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
 }
 .talent-save-button svg {
   width: 16px;
@@ -1854,7 +1865,9 @@ a:hover {
   color: #fff;
   cursor: pointer;
   box-shadow: 0 16px 40px rgba(2, 132, 132, 0.28);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .paichat-fab:hover {
   transform: translateY(-2px);
@@ -2019,7 +2032,9 @@ a:hover {
   background: rgba(15, 23, 42, 0.04);
   color: var(--text);
   text-decoration: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .job-link:hover {
   border-color: var(--brand);
@@ -2036,7 +2051,6 @@ a:hover {
   font-weight: 600;
   word-break: break-word;
 }
-
 
 .knowledge-header {
   display: flex;

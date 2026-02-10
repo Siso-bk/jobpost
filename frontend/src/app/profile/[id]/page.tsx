@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import {
   authService,
@@ -584,6 +585,12 @@ export default function ProfilePage() {
         {isOwner && (
           <section className="card">
             <h2>Settings</h2>
+            <div className="setting-row">
+              <span>Password</span>
+              <Link href="/change-password" className="btn-secondary">
+                Change password
+              </Link>
+            </div>
             <div className="setting-row">
               <span>Theme</span>
               <button

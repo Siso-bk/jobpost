@@ -205,6 +205,22 @@ const canManageJob = (job, req) => {
   return Array.isArray(req.userRoles) && req.userRoles.includes('admin');
 };
 
+
+const buildLocationList = (values = []) => {
+  const cleaned = values
+    .map((value) => String(value || '').trim())
+    .filter(Boolean);
+  const unique = Array.from(new Set(cleaned));
+  unique.sort((a, b) => {
+    const aRemote = /remote/i.test(a);
+    const bRemote = /remote/i.test(b);
+    if (aRemote && !bRemote) return -1;
+    if (!aRemote && bRemote) return 1;
+    return a.localeCompare(b);
+  });
+  return unique;
+};
+
 // Get all jobs (with pagination and filters)
 router.get('/', async (req, res) => {
   try {
@@ -246,6 +262,22 @@ router.get('/', async (req, res) => {
     res.json({ items, page: pageNum, limit: lim, total, pages: Math.ceil(total / lim) });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+
+// Get available job locations
+router.get('/locations', async (_req, res) => {
+  try {
+    const values = await Job.distinct('location', {
+      status: 'open',
+      isHidden: { $ne: true },
+      location: { $exists: true, $ne: '' }
+    });
+    const items = buildLocationList(values);
+    return res.json({ items });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
   }
 });
 

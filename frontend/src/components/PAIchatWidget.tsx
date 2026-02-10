@@ -121,16 +121,9 @@ export default function PAIchatWidget() {
           </div>
         )}
         {widgetSrc ? (
-          <iframe
-            ref={iframeRef}
-            className="paichat-frame"
-            src={widgetSrc}
-            title="PAIchat"
-          />
+          <iframe ref={iframeRef} className="paichat-frame" src={widgetSrc} title="PAIchat" />
         ) : null}
       </div>
     </div>
   );
 }
-
-
