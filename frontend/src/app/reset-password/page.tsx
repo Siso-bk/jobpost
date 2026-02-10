@@ -69,7 +69,7 @@ export default function ResetPasswordPage() {
         formData.email.trim().toLowerCase(),
         formData.code.trim()
       );
-      setResetToken(res.data?.resetToken || null);
+      setResetToken(res.data?.resetToken || res.data?.token || null);
       setStep('reset');
       setStatus({ tone: 'success', message: 'Code verified. Enter a new password below.' });
     } catch (err: any) {
@@ -308,3 +308,4 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
+

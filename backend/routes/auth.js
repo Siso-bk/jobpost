@@ -352,12 +352,23 @@ router.post('/reset-verify', async (req, res) => {
 
 router.post('/reset', async (req, res) => {
   try {
-    const token = (req.body?.token || '').trim();
+    const token = (req.body?.token || req.body?.resetToken || '').trim();
     const newPassword = req.body?.newPassword || '';
     if (!token || !STRONG_PASSWORD.test(newPassword)) {
       return res.status(400).json({ message: 'Reset token and strong password are required' });
     }
-    const paiRes = await postToPai('/api/auth/reset', { token, newPassword });
+    const buildPayload = (useResetToken) =>
+      useResetToken ? { resetToken: token, newPassword } : { token, newPassword };
+    let paiRes;
+    try {
+      paiRes = await postToPai('/api/auth/reset', buildPayload(true));
+    } catch (err) {
+      if (err?.response?.status === 400) {
+        paiRes = await postToPai('/api/auth/reset', buildPayload(false));
+      } else {
+        throw err;
+      }
+    }
     return res.status(paiRes.status).json(paiRes.data);
   } catch (error) {
     if (error.response) {
@@ -443,3 +454,5 @@ router.post('/external', async (req, res) => {
 });
 
 module.exports = router;
+
+

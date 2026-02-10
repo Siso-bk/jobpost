@@ -64,7 +64,7 @@ export default function ChangePasswordPage() {
     setVerifying(true);
     try {
       const verify = await authService.verifyResetCode(email.trim().toLowerCase(), code.trim());
-      const resetToken = verify.data?.resetToken;
+      const resetToken = verify.data?.resetToken || verify.data?.token;
       if (!resetToken) {
         throw new Error('Reset token missing. Request a new code and try again.');
       }
@@ -137,3 +137,4 @@ export default function ChangePasswordPage() {
     </div>
   );
 }
+
