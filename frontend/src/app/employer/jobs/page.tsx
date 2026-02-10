@@ -64,12 +64,12 @@ export default function EmployerJobsPage() {
     setStatus(null);
     try {
       if (job.isHidden) {
-        const res = await jobsService.unhideJob(job._id);
+        const res = (await jobsService.unhideJob(job._id)) as any;
         const updated = res.data?.job || { ...job, isHidden: false };
         setJobs((prev) => prev.map((item) => (item._id === job._id ? updated : item)));
         setStatus('Job is now visible to applicants.');
       } else {
-        const res = await jobsService.hideJob(job._id);
+        const res = (await jobsService.hideJob(job._id)) as any;
         const updated = res.data?.job || { ...job, isHidden: true };
         setJobs((prev) => prev.map((item) => (item._id === job._id ? updated : item)));
         setStatus('Job hidden from public listings.');
