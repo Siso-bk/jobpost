@@ -27,8 +27,30 @@ export default function ResetPasswordPage() {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const prefilled = params.get('email');
-    if (prefilled) {
-      setFormData((prev) => ({ ...prev, email: prefilled }));
+    const tokenParam = params.get('token');
+    const mode = params.get('mode');
+    const storedEmail = window.sessionStorage.getItem('reset_email');
+    const storedToken = window.sessionStorage.getItem('reset_token');
+    const resolvedEmail = prefilled || storedEmail || '';
+    const resolvedToken = tokenParam || storedToken || '';
+    if (resolvedEmail) {
+      setFormData((prev) => ({ ...prev, email: resolvedEmail }));
+    }
+    if (resolvedToken) {
+      setResetToken(resolvedToken);
+      setStep('reset');
+      if (mode === 'change') {
+        setStatus({
+          tone: 'success',
+          message: 'Code verified. Enter a new password below.',
+        });
+      }
+    }
+    if (storedEmail) {
+      window.sessionStorage.removeItem('reset_email');
+    }
+    if (storedToken) {
+      window.sessionStorage.removeItem('reset_token');
     }
   }, []);
 

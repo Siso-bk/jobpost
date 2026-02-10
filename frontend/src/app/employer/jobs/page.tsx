@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { MouseEvent } from 'react';
 import Link from 'next/link';
 import { jobsService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
@@ -87,6 +88,44 @@ export default function EmployerJobsPage() {
     return date.toISOString().slice(0, 10);
   };
 
+  const buildShareLink = (jobId: string) => {
+    const base =
+      process.env.NEXT_PUBLIC_ORIGIN ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : '');
+    const path = `/job/${jobId}#apply`;
+    if (!base) return path;
+    return `${base.replace(/\/$/, '')}${path}`;
+  };
+
+  const handleShareJob = async (event: MouseEvent<HTMLButtonElement>, job: Job) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setError(null);
+    setStatus(null);
+    const link = buildShareLink(job._id);
+    const title = `${job.title} at ${job.company}`;
+    const text = `Apply for ${job.title} at ${job.company}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text, url: link });
+        setStatus('Share sheet opened.');
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(link);
+        setStatus('Link copied.');
+        return;
+      }
+      window.prompt('Copy this link', link);
+      setStatus('Link ready to copy.');
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
+      setError('Could not share the job link.');
+    }
+  };
+
   return (
     <div className="page-container">
       <div className="applications-header">
@@ -132,6 +171,20 @@ export default function EmployerJobsPage() {
               <div className="application-actions">
                 <Link href={`/job/${job._id}`}>View</Link>
                 <Link href={`/post-job?id=${job._id}`}>Edit</Link>
+                <button
+                  type="button"
+                  className="job-share-button"
+                  onClick={(event) => handleShareJob(event, job)}
+                  title="Share job"
+                  aria-label="Share job"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 3l4 4h-3v6h-2V7H8l4-4zm-6 8v8h12v-8h2v10H4V11h2z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
                 <button
                   type="button"
                   className="btn-ghost"

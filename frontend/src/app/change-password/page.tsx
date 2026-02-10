@@ -5,22 +5,16 @@ import { authService } from '@/services/api';
 import { friendlyError } from '@/lib/feedback';
 
 type StatusTone = 'info' | 'success' | 'fail';
-const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,128}$/;
-const PASSWORD_HINT = 'Use at least 8 characters with uppercase, lowercase, and a number.';
 
 export default function ChangePasswordPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
   const [status, setStatus] = useState<{ tone: StatusTone; message: string } | null>(null);
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -62,48 +56,44 @@ export default function ChangePasswordPage() {
     }
   };
 
-  const handleChangePassword = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleVerifyCode = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!STRONG_PASSWORD.test(password)) {
-      setError(PASSWORD_HINT);
-      setStatus(null);
-      return;
-    }
-    if (password !== confirm) {
-      setError('Passwords must match.');
-      setStatus(null);
-      return;
-    }
+    if (!code.trim()) return;
     setError('');
-    setStatus({ tone: 'info', message: 'Updating password...' });
-    setLoading(true);
+    setStatus({ tone: 'info', message: 'Verifying code...' });
+    setVerifying(true);
     try {
       const verify = await authService.verifyResetCode(email.trim().toLowerCase(), code.trim());
       const resetToken = verify.data?.resetToken;
       if (!resetToken) {
         throw new Error('Reset token missing. Request a new code and try again.');
       }
-      await authService.resetWithToken(resetToken, password);
-      setStatus({ tone: 'success', message: 'Password updated successfully.' });
-      setPassword('');
-      setConfirm('');
-      setCode('');
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('reset_token', resetToken);
+        sessionStorage.setItem('reset_email', email.trim().toLowerCase());
+      }
+      setStatus({
+        tone: 'success',
+        message: 'Code verified. Redirecting to set a new password...',
+      });
+      router.push('/reset-password?mode=change');
     } catch (err: any) {
       setStatus(null);
-      setError(friendlyError(err, 'We could not update your password.'));
+      setError(friendlyError(err, 'We could not verify that code.'));
     } finally {
-      setLoading(false);
+      setVerifying(false);
     }
   };
 
-  const canSubmit =
-    code.trim().length === 6 && STRONG_PASSWORD.test(password) && password === confirm;
+  const canVerify = code.trim().length === 6;
 
   return (
     <div className="auth-container">
       <div className="auth-box">
         <h2>Change Password</h2>
-        {status && <p className={`status-message status-${status.tone}`}>{status.message}</p>}
+        {status && (
+          <p className={'status-message status-' + status.tone}>{status.message}</p>
+        )}
         {error && <p className="error-message">{error}</p>}
 
         <form onSubmit={handleSendCode} className="auth-form">
@@ -116,7 +106,7 @@ export default function ChangePasswordPage() {
           </button>
         </form>
 
-        <form onSubmit={handleChangePassword} className="auth-form">
+        <form onSubmit={handleVerifyCode} className="auth-form">
           <label>
             <span>Verification Code</span>
             <input
@@ -129,145 +119,15 @@ export default function ChangePasswordPage() {
               required
             />
           </label>
-          <label>
-            <span>New Password</span>
-            <div className="password-field">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                placeholder="At least 8 chars, upper/lower, number"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="icon-button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                title={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? (
-                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                    <path
-                      d="M3 4l18 16"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M2 12s3.5-6 10-6c2.2 0 4.1.5 5.6 1.4M22 12s-3.5 6-10 6c-2.7 0-5-.9-6.8-2.2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                    <path
-                      d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-            <span className="muted">{PASSWORD_HINT}</span>
-          </label>
-          <label>
-            <span>Confirm Password</span>
-            <div className="password-field">
-              <input
-                type={showConfirm ? 'text' : 'password'}
-                name="confirm"
-                placeholder="Repeat new password"
-                value={confirm}
-                onChange={(event) => setConfirm(event.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="icon-button"
-                onClick={() => setShowConfirm((prev) => !prev)}
-                aria-label={showConfirm ? 'Hide password' : 'Show password'}
-                title={showConfirm ? 'Hide password' : 'Show password'}
-              >
-                {showConfirm ? (
-                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                    <path
-                      d="M3 4l18 16"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M2 12s3.5-6 10-6c2.2 0 4.1.5 5.6 1.4M22 12s-3.5 6-10 6c-2.7 0-5-.9-6.8-2.2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                    <path
-                      d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="3"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </label>
-          <button type="submit" className="btn-primary" disabled={loading || !canSubmit}>
-            {loading ? 'Updating...' : 'Update password'}
+          <p className="muted">
+            After verification, you will set a new password on the next screen.
+          </p>
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={verifying || !canVerify || !codeSent}
+          >
+            {verifying ? 'Verifying...' : 'Verify code'}
           </button>
         </form>
         <p className="auth-meta">
