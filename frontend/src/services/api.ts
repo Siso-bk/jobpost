@@ -160,6 +160,10 @@ export const usersService = {
 export const adminService = {
   getHomeContent: () => api.get('/admin/home'),
   updateHomeContent: (content: any) => api.put('/admin/home', { content }),
+  addKnowledge: (payload: { url?: string; urls?: string[]; title?: string; content?: string }) =>
+    api.post('/paichat/knowledge', payload),
+  listKnowledge: (params?: { page?: number; limit?: number }) =>
+    api.get('/paichat/knowledge', { params }),
   listJobs: (params: {
     status?: string;
     hidden?: string;

@@ -163,6 +163,20 @@ const normalizeCompanyLink = (value) => {
   return `https://${trimmed}`;
 };
 
+const normalizeApplyLink = (value) => {
+  if (value === undefined) return undefined;
+  const trimmed = String(value).trim();
+  if (trimmed === '') return '';
+  if (/^https?:\/\//.test(trimmed)) {
+    return trimmed;
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    throw new Error('Apply link must start with http or https');
+  }
+  return `https://${trimmed}`;
+};
+
+
 const notifyEmployerVisibility = async (job, actorId, action, actorIsAdmin) => {
   if (!job?.employerId) return;
   const verb = action === 'hide' ? 'hidden' : 'restored';
@@ -279,6 +293,7 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
       description,
       company,
       companyLink,
+      applyLink,
       location,
       salary,
       jobType,
@@ -295,9 +310,18 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
 
     let resolvedLogoUrl;
     let resolvedCompanyLink;
+    let resolvedApplyLink;
     if (companyLink !== undefined) {
       try {
         resolvedCompanyLink = normalizeCompanyLink(companyLink);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+
+    if (applyLink !== undefined) {
+      try {
+        resolvedApplyLink = normalizeApplyLink(applyLink);
       } catch (error) {
         return res.status(400).json({ message: error.message });
       }
@@ -325,6 +349,7 @@ router.post('/', auth, requireRole('employer'), async (req, res) => {
       description,
       company,
       companyLink: resolvedCompanyLink,
+      applyLink: resolvedApplyLink,
       location,
       salary,
       jobType,
@@ -370,6 +395,13 @@ router.put('/:id', auth, requireRole('employer'), async (req, res) => {
     if (req.body.companyLink !== undefined) {
       try {
         job.companyLink = normalizeCompanyLink(req.body.companyLink);
+      } catch (error) {
+        return res.status(400).json({ message: error.message });
+      }
+    }
+    if (req.body.applyLink !== undefined) {
+      try {
+        job.applyLink = normalizeApplyLink(req.body.applyLink);
       } catch (error) {
         return res.status(400).json({ message: error.message });
       }

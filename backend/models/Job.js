@@ -16,6 +16,7 @@ const jobSchema = new mongoose.Schema(
       required: true
     },
     companyLink: String,
+    applyLink: String,
     logoUrl: String,
     imageUrls: {
       type: [String],

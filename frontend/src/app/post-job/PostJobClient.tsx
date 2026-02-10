@@ -20,6 +20,7 @@ export default function PostJobClient() {
     description: '',
     company: '',
     companyLink: '',
+    applyLink: '',
     location: '',
     jobType: 'full-time',
     status: 'open',
@@ -74,6 +75,7 @@ export default function PostJobClient() {
           description: job.description || '',
           company: job.company || '',
           companyLink: job.companyLink || '',
+          applyLink: job.applyLink || '',
           location: job.location || '',
           jobType: job.jobType || 'full-time',
           status: job.status || 'open',
@@ -207,6 +209,7 @@ export default function PostJobClient() {
         description: form.description,
         company: form.company,
         companyLink: form.companyLink,
+        applyLink: form.applyLink,
         location: form.location,
         jobType: form.jobType,
         status: form.status,
@@ -230,6 +233,7 @@ export default function PostJobClient() {
           description: '',
           company: '',
           companyLink: '',
+          applyLink: '',
           location: '',
           jobType: 'full-time',
           status: 'open',
@@ -294,6 +298,16 @@ export default function PostJobClient() {
               value={form.companyLink}
               onChange={handleChange}
             />
+          </label>
+          <label>
+            <span>Apply link (company application page)</span>
+            <input
+              name="applyLink"
+              placeholder="https://company.com/careers"
+              value={form.applyLink}
+              onChange={handleChange}
+            />
+            <span className="muted">Optional. If set, JobPost will send applicants to this link.</span>
           </label>
           <label>
             <span>Company Logo URL</span>

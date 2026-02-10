@@ -46,7 +46,9 @@ const buildApplyLink = (jobId: string) => {
 
 export default async function JobDetail({ params }: { params: { id: string } }) {
   const job = await getJob(params.id);
-  const applyLink = buildApplyLink(job._id);
+  const internalApplyLink = buildApplyLink(job._id);
+  const externalApplyLink = normalizeExternalUrl(job.applyLink);
+  const externalApplyLabel = displayUrl(job.applyLink) || externalApplyLink;
   const companyLink = normalizeExternalUrl(job.companyLink);
   const companyLabel = displayUrl(job.companyLink) || companyLink;
   return (
@@ -91,10 +93,22 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
                 <div className="detail-card">
           <strong>Links</strong>
           <div className="job-links">
-            <a className="job-link" href={applyLink}>
-              <span className="job-link-label">Apply link</span>
-              <span className="job-link-meta">{applyLink}</span>
-            </a>
+            {externalApplyLink ? (
+              <a
+                className="job-link job-link-primary"
+                href={externalApplyLink}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span className="job-link-label">Apply on company site</span>
+                <span className="job-link-meta">{externalApplyLabel}</span>
+              </a>
+            ) : (
+              <a className="job-link" href={internalApplyLink}>
+                <span className="job-link-label">Apply on JobPost</span>
+                <span className="job-link-meta">{internalApplyLink}</span>
+              </a>
+            )}
             {companyLink && (
               <a className="job-link" href={companyLink} target="_blank" rel="noreferrer">
                 <span className="job-link-label">Company link</span>
@@ -109,7 +123,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
             {job.description}
           </p>
         </div>
-        <ApplyForm jobId={job._id} />
+        {!externalApplyLink && <ApplyForm jobId={job._id} />}
       </div>
     </div>
   );

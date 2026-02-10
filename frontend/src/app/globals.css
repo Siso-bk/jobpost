@@ -79,6 +79,19 @@ body {
     radial-gradient(900px 420px at 85% -5%, rgba(245, 158, 11, 0.18), transparent);
 }
 
+img,
+picture,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -2024,3 +2037,120 @@ a:hover {
   word-break: break-word;
 }
 
+
+.knowledge-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.knowledge-url-input {
+  min-height: 96px;
+}
+
+.knowledge-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.knowledge-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px 16px;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.knowledge-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.knowledge-url {
+  color: var(--brand);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.knowledge-meta {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+
+.knowledge-status {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  align-self: start;
+}
+
+.knowledge-status.success {
+  color: #28c081;
+  border-color: rgba(40, 192, 129, 0.45);
+  background: rgba(40, 192, 129, 0.12);
+}
+
+.knowledge-status.failed {
+  color: #ff8b8b;
+  border-color: rgba(255, 139, 139, 0.45);
+  background: rgba(255, 139, 139, 0.12);
+}
+
+.knowledge-error {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: #ff9a9a;
+}
+
+.job-link-primary {
+  border-color: transparent;
+  background: var(--brand);
+  color: #fff;
+}
+.job-link-primary:hover {
+  border-color: transparent;
+  background: var(--brand-600);
+}
+.job-link-primary .job-link-label {
+  color: rgba(255, 255, 255, 0.8);
+  opacity: 1;
+}
+.job-link-primary .job-link-meta {
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .applications-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .application-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero-actions {
+    width: 100%;
+  }
+  .hero-actions a,
+  .hero-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
