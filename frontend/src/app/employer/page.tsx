@@ -32,10 +32,8 @@ export default function EmployerDashboardPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [jobsRes, appsRes] = await Promise.all([
-          jobsService.getMyJobs(),
-          applicationsService.getEmployerApplications(),
-        ]);
+        const jobsRes = (await jobsService.getMyJobs()) as any;
+        const appsRes = (await applicationsService.getEmployerApplications()) as any;
         setJobs(jobsRes.data || []);
         setApplications(appsRes.data || []);
         setError(null);

@@ -67,7 +67,7 @@ export default function JobsPage() {
     let active = true;
     jobsService
       .listLocations()
-      .then((res) => {
+      .then((res: any) => {
         if (!active) return;
         const items = Array.isArray(res.data?.items)
           ? res.data.items
@@ -159,11 +159,11 @@ export default function JobsPage() {
   const fetchJobs = async (overrideFilters = filters, overridePage = page) => {
     setLoading(true);
     try {
-      const res = await jobsService.getAllJobs({
+      const res = (await jobsService.getAllJobs({
         ...overrideFilters,
         page: overridePage,
         limit: 12,
-      });
+      })) as any;
       const data = res.data?.items ? res.data : { items: res.data, pages: 1 };
       setJobs(data.items);
       setPages(data.pages || 1);
