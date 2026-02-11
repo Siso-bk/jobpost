@@ -136,14 +136,23 @@ router.get('/token', auth, async (req, res) => {
       externalUserId: user.email || String(req.userId)
     };
 
-    const response = await axios.post(
-      `${normalizeBase(baseUrl)}/v1/tenants/${tenantId}/users/token`,
-      payload,
-      {
-        headers: { 'x-platform-key': platformKey },
-        timeout: 6000
+    const endpoint = `${normalizeBase(baseUrl)}/v1/tenants/${tenantId}/users/token`;
+    let response;
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        response = await axios.post(endpoint, payload, {
+          headers: { 'x-platform-key': platformKey },
+          timeout: 15000
+        });
+        break;
+      } catch (err) {
+        if (attempt === 0 && err?.code === 'ECONNABORTED') {
+          continue;
+        }
+        throw err;
       }
-    );
+    }
 
     const token = response.data?.token;
     if (!token) {
@@ -311,3 +320,4 @@ router.get('/suggestions', auth, async (req, res) => {
 });
 
 module.exports = router;
+
