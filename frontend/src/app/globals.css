@@ -1958,8 +1958,8 @@ a:hover {
   width: 32px;
   height: 32px;
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 12px;
+  right: 12px;
   z-index: 2;
   border: 1px solid var(--line);
   background: rgba(15, 23, 42, 0.04);
@@ -1972,6 +1972,7 @@ a:hover {
   font-size: 18px;
   line-height: 1;
 }
+
 .paichat-status {
   display: flex;
   justify-content: space-between;
@@ -1982,7 +1983,14 @@ a:hover {
   color: var(--muted);
   border-bottom: 1px solid var(--line);
   background: rgba(245, 158, 11, 0.08);
+  position: relative;
+  padding-right: 54px;
+  flex-wrap: wrap;
 }
+.paichat-status > button {
+  flex-shrink: 0;
+}
+
 .paichat-cta {
   border: 1px solid var(--brand);
   background: rgba(14, 165, 164, 0.08);
@@ -2297,4 +2305,9 @@ a:hover {
     padding: 18px;
   }
 }
+
+
+
+
+
 

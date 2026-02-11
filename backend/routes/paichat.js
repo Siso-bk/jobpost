@@ -11,6 +11,7 @@ const baseUrl = process.env.PAICHAT_API_BASE || '';
 const tenantId = process.env.PAICHAT_TENANT_ID || '';
 const platformKey = process.env.PAICHAT_PLATFORM_KEY || '';
 const consoleToken = process.env.PAICHAT_CONSOLE_TOKEN || '';
+const buildTenantUrl = (path) => `${normalizeBase(baseUrl)}${path}`;
 
 const normalizeBase = (value) => String(value || '').replace(/\/$/, '');
 
@@ -132,29 +133,50 @@ router.get('/token', auth, async (req, res) => {
   }
 
   try {
-    const payload = {
-      externalUserId: user.email || String(req.userId)
-    };
+    const externalUserId = user.email || String(req.userId);
+    const payload = { externalUserId };
 
-    const endpoint = `${normalizeBase(baseUrl)}/v1/tenants/${tenantId}/users/token`;
+    const endpoint = buildTenantUrl(`/v1/tenants/${tenantId}/users/token`);
     let response;
 
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        response = await axios.post(endpoint, payload, {
-          headers: { 'x-platform-key': platformKey },
-          timeout: 15000
-        });
-        break;
-      } catch (err) {
-        if (attempt === 0 && err?.code === 'ECONNABORTED') {
-          continue;
+    const requestToken = async () =>
+      axios.post(endpoint, payload, {
+        headers: { 'x-platform-key': platformKey },
+        timeout: 15000
+      });
+
+    try {
+      response = await requestToken();
+    } catch (err) {
+      if (err?.code === 'ECONNABORTED') {
+        response = await requestToken();
+      } else {
+        const status = err?.response?.status;
+        if (status === 404 || status === 401) {
+          try {
+            await axios.post(
+              buildTenantUrl(`/v1/tenants/${tenantId}/users`),
+              {
+                externalUserId,
+                email: user.email,
+                displayName: user.name || user.email || 'JobPost user'
+              },
+              {
+                headers: { 'x-platform-key': platformKey },
+                timeout: 15000
+              }
+            );
+            response = await requestToken();
+          } catch (provisionError) {
+            throw provisionError;
+          }
+        } else {
+          throw err;
         }
-        throw err;
       }
     }
 
-    const token = response.data?.token;
+    const token = response?.data?.token;
     if (!token) {
       return res.status(502).json({ message: 'PAIchat token response missing token.' });
     }
@@ -320,4 +342,6 @@ router.get('/suggestions', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+
 
