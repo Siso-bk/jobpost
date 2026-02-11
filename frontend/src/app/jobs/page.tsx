@@ -355,8 +355,8 @@ export default function JobsPage() {
               <option value="contract">Contract</option>
               <option value="internship">Internship</option>
             </select>
-            <button type="submit" className="btn-primary">
-              Search
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Searching...' : 'Search'}
             </button>
           </form>
         </div>
@@ -551,5 +551,6 @@ export default function JobsPage() {
     </div>
   );
 }
+
 
 

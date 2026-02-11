@@ -2244,3 +2244,57 @@ a:hover {
   flex-shrink: 0;
 }
 
+
+
+/* Admin - pro polish */
+.admin-page .applications-header {
+  align-items: flex-end;
+}
+.admin-page .form-card {
+  border-radius: 20px;
+  padding: 22px 24px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.42));
+}
+.admin-page .form-card h2 {
+  font-size: 20px;
+}
+.admin-page .form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 16px;
+  align-items: start;
+}
+.admin-page .form-grid label {
+  gap: 6px;
+  font-size: 13px;
+}
+.admin-page .form-grid input,
+.admin-page .form-grid textarea,
+.admin-page .form-grid select {
+  min-height: 44px;
+}
+.admin-page .form-grid textarea {
+  min-height: 110px;
+}
+.admin-page .action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-start;
+}
+.admin-page .knowledge-row {
+  padding: 16px;
+  border-radius: 16px;
+}
+.admin-page .knowledge-title {
+  font-size: 14px;
+}
+.admin-page .knowledge-meta {
+  font-size: 11px;
+}
+@media (max-width: 900px) {
+  .admin-page .form-card {
+    padding: 18px;
+  }
+}
+
