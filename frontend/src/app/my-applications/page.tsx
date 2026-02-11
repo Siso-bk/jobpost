@@ -84,6 +84,7 @@ export default function MyApplicationsPage() {
           <div className="applications-grid">
             {applications.map((application) => {
               const job = application.jobId;
+              const salaryText = job?.salary ? formatSalary(job.salary) : "";
               return (
                 <div key={application._id} className="application-card">
                   <div className="application-head">
@@ -106,9 +107,9 @@ export default function MyApplicationsPage() {
                     <span className="dot">|</span>
                     <span>Applied {formatDate(application.createdAt)}</span>
                   </div>
-                  {job?.salary && (
+                  {salaryText && (
                     <div className="job-tags">
-                      <span className="pill">{formatSalary(job.salary)}</span>
+                      <span className="pill">{salaryText}</span>
                     </div>
                   )}
                   <div className="application-actions">
@@ -128,3 +129,5 @@ export default function MyApplicationsPage() {
     </div>
   );
 }
+
+

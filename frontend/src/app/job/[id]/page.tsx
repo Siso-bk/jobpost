@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import ApplyForm from '@/components/ApplyForm';
@@ -51,6 +51,7 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
   const externalApplyLabel = displayUrl(job.applyLink) || externalApplyLink;
   const companyLink = normalizeExternalUrl(job.companyLink);
   const companyLabel = displayUrl(job.companyLink) || companyLink;
+  const salaryText = formatSalary(job.salary);
   return (
     <div className="job-detail">
       <div className="detail-card">
@@ -78,10 +79,10 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
       </div>
 
       <div className="detail-grid">
-        {job.salary && (
+        {salaryText && (
           <div className="detail-card">
             <strong>Salary</strong>
-            <div className="job-meta">{formatSalary(job.salary)}</div>
+            <div className="job-meta">{salaryText}</div>
           </div>
         )}
         {Array.isArray(job.imageUrls) && job.imageUrls.length > 0 && (
@@ -128,3 +129,5 @@ export default async function JobDetail({ params }: { params: { id: string } }) 
     </div>
   );
 }
+
+

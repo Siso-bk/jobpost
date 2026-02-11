@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { authService, jobsService, usersService } from '@/services/api';
@@ -442,6 +442,7 @@ export default function JobsPage() {
               const initials = getInitials(job.company);
               const jobLabel = `View ${job.title} at ${job.company}`;
               const isSaved = savedJobs.includes(job._id);
+              const salaryText = formatSalary(job.salary);
               return (
                 <Link
                   key={job._id}
@@ -506,7 +507,7 @@ export default function JobsPage() {
                   </div>
                   <div className="job-tags">
                     <span className="pill">{formatJobType(job.jobType)}</span>
-                    {job.salary && <span className="pill">{formatSalary(job.salary)}</span>}
+                    {salaryText && <span className="pill">{salaryText}</span>}
                   </div>
                   <p className="job-desc">{job.description?.slice(0, 140)}...</p>
                   <div className="job-actions">
@@ -550,3 +551,5 @@ export default function JobsPage() {
     </div>
   );
 }
+
+
