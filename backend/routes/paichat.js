@@ -10,8 +10,101 @@ const router = express.Router();
 const baseUrl = process.env.PAICHAT_API_BASE || '';
 const tenantId = process.env.PAICHAT_TENANT_ID || '';
 const platformKey = process.env.PAICHAT_PLATFORM_KEY || '';
-const consoleToken = process.env.PAICHAT_CONSOLE_TOKEN || '';
 const buildTenantUrl = (path) => `${normalizeBase(baseUrl)}${path}`;
+
+const consoleAuth = {
+  apiKey: () => process.env.PAICHAT_CONSOLE_API_KEY || '',
+  token: () => process.env.PAICHAT_CONSOLE_TOKEN || '',
+  email: () => process.env.PAICHAT_CONSOLE_EMAIL || '',
+  password: () => process.env.PAICHAT_CONSOLE_PASSWORD || '',
+  domain: () => process.env.PAICHAT_CONSOLE_DOMAIN || ''
+};
+
+let cachedConsoleToken = '';
+let cachedConsoleTokenExpMs = 0;
+let consoleTokenPromise = null;
+
+const parseJwtExpMs = (token) => {
+  if (!token) return 0;
+  const parts = String(token).split('.');
+  if (parts.length < 2) return 0;
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    if (payload && typeof payload.exp === 'number') {
+      return payload.exp * 1000;
+    }
+  } catch (err) {
+    return 0;
+  }
+  return 0;
+};
+
+const isTokenFresh = (token, expMs) => {
+  if (!token) return false;
+  const expiry = expMs || parseJwtExpMs(token);
+  if (!expiry) return true;
+  return expiry - 60000 > Date.now();
+};
+
+const cacheConsoleToken = (token) => {
+  cachedConsoleToken = token;
+  cachedConsoleTokenExpMs = parseJwtExpMs(token);
+};
+
+const hasConsoleAuth = () => {
+  const apiKey = consoleAuth.apiKey();
+  const envToken = consoleAuth.token();
+  const email = consoleAuth.email();
+  const password = consoleAuth.password();
+  return Boolean(apiKey || envToken || (email && password));
+};
+
+const loginConsole = async () => {
+  const email = consoleAuth.email();
+  const password = consoleAuth.password();
+  if (!email || !password) {
+    const error = new Error('console_auth_missing');
+    error.code = 'console_auth_missing';
+    throw error;
+  }
+  const payload = { email, password };
+  const domain = consoleAuth.domain();
+  if (domain) payload.domain = domain;
+
+  const response = await axios.post(
+    `${normalizeBase(baseUrl)}/v1/console/auth/login`,
+    payload,
+    { timeout: 8000 }
+  );
+  const token = response?.data?.token;
+  if (!token) {
+    throw new Error('console_token_missing');
+  }
+  cacheConsoleToken(token);
+  return token;
+};
+
+const getConsoleToken = async ({ forceRefresh = false } = {}) => {
+  const envToken = consoleAuth.token();
+  if (!forceRefresh && envToken && isTokenFresh(envToken)) {
+    return envToken;
+  }
+  if (!forceRefresh && isTokenFresh(cachedConsoleToken, cachedConsoleTokenExpMs)) {
+    return cachedConsoleToken;
+  }
+  if (!consoleAuth.email() || !consoleAuth.password()) {
+    if (envToken) return envToken;
+    const error = new Error('console_auth_missing');
+    error.code = 'console_auth_missing';
+    throw error;
+  }
+  if (!consoleTokenPromise) {
+    consoleTokenPromise = loginConsole().finally(() => {
+      consoleTokenPromise = null;
+    });
+  }
+  return consoleTokenPromise;
+};
 
 const normalizeBase = (value) => String(value || '').replace(/\/$/, '');
 
@@ -207,7 +300,7 @@ router.get('/knowledge', auth, requireRole('admin'), async (req, res) => {
 });
 
 router.post('/knowledge', auth, requireRole('admin'), async (req, res) => {
-  if (!baseUrl || !consoleToken) {
+  if (!baseUrl || !hasConsoleAuth()) {
     return res.status(501).json({ message: 'PAIchat knowledge is not configured.' });
   }
 
@@ -223,6 +316,25 @@ router.post('/knowledge', auth, requireRole('admin'), async (req, res) => {
     : [{ url, title, content, sourceUrl }];
 
   const results = [];
+
+  let token;
+  let authMode = 'token';
+  const apiKey = consoleAuth.apiKey();
+  if (apiKey) {
+    authMode = 'key';
+    token = apiKey;
+  } else {
+    try {
+      token = await getConsoleToken();
+    } catch (err) {
+      if (err?.code === 'console_auth_missing' || err?.message === 'console_auth_missing') {
+        return res.status(501).json({ message: 'PAIchat knowledge is not configured.' });
+      }
+      const status = err?.response?.status || 502;
+      const message = err?.response?.data?.error || err?.message || 'PAIchat console login failed.';
+      return res.status(status).json({ message });
+    }
+  }
 
   for (const entry of entries) {
     const payload = await buildKnowledgePayload(entry);
@@ -251,20 +363,7 @@ router.post('/knowledge', auth, requireRole('admin'), async (req, res) => {
       continue;
     }
 
-    try {
-      const response = await axios.post(
-        `${normalizeBase(baseUrl)}/v1/console/knowledge`,
-        {
-          title: payload.title,
-          content: payload.content,
-          sourceUrl: payload.sourceUrl || undefined
-        },
-        {
-          headers: { Authorization: `Bearer ${consoleToken}` },
-          timeout: 8000
-        }
-      );
-
+    const persistSuccess = async (response) => {
       const externalId = response.data?.id || response.data?._id || response.data?.knowledgeId;
 
       const saved = await KnowledgeSource.create({
@@ -280,9 +379,55 @@ router.post('/knowledge', auth, requireRole('admin'), async (req, res) => {
         sourceUrl: saved.sourceUrl,
         externalId
       });
+    };
+
+    const buildConsoleHeaders = (token) =>
+      authMode === 'key'
+        ? { 'x-console-key': token }
+        : { Authorization: `Bearer ${token}` };
+
+    const sendKnowledge = async (token) =>
+      axios.post(
+        `${normalizeBase(baseUrl)}/v1/console/knowledge`,
+        {
+          title: payload.title,
+          content: payload.content,
+          sourceUrl: payload.sourceUrl || undefined
+        },
+        {
+          headers: buildConsoleHeaders(token),
+          timeout: 8000
+        }
+      );
+
+    try {
+      const response = await sendKnowledge(token);
+      await persistSuccess(response);
     } catch (err) {
-      const status = err?.response?.status || 502;
-      const message = err?.response?.data?.error || err?.message || 'PAIchat knowledge request failed.';
+      let finalError = err;
+      let status = err?.response?.status || 502;
+
+      if (
+        authMode === 'token' &&
+        (status === 401 || status === 403) &&
+        consoleAuth.email() &&
+        consoleAuth.password()
+      ) {
+        try {
+          token = await getConsoleToken({ forceRefresh: true });
+          const retryResponse = await sendKnowledge(token);
+          await persistSuccess(retryResponse);
+          continue;
+        } catch (retryError) {
+          finalError = retryError;
+          status = retryError?.response?.status || 502;
+        }
+      }
+
+      const message =
+        finalError?.response?.data?.error ||
+        finalError?.message ||
+        'PAIchat knowledge request failed.';
       const saved = await KnowledgeSource.create({
         ...record,
         status: 'failed',
