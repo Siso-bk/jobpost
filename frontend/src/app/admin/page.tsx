@@ -19,6 +19,7 @@ const SOCIAL_OPTIONS = [
   { value: 'x', label: 'X (Twitter)' },
   { value: 'github', label: 'GitHub' },
   { value: 'instagram', label: 'Instagram' },
+  { value: 'telegram', label: 'Telegram' },
   { value: 'facebook', label: 'Facebook' },
   { value: 'youtube', label: 'YouTube' },
   { value: 'tiktok', label: 'TikTok' },
