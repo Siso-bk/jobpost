@@ -219,8 +219,6 @@ export default function AdminDashboardPage() {
       socialLinks: prev.socialLinks.filter((_, idx) => idx !== index),
     }));
   };
-    });
-  };
 
   const updateFeature = (index: number, key: 'title' | 'description', value: string) => {
     setForm((prev) => {
