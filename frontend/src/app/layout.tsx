@@ -1,6 +1,7 @@
 ﻿import './globals.css';
 import React from 'react';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import PAIchatWidget from '../components/PAIchatWidget';
 
 export const metadata = {
@@ -48,6 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <Header />
         {children}
+        <Footer />
         <PAIchatWidget />
       </body>
     </html>

@@ -24,6 +24,7 @@ export type HomeContent = {
     primaryCta: { label: string; href: string };
     secondaryCta: { label: string; href: string };
   };
+  socialLinks: { label: string; href: string; icon: string }[];
 };
 
 export const DEFAULT_HOME_CONTENT: HomeContent = {
@@ -89,6 +90,11 @@ export const DEFAULT_HOME_CONTENT: HomeContent = {
     primaryCta: { label: 'Create account', href: '/register' },
     secondaryCta: { label: 'Browse jobs', href: '/jobs' },
   },
+  socialLinks: [
+    { label: 'LinkedIn', href: 'https://linkedin.com/company/jobpost', icon: 'linkedin' },
+    { label: 'X', href: 'https://x.com/jobpost', icon: 'x' },
+    { label: 'GitHub', href: 'https://github.com/jobpost', icon: 'github' },
+  ],
 };
 
 export function mergeHomeContent(
@@ -150,6 +156,10 @@ export function mergeHomeContent(
     },
   };
 
+  const socialLinks = Array.isArray(incoming.socialLinks)
+    ? incoming.socialLinks
+    : base.socialLinks;
+
   return {
     hero,
     metrics,
@@ -157,5 +167,6 @@ export function mergeHomeContent(
     featureSection,
     stepsSection,
     cta,
+    socialLinks,
   };
 }

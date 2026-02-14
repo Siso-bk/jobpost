@@ -176,6 +176,10 @@ export const usersService = {
   unsaveWorker: (workerId: string) => api.delete(`/users/me/saved-workers/${workerId}`),
 };
 
+export const publicService = {
+  getHomeContent: () => api.get('/public/home'),
+};
+
 export const adminService = {
   getHomeContent: () => api.get('/admin/home'),
   updateHomeContent: (content: any) => api.put('/admin/home', { content }),

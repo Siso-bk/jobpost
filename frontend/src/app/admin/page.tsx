@@ -14,6 +14,18 @@ type KnowledgeItem = {
   createdAt?: string;
 };
 
+const SOCIAL_OPTIONS = [
+  { value: 'linkedin', label: 'LinkedIn' },
+  { value: 'x', label: 'X (Twitter)' },
+  { value: 'github', label: 'GitHub' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'youtube', label: 'YouTube' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'link', label: 'Link' },
+];
+
+
 export default function AdminDashboardPage() {
   const [form, setForm] = useState<HomeContent>(DEFAULT_HOME_CONTENT);
   const [loading, setLoading] = useState(false);
@@ -183,6 +195,30 @@ export default function AdminDashboardPage() {
       const logos = [...prev.logos];
       logos[index] = value;
       return { ...prev, logos };
+    });
+  };
+
+  const updateSocialLink = (index: number, key: 'label' | 'href' | 'icon', value: string) => {
+    setForm((prev) => {
+      const socialLinks = [...prev.socialLinks];
+      socialLinks[index] = { ...socialLinks[index], [key]: value };
+      return { ...prev, socialLinks };
+    });
+  };
+
+  const addSocialLink = () => {
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: [...prev.socialLinks, { label: '', href: '', icon: 'link' }],
+    }));
+  };
+
+  const removeSocialLink = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: prev.socialLinks.filter((_, idx) => idx !== index),
+    }));
+  };
     });
   };
 
@@ -442,6 +478,60 @@ export default function AdminDashboardPage() {
               <input value={logo} onChange={(event) => updateLogo(index, event.target.value)} />
             </label>
           ))}
+        </div>
+
+        <div className="form-section">
+          <div className="form-section-head">
+            <div>
+              <h3>Social links</h3>
+              <p className="muted">Shown in the footer across the platform.</p>
+            </div>
+            <button type="button" className="btn-secondary" onClick={addSocialLink}>
+              Add social link
+            </button>
+          </div>
+          <div className="social-links-grid">
+            {form.socialLinks.map((link, index) => (
+              <div className="social-link-row" key={`social-${index}`}>
+                <label>
+                  <span>Label</span>
+                  <input
+                    value={link.label}
+                    onChange={(event) => updateSocialLink(index, 'label', event.target.value)}
+                    placeholder="LinkedIn"
+                  />
+                </label>
+                <label>
+                  <span>URL</span>
+                  <input
+                    value={link.href}
+                    onChange={(event) => updateSocialLink(index, 'href', event.target.value)}
+                    placeholder="https://..."
+                  />
+                </label>
+                <label>
+                  <span>Icon</span>
+                  <select
+                    value={link.icon || 'link'}
+                    onChange={(event) => updateSocialLink(index, 'icon', event.target.value)}
+                  >
+                    {SOCIAL_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => removeSocialLink(index)}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="form-grid">
