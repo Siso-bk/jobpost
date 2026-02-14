@@ -60,21 +60,16 @@ export default function ChangePasswordPage() {
     event.preventDefault();
     if (!code.trim()) return;
     setError('');
-    setStatus({ tone: 'info', message: 'Verifying code...' });
+    setStatus({ tone: 'info', message: 'Preparing reset...' });
     setVerifying(true);
     try {
-      const verify = await authService.verifyResetCode(email.trim().toLowerCase(), code.trim());
-      const resetToken = verify.data?.resetToken || verify.data?.token;
-      if (!resetToken) {
-        throw new Error('Reset token missing. Request a new code and try again.');
-      }
       if (typeof window !== 'undefined') {
-        sessionStorage.setItem('reset_token', resetToken);
+        sessionStorage.setItem('reset_code', code.trim());
         sessionStorage.setItem('reset_email', email.trim().toLowerCase());
       }
       setStatus({
         tone: 'success',
-        message: 'Code verified. Redirecting to set a new password...',
+        message: 'Code captured. Redirecting to set a new password...',
       });
       router.push('/reset-password?mode=change');
     } catch (err: any) {
@@ -137,4 +132,3 @@ export default function ChangePasswordPage() {
     </div>
   );
 }
-

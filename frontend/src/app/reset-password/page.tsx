@@ -21,23 +21,22 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [resetToken, setResetToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const prefilled = params.get('email');
-    const tokenParam = params.get('token');
+    const codeParam = params.get('code');
     const mode = params.get('mode');
     const storedEmail = window.sessionStorage.getItem('reset_email');
-    const storedToken = window.sessionStorage.getItem('reset_token');
+    const storedCode = window.sessionStorage.getItem('reset_code');
     const resolvedEmail = prefilled || storedEmail || '';
-    const resolvedToken = tokenParam || storedToken || '';
+    const resolvedCode = codeParam || storedCode || '';
     if (resolvedEmail) {
       setFormData((prev) => ({ ...prev, email: resolvedEmail }));
     }
-    if (resolvedToken) {
-      setResetToken(resolvedToken);
+    if (resolvedCode) {
+      setFormData((prev) => ({ ...prev, code: resolvedCode }));
       setStep('reset');
       if (mode === 'change') {
         setStatus({
@@ -49,8 +48,8 @@ export default function ResetPasswordPage() {
     if (storedEmail) {
       window.sessionStorage.removeItem('reset_email');
     }
-    if (storedToken) {
-      window.sessionStorage.removeItem('reset_token');
+    if (storedCode) {
+      window.sessionStorage.removeItem('reset_code');
     }
   }, []);
 
@@ -62,14 +61,9 @@ export default function ResetPasswordPage() {
   const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
-    setStatus({ tone: 'info', message: 'Verifying code...' });
+    if (!formData.email.trim() || !formData.code.trim()) return;
     setLoading(true);
     try {
-      const res = await authService.verifyResetCode(
-        formData.email.trim().toLowerCase(),
-        formData.code.trim()
-      );
-      setResetToken(res.data?.resetToken || res.data?.token || null);
       setStep('reset');
       setStatus({ tone: 'success', message: 'Code verified. Enter a new password below.' });
     } catch (err: any) {
@@ -82,7 +76,6 @@ export default function ResetPasswordPage() {
 
   const handleReset = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!resetToken) return;
     if (!STRONG_PASSWORD.test(formData.password)) {
       setError(PASSWORD_HINT);
       setStatus(null);
@@ -97,14 +90,17 @@ export default function ResetPasswordPage() {
     setStatus({ tone: 'info', message: 'Resetting password...' });
     setLoading(true);
     try {
-      await authService.resetWithToken(resetToken, formData.password);
+      await authService.resetPassword(
+        formData.email.trim().toLowerCase(),
+        formData.code.trim(),
+        formData.password
+      );
       setStatus({
         tone: 'success',
         message: 'Password reset successfully. Sign in with your new password.',
       });
       setStep('verify');
-      setFormData((prev) => ({ ...prev, password: '', confirm: '' }));
-      setResetToken(null);
+      setFormData((prev) => ({ ...prev, password: '', confirm: '', code: '' }));
     } catch (err: any) {
       setStatus(null);
       setError(friendlyError(err, 'We could not reset your password.'));
@@ -116,10 +112,11 @@ export default function ResetPasswordPage() {
   const canVerify = formData.email.trim() && formData.code.trim().length === 6;
   const passwordStrong = STRONG_PASSWORD.test(formData.password);
   const canReset =
+    formData.email.trim() &&
+    formData.code.trim().length === 6 &&
     formData.password &&
     formData.confirm &&
     formData.password === formData.confirm &&
-    Boolean(resetToken) &&
     passwordStrong;
 
   return (
@@ -308,4 +305,3 @@ export default function ResetPasswordPage() {
     </div>
   );
 }
-
